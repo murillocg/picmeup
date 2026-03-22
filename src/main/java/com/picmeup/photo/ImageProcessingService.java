@@ -20,8 +20,10 @@ public class ImageProcessingService {
 
     private static final int THUMBNAIL_MAX_WIDTH = 800;
     private static final String WATERMARK_TEXT = "PicMeUp";
-    private static final float WATERMARK_OPACITY = 0.3f;
+    private static final float WATERMARK_OPACITY = 0.35f;
+    private static final float WATERMARK_OPACITY_SECONDARY = 0.2f;
     private static final double WATERMARK_ROTATION = -30.0;
+    private static final double WATERMARK_ROTATION_SECONDARY = 30.0;
 
     public byte[] generateThumbnail(byte[] originalBytes) throws IOException {
         var original = ImageIO.read(new ByteArrayInputStream(originalBytes));
@@ -54,27 +56,45 @@ public class ImageProcessingService {
         try {
             g2d.drawImage(image, 0, 0, null);
             g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, WATERMARK_OPACITY));
             g2d.setColor(Color.WHITE);
 
-            int fontSize = Math.max(image.getWidth() / 12, 24);
+            int fontSize = Math.max(image.getWidth() / 10, 28);
             g2d.setFont(new Font("SansSerif", Font.BOLD, fontSize));
 
             var fontMetrics = g2d.getFontMetrics();
             int textWidth = fontMetrics.stringWidth(WATERMARK_TEXT);
             int textHeight = fontMetrics.getHeight();
-            int spacing = textWidth + textHeight;
+            int spacing = (int) (textWidth * 0.8);
 
             var originalTransform = g2d.getTransform();
-            var rotateTransform = AffineTransform.getRotateInstance(
+
+            // Primary watermark layer
+            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, WATERMARK_OPACITY));
+            g2d.setTransform(AffineTransform.getRotateInstance(
                     Math.toRadians(WATERMARK_ROTATION),
                     image.getWidth() / 2.0,
                     image.getHeight() / 2.0
-            );
-            g2d.setTransform(rotateTransform);
+            ));
 
             for (int y = -image.getHeight(); y < image.getHeight() * 2; y += spacing) {
                 for (int x = -image.getWidth(); x < image.getWidth() * 2; x += spacing) {
+                    g2d.drawString(WATERMARK_TEXT, x, y);
+                }
+            }
+
+            // Secondary watermark layer (opposite angle, smaller, offset)
+            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, WATERMARK_OPACITY_SECONDARY));
+            int smallerFontSize = Math.max(fontSize * 2 / 3, 20);
+            g2d.setFont(new Font("SansSerif", Font.ITALIC, smallerFontSize));
+            g2d.setTransform(AffineTransform.getRotateInstance(
+                    Math.toRadians(WATERMARK_ROTATION_SECONDARY),
+                    image.getWidth() / 2.0,
+                    image.getHeight() / 2.0
+            ));
+
+            int smallSpacing = (int) (spacing * 0.7);
+            for (int y = -image.getHeight(); y < image.getHeight() * 2; y += smallSpacing) {
+                for (int x = -image.getWidth(); x < image.getWidth() * 2; x += smallSpacing) {
                     g2d.drawString(WATERMARK_TEXT, x, y);
                 }
             }
