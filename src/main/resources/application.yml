@@ -1,0 +1,95 @@
+spring:
+  application:
+    name: picmeup
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 200MB
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+
+server:
+  port: 8080
+
+app:
+  cors:
+    allowed-origins: http://localhost:5173
+
+logging:
+  level:
+    org.springframework.web.filter.CommonsRequestLoggingFilter: DEBUG
+
+---
+spring:
+  config:
+    activate:
+      on-profile: local
+  datasource:
+    url: jdbc:postgresql://localhost:5432/picmeup
+    username: picmeup
+    password: picmeup
+  jpa:
+    show-sql: true
+
+aws:
+  region: ap-southeast-2
+  s3:
+    bucket: picmeup-photos
+    endpoint: http://localhost:4566
+  rekognition:
+    endpoint: http://localhost:4566
+    confidence-threshold: 80.0
+
+stripe:
+  api-key: ${STRIPE_API_KEY:sk_test_placeholder}
+  webhook-secret: ${STRIPE_WEBHOOK_SECRET:whsec_placeholder}
+
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+  datasource:
+    url: jdbc:postgresql://localhost:5432/picmeup
+    username: picmeup
+    password: ${DB_PASSWORD}
+
+aws:
+  region: ap-southeast-2
+  s3:
+    bucket: picmeup-photos-dev
+  rekognition:
+    confidence-threshold: 80.0
+
+stripe:
+  api-key: ${STRIPE_API_KEY}
+  webhook-secret: ${STRIPE_WEBHOOK_SECRET}
+
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+  datasource:
+    url: ${DATABASE_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+
+aws:
+  region: ap-southeast-2
+  s3:
+    bucket: ${S3_BUCKET}
+  rekognition:
+    confidence-threshold: 85.0
+
+app:
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS}
+
+stripe:
+  api-key: ${STRIPE_API_KEY}
+  webhook-secret: ${STRIPE_WEBHOOK_SECRET}

@@ -1,0 +1,25 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: picmeup
+      POSTGRES_USER: picmeup
+      POSTGRES_PASSWORD: picmeup
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  localstack:
+    image: localstack/localstack:3
+    environment:
+      SERVICES: s3,rekognition
+      DEFAULT_REGION: ap-southeast-2
+    ports:
+      - "4566:4566"
+    volumes:
+      - localstack:/var/lib/localstack
+
+volumes:
+  pgdata:
+  localstack:
