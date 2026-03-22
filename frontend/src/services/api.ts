@@ -43,6 +43,10 @@ export async function uploadPhotos(
   return response.data;
 }
 
+export async function deleteEvent(slug: string): Promise<void> {
+  await api.delete(`/events/${slug}`);
+}
+
 export async function listPhotos(slug: string): Promise<PhotoResponse[]> {
   const response = await api.get<PhotoResponse[]>(`/events/${slug}/photos`);
   return response.data;

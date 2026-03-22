@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { getEvent, listPhotos, searchByFace } from '../services/api';
+import { useParams, useNavigate } from 'react-router-dom';
+import { getEvent, listPhotos, searchByFace, deleteEvent } from '../services/api';
 import type { EventResponse, PhotoResponse } from '../types/api';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorMessage from '../components/ErrorMessage';
@@ -9,7 +9,9 @@ import PhotoGrid from '../components/PhotoGrid';
 
 export default function EventDetailPage() {
   const { slug } = useParams<{ slug: string }>();
+  const navigate = useNavigate();
   const [event, setEvent] = useState<EventResponse | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const [photos, setPhotos] = useState<PhotoResponse[]>([]);
   const [matchedPhotos, setMatchedPhotos] = useState<PhotoResponse[] | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => {
@@ -75,16 +77,35 @@ export default function EventDetailPage() {
 
   return (
     <div>
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">{event.name}</h1>
-        <p className="text-gray-600 mt-1">{event.location}</p>
-        <p className="text-sm text-gray-400">
-          {new Date(event.date).toLocaleDateString('en-AU', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-          })}
-        </p>
+      <div className="mb-8 flex items-start justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">{event.name}</h1>
+          <p className="text-gray-600 mt-1">{event.location}</p>
+          <p className="text-sm text-gray-400">
+            {new Date(event.date).toLocaleDateString('en-AU', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+            })}
+          </p>
+        </div>
+        <button
+          onClick={async () => {
+            if (!slug || !window.confirm('Delete this event and all its photos? This cannot be undone.')) return;
+            setDeleting(true);
+            try {
+              await deleteEvent(slug);
+              navigate('/');
+            } catch {
+              setError('Failed to delete event');
+              setDeleting(false);
+            }
+          }}
+          disabled={deleting}
+          className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 disabled:opacity-50 text-sm"
+        >
+          {deleting ? 'Deleting...' : 'Delete event'}
+        </button>
       </div>
 
       {error && <ErrorMessage message={error} />}
