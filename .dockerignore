@@ -1,0 +1,10 @@
+target/
+frontend/node_modules/
+frontend/dist/
+frontend/node/
+.idea/
+.git/
+*.md
+docker-compose.yml
+terraform/
+.github/

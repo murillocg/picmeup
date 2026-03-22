@@ -22,3 +22,15 @@ Thumbs.db
 ### Environment ###
 .env
 *.env.local
+
+### Terraform ###
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfvars
+!*.tfvars.example
+
+### Frontend ###
+frontend/node_modules/
+frontend/dist/
+frontend/node/
