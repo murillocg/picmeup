@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { getEvent, listPhotos, searchByFace, deleteEvent } from '../services/api';
 import type { EventResponse, PhotoResponse } from '../types/api';
+import { useAuth } from '../context/AuthContext';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorMessage from '../components/ErrorMessage';
 import SelfieCapture from '../components/SelfieCapture';
@@ -10,6 +11,7 @@ import PhotoGrid from '../components/PhotoGrid';
 export default function EventDetailPage() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
+  const { authenticated } = useAuth();
   const [event, setEvent] = useState<EventResponse | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [photos, setPhotos] = useState<PhotoResponse[]>([]);
@@ -89,23 +91,33 @@ export default function EventDetailPage() {
             })}
           </p>
         </div>
-        <button
-          onClick={async () => {
-            if (!slug || !window.confirm('Delete this event and all its photos? This cannot be undone.')) return;
-            setDeleting(true);
-            try {
-              await deleteEvent(slug);
-              navigate('/');
-            } catch {
-              setError('Failed to delete event');
-              setDeleting(false);
-            }
-          }}
-          disabled={deleting}
-          className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 disabled:opacity-50 text-sm"
-        >
-          {deleting ? 'Deleting...' : 'Delete event'}
-        </button>
+        {authenticated && (
+          <div className="flex items-center gap-2">
+            <Link
+              to={`/events/${slug}/upload`}
+              className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 text-sm"
+            >
+              Upload photos
+            </Link>
+            <button
+              onClick={async () => {
+                if (!slug || !window.confirm('Delete this event and all its photos? This cannot be undone.')) return;
+                setDeleting(true);
+                try {
+                  await deleteEvent(slug);
+                  navigate('/');
+                } catch {
+                  setError('Failed to delete event');
+                  setDeleting(false);
+                }
+              }}
+              disabled={deleting}
+              className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 disabled:opacity-50 text-sm"
+            >
+              {deleting ? 'Deleting...' : 'Delete event'}
+            </button>
+          </div>
+        )}
       </div>
 
       {error && <ErrorMessage message={error} />}

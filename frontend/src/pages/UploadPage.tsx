@@ -1,18 +1,22 @@
 import { useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, Navigate } from 'react-router-dom';
 import { uploadPhotos } from '../services/api';
 import type { PhotoUploadResponse } from '../types/api';
+import { useAuth } from '../context/AuthContext';
 import FileUpload from '../components/FileUpload';
 import ErrorMessage from '../components/ErrorMessage';
 
 export default function UploadPage() {
   const { slug } = useParams<{ slug: string }>();
+  const { authenticated, loading: authLoading } = useAuth();
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   const [files, setFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
   const [results, setResults] = useState<PhotoUploadResponse[] | null>(null);
   const [error, setError] = useState('');
+
+  if (!authLoading && !authenticated) return <Navigate to="/" />;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

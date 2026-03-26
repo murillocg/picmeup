@@ -10,6 +10,14 @@ const api = axios.create({
   baseURL: '/api',
 });
 
+api.interceptors.request.use((config) => {
+  const auth = sessionStorage.getItem('auth');
+  if (auth) {
+    config.headers.Authorization = `Basic ${auth}`;
+  }
+  return config;
+});
+
 export async function listEvents(): Promise<EventResponse[]> {
   const response = await api.get<EventResponse[]>('/events');
   return response.data;
@@ -63,5 +71,10 @@ export async function searchByFace(
     `/events/${slug}/search`,
     formData,
   );
+  return response.data;
+}
+
+export async function checkAuth(): Promise<{ authenticated: boolean; username?: string }> {
+  const response = await api.get<{ authenticated: boolean; username?: string }>('/auth/check');
   return response.data;
 }
