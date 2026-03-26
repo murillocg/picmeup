@@ -33,14 +33,14 @@ export async function createEvent(data: CreateEventRequest): Promise<EventRespon
   return response.data;
 }
 
-export async function uploadPhotos(
+export async function uploadPhoto(
   slug: string,
-  files: File[],
+  file: File,
   photographerEmail: string,
   photographerName: string,
-): Promise<PhotoUploadResponse[]> {
+): Promise<PhotoUploadResponse> {
   const formData = new FormData();
-  files.forEach((file) => formData.append('files', file));
+  formData.append('files', file);
   formData.append('photographerEmail', photographerEmail);
   formData.append('photographerName', photographerName);
 
@@ -48,7 +48,7 @@ export async function uploadPhotos(
     `/events/${slug}/photos`,
     formData,
   );
-  return response.data;
+  return response.data[0];
 }
 
 export async function updateEvent(slug: string, data: CreateEventRequest): Promise<EventResponse> {
