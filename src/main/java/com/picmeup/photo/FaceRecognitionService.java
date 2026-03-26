@@ -105,6 +105,8 @@ public class FaceRecognitionService {
             log.info("Deleted Rekognition collection {}", collectionId(eventId));
         } catch (ResourceNotFoundException e) {
             log.warn("Collection {} not found, skipping deletion", collectionId(eventId));
+        } catch (Exception e) {
+            log.warn("Failed to delete Rekognition collection {}: {}", collectionId(eventId), e.getMessage());
         }
     }
 }
