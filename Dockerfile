@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 FROM eclipse-temurin:21-jdk-alpine AS build
 
 WORKDIR /app
@@ -6,15 +7,16 @@ RUN apk add --no-cache nodejs npm
 
 COPY pom.xml mvnw ./
 COPY .mvn .mvn
-RUN chmod +x mvnw && ./mvnw dependency:go-offline -B
+RUN chmod +x mvnw
+RUN --mount=type=cache,target=/root/.m2 ./mvnw dependency:go-offline -B
 
 COPY frontend/package.json frontend/package-lock.json frontend/
-RUN cd frontend && npm ci
+RUN --mount=type=cache,target=/root/.npm cd frontend && npm ci
 
 COPY frontend frontend
 COPY src src
 
-RUN ./mvnw package -DskipTests -B
+RUN --mount=type=cache,target=/root/.m2 ./mvnw package -DskipTests -B
 
 FROM eclipse-temurin:21-jre-alpine
 
