@@ -29,6 +29,19 @@ resource "aws_secretsmanager_secret" "stripe_webhook_secret" {
   name = "${var.app_name}/stripe-webhook-secret"
 }
 
+resource "aws_secretsmanager_secret" "admin_password" {
+  name = "${var.app_name}/admin-password"
+}
+
+resource "aws_secretsmanager_secret_version" "admin_password" {
+  secret_id     = aws_secretsmanager_secret.admin_password.id
+  secret_string = "{bcrypt}${bcrypt(var.admin_password)}"
+
+  lifecycle {
+    ignore_changes = [secret_string]
+  }
+}
+
 resource "aws_db_instance" "main" {
   identifier     = var.app_name
   engine         = "postgres"

@@ -75,3 +75,9 @@ variable "rekognition_confidence_threshold" {
   type        = number
   default     = 85.0
 }
+
+variable "admin_password" {
+  description = "Admin password (plaintext) for HTTP Basic Auth — stored BCrypt-hashed in Secrets Manager"
+  type        = string
+  sensitive   = true
+}

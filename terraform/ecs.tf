@@ -41,6 +41,7 @@ resource "aws_ecs_task_definition" "app" {
         { name = "DB_PASSWORD", valueFrom = aws_secretsmanager_secret.db_password.arn },
         { name = "STRIPE_API_KEY", valueFrom = aws_secretsmanager_secret.stripe_api_key.arn },
         { name = "STRIPE_WEBHOOK_SECRET", valueFrom = aws_secretsmanager_secret.stripe_webhook_secret.arn },
+        { name = "ADMIN_PASSWORD", valueFrom = aws_secretsmanager_secret.admin_password.arn },
       ]
 
       logConfiguration = {
