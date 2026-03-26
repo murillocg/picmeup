@@ -51,6 +51,11 @@ export async function uploadPhotos(
   return response.data;
 }
 
+export async function updateEvent(slug: string, data: CreateEventRequest): Promise<EventResponse> {
+  const response = await api.put<EventResponse>(`/events/${slug}`, data);
+  return response.data;
+}
+
 export async function deleteEvent(slug: string): Promise<void> {
   await api.delete(`/events/${slug}`);
 }

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { getEvent, listPhotos, searchByFace, deleteEvent } from '../services/api';
+import { getEvent, listPhotos, searchByFace, deleteEvent, updateEvent } from '../services/api';
 import type { EventResponse, PhotoResponse } from '../types/api';
 import { useAuth } from '../context/AuthContext';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -13,6 +13,11 @@ export default function EventDetailPage() {
   const navigate = useNavigate();
   const { authenticated } = useAuth();
   const [event, setEvent] = useState<EventResponse | null>(null);
+  const [editing, setEditing] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editDate, setEditDate] = useState('');
+  const [editLocation, setEditLocation] = useState('');
+  const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [photos, setPhotos] = useState<PhotoResponse[]>([]);
   const [matchedPhotos, setMatchedPhotos] = useState<PhotoResponse[] | null>(null);
@@ -77,22 +82,90 @@ export default function EventDetailPage() {
   const displayPhotos = showAll ? photos : (matchedPhotos ?? []);
   const totalPrice = selectedIds.size * 10;
 
+  function startEditing() {
+    setEditName(event!.name);
+    setEditDate(event!.date);
+    setEditLocation(event!.location);
+    setEditing(true);
+  }
+
+  async function handleSave() {
+    if (!slug) return;
+    setSaving(true);
+    setError('');
+    try {
+      const updated = await updateEvent(slug, { name: editName, date: editDate, location: editLocation });
+      setEvent(updated);
+      setEditing(false);
+    } catch {
+      setError('Failed to update event');
+    } finally {
+      setSaving(false);
+    }
+  }
+
   return (
     <div>
       <div className="mb-8 flex items-start justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">{event.name}</h1>
-          <p className="text-gray-600 mt-1">{event.location}</p>
-          <p className="text-sm text-gray-400">
-            {new Date(event.date).toLocaleDateString('en-AU', {
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-            })}
-          </p>
+          {editing ? (
+            <div className="space-y-3">
+              <input
+                type="text"
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                className="block text-2xl font-bold border border-gray-300 rounded-lg px-3 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+              <input
+                type="text"
+                value={editLocation}
+                onChange={(e) => setEditLocation(e.target.value)}
+                className="block border border-gray-300 rounded-lg px-3 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+              <input
+                type="date"
+                value={editDate}
+                onChange={(e) => setEditDate(e.target.value)}
+                className="block border border-gray-300 rounded-lg px-3 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+              <div className="flex gap-2">
+                <button
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="bg-indigo-600 text-white px-4 py-1 rounded-lg hover:bg-indigo-700 disabled:opacity-50 text-sm"
+                >
+                  {saving ? 'Saving...' : 'Save'}
+                </button>
+                <button
+                  onClick={() => setEditing(false)}
+                  className="bg-gray-200 text-gray-700 px-4 py-1 rounded-lg hover:bg-gray-300 text-sm"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            <>
+              <h1 className="text-3xl font-bold text-gray-900">{event.name}</h1>
+              <p className="text-gray-600 mt-1">{event.location}</p>
+              <p className="text-sm text-gray-400">
+                {new Date(event.date).toLocaleDateString('en-AU', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                })}
+              </p>
+            </>
+          )}
         </div>
-        {authenticated && (
+        {authenticated && !editing && (
           <div className="flex items-center gap-2">
+            <button
+              onClick={startEditing}
+              className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 text-sm"
+            >
+              Edit
+            </button>
             <Link
               to={`/events/${slug}/upload`}
               className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 text-sm"
