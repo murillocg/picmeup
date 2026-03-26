@@ -34,6 +34,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/events/*/search").permitAll()
                         .requestMatchers("/actuator/**").permitAll()
                         .requestMatchers("/", "/index.html", "/assets/**", "/error").permitAll()
+                        .requestMatchers("/api/auth/login").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/events/**").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/api/events/**").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/api/events/**").authenticated()

@@ -22,4 +22,12 @@ public class AuthController {
                 "username", principal.getName()
         ));
     }
+
+    @GetMapping("/login")
+    public ResponseEntity<Map<String, Object>> login(Principal principal) {
+        return ResponseEntity.ok(Map.of(
+                "authenticated", true,
+                "username", principal.getName()
+        ));
+    }
 }

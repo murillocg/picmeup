@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import type { ReactNode } from 'react';
-import { checkAuth as apiCheckAuth } from '../services/api';
+import { checkAuth as apiCheckAuth, loginWithBasicAuth } from '../services/api';
 
 interface AuthState {
   authenticated: boolean;
@@ -40,22 +40,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     refresh();
   }, [refresh]);
 
-  const login = useCallback(() => {
-    // Trigger Basic Auth by making an authenticated request
-    // The browser will show the credential dialog on 401
-    const credentials = window.prompt('Enter credentials as username:password');
-    if (!credentials) return;
-
-    const [user, ...passParts] = credentials.split(':');
-    const pass = passParts.join(':');
-
-    // Store credentials and verify
-    sessionStorage.setItem('auth', btoa(`${user}:${pass}`));
-    refresh();
-  }, [refresh]);
+  const login = useCallback(async () => {
+    try {
+      const data = await loginWithBasicAuth();
+      setAuthenticated(data.authenticated);
+      setUsername(data.username ?? null);
+    } catch {
+      // User cancelled the dialog or credentials were wrong
+    }
+  }, []);
 
   const logout = useCallback(() => {
-    sessionStorage.removeItem('auth');
+    // Clear browser-cached credentials by sending a request with wrong credentials
+    // This forces the browser to forget the Basic Auth session
+    fetch('/api/auth/login', {
+      headers: { Authorization: 'Basic ' + btoa('logout:logout') },
+    }).catch(() => {});
     setAuthenticated(false);
     setUsername(null);
   }, []);

@@ -8,14 +8,7 @@ import type {
 
 const api = axios.create({
   baseURL: '/api',
-});
-
-api.interceptors.request.use((config) => {
-  const auth = sessionStorage.getItem('auth');
-  if (auth) {
-    config.headers.Authorization = `Basic ${auth}`;
-  }
-  return config;
+  withCredentials: true,
 });
 
 export async function listEvents(): Promise<EventResponse[]> {
@@ -82,4 +75,11 @@ export async function searchByFace(
 export async function checkAuth(): Promise<{ authenticated: boolean; username?: string }> {
   const response = await api.get<{ authenticated: boolean; username?: string }>('/auth/check');
   return response.data;
+}
+
+export async function loginWithBasicAuth(): Promise<{ authenticated: boolean; username?: string }> {
+  // Use fetch (not axios) so the browser handles the 401 → native credential dialog
+  const response = await fetch('/api/auth/login', { credentials: 'include' });
+  if (!response.ok) throw new Error('Login failed');
+  return response.json();
 }
