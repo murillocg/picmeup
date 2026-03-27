@@ -38,7 +38,6 @@ public class SecurityConfig {
                         .requestMatchers("/", "/index.html", "/assets/**", "/error").permitAll()
                         .requestMatchers("/api/auth/login").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/events/**").authenticated()
-                        .requestMatchers(HttpMethod.PUT, "/api/events/**").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/api/events/**").authenticated()
                         .anyRequest().permitAll()
                 )

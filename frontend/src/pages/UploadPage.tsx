@@ -8,8 +8,6 @@ import ErrorMessage from '../components/ErrorMessage';
 export default function UploadPage() {
   const { slug } = useParams<{ slug: string }>();
   const { authenticated, loading: authLoading } = useAuth();
-  const [email, setEmail] = useState('');
-  const [name, setName] = useState('');
   const [files, setFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
   const [uploaded, setUploaded] = useState(0);
@@ -41,7 +39,7 @@ export default function UploadPage() {
       if (abortRef.current) break;
 
       try {
-        await uploadPhoto(slug, files[i], email, name);
+        await uploadPhoto(slug, files[i]);
         completedCount++;
       } catch {
         failedCount++;
@@ -50,7 +48,6 @@ export default function UploadPage() {
       setUploaded(completedCount);
       setFailed(failedCount);
 
-      // Calculate time remaining
       const elapsed = Date.now() - startTime;
       const avgPerFile = elapsed / (i + 1);
       const remaining = avgPerFile * (total - i - 1);
@@ -109,30 +106,6 @@ export default function UploadPage() {
       {error && <div className="mb-4"><ErrorMessage message={error} /></div>}
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Your name</label>
-          <input
-            type="text"
-            required
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            disabled={uploading}
-            className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-100"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Your email</label>
-          <input
-            type="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            disabled={uploading}
-            className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-100"
-          />
-        </div>
-
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Photos</label>
           {!uploading && (

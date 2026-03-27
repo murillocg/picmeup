@@ -28,8 +28,8 @@ public class PhotoController {
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<List<PhotoUploadResponse>> uploadPhotos(
             @PathVariable String slug,
-            @RequestParam String photographerEmail,
-            @RequestParam String photographerName,
+            @RequestParam(required = false, defaultValue = "") String photographerEmail,
+            @RequestParam(required = false, defaultValue = "") String photographerName,
             @RequestParam("files") List<MultipartFile> files) {
 
         if (files.isEmpty()) {

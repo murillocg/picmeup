@@ -53,15 +53,6 @@ public class EventService {
     }
 
     @Transactional
-    public Event updateEvent(String slug, String name, LocalDate date, String location) {
-        var event = getBySlug(slug);
-        event.setName(name);
-        event.setDate(date);
-        event.setLocation(location);
-        return eventRepository.save(event);
-    }
-
-    @Transactional
     public void deleteEvent(String slug) {
         var event = getBySlug(slug);
         var eventId = event.getId();

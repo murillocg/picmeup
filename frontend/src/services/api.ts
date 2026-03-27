@@ -29,24 +29,15 @@ export async function createEvent(data: CreateEventRequest): Promise<EventRespon
 export async function uploadPhoto(
   slug: string,
   file: File,
-  photographerEmail: string,
-  photographerName: string,
 ): Promise<PhotoUploadResponse> {
   const formData = new FormData();
   formData.append('files', file);
-  formData.append('photographerEmail', photographerEmail);
-  formData.append('photographerName', photographerName);
 
   const response = await api.post<PhotoUploadResponse[]>(
     `/events/${slug}/photos`,
     formData,
   );
   return response.data[0];
-}
-
-export async function updateEvent(slug: string, data: CreateEventRequest): Promise<EventResponse> {
-  const response = await api.put<EventResponse>(`/events/${slug}`, data);
-  return response.data;
 }
 
 export async function deleteEvent(slug: string): Promise<void> {
