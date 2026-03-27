@@ -14,6 +14,7 @@ import software.amazon.awssdk.services.rekognition.model.Image;
 import software.amazon.awssdk.services.rekognition.model.IndexFacesRequest;
 import software.amazon.awssdk.services.rekognition.model.QualityFilter;
 import software.amazon.awssdk.services.rekognition.model.ResourceNotFoundException;
+import software.amazon.awssdk.services.rekognition.model.S3Object;
 import software.amazon.awssdk.services.rekognition.model.SearchFacesByImageRequest;
 
 import java.util.List;
@@ -25,11 +26,14 @@ public class FaceRecognitionService {
     private static final Logger log = LoggerFactory.getLogger(FaceRecognitionService.class);
 
     private final RekognitionClient rekognitionClient;
+    private final String s3Bucket;
     private final float confidenceThreshold;
 
     public FaceRecognitionService(RekognitionClient rekognitionClient,
+                                  @Value("${aws.s3.bucket}") String s3Bucket,
                                   @Value("${aws.rekognition.confidence-threshold}") float confidenceThreshold) {
         this.rekognitionClient = rekognitionClient;
+        this.s3Bucket = s3Bucket;
         this.confidenceThreshold = confidenceThreshold;
     }
 
@@ -46,9 +50,12 @@ public class FaceRecognitionService {
         log.info("Created Rekognition collection {} (status: {})", collectionId(eventId), response.statusCode());
     }
 
-    public String[] indexFaces(UUID eventId, UUID photoId, byte[] imageBytes) {
+    public String[] indexFaces(UUID eventId, UUID photoId, String s3Key) {
         var image = Image.builder()
-                .bytes(SdkBytes.fromByteArray(imageBytes))
+                .s3Object(S3Object.builder()
+                        .bucket(s3Bucket)
+                        .name(s3Key)
+                        .build())
                 .build();
 
         var request = IndexFacesRequest.builder()
@@ -70,7 +77,7 @@ public class FaceRecognitionService {
         } catch (ResourceNotFoundException e) {
             log.warn("Collection not found for event {}, creating it", eventId);
             createCollection(eventId);
-            return indexFaces(eventId, photoId, imageBytes);
+            return indexFaces(eventId, photoId, s3Key);
         }
     }
 

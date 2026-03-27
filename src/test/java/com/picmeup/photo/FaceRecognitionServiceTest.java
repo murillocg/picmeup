@@ -41,7 +41,7 @@ class FaceRecognitionServiceTest {
 
     @BeforeEach
     void setUp() {
-        faceRecognitionService = new FaceRecognitionService(rekognitionClient, 80.0f);
+        faceRecognitionService = new FaceRecognitionService(rekognitionClient, "picmeup-photos-test", 80.0f);
     }
 
     @Test
@@ -64,7 +64,7 @@ class FaceRecognitionServiceTest {
 
         when(rekognitionClient.indexFaces(any(IndexFacesRequest.class))).thenReturn(response);
 
-        var faceIds = faceRecognitionService.indexFaces(eventId, photoId, new byte[]{1, 2, 3});
+        var faceIds = faceRecognitionService.indexFaces(eventId, photoId, "originals/" + eventId + "/" + photoId + ".jpg");
 
         assertThat(faceIds).containsExactly("face-123");
 
@@ -81,7 +81,7 @@ class FaceRecognitionServiceTest {
         when(rekognitionClient.createCollection(any(CreateCollectionRequest.class)))
                 .thenReturn(CreateCollectionResponse.builder().statusCode(200).build());
 
-        var faceIds = faceRecognitionService.indexFaces(eventId, photoId, new byte[]{1, 2, 3});
+        var faceIds = faceRecognitionService.indexFaces(eventId, photoId, "originals/" + eventId + "/" + photoId + ".jpg");
 
         assertThat(faceIds).isEmpty();
         verify(rekognitionClient).createCollection(any(CreateCollectionRequest.class));

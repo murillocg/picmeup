@@ -63,11 +63,15 @@ export default function FileUpload({
         type="file"
         accept={accept}
         multiple
-        onChange={(e) => e.target.files && handleFiles(e.target.files)}
+        onChange={(e) => {
+          if (e.target.files) handleFiles(e.target.files);
+          e.target.value = '';
+        }}
         className="hidden"
       />
 
       <button
+        type="button"
         onClick={() => fileInputRef.current?.click()}
         className="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700"
       >

@@ -78,7 +78,7 @@ public class PhotoService {
             String thumbnailKey = "thumbnails/%s/%s.jpg".formatted(eventId, photoId);
             s3StorageService.uploadFile(thumbnailKey, watermarkedThumbnail, "image/jpeg");
 
-            String[] faceIds = faceRecognitionService.indexFaces(eventId, photoId, originalBytes);
+            String[] faceIds = faceRecognitionService.indexFaces(eventId, photoId, originalKey);
 
             var photo = photoRepository.findById(photoId).orElse(null);
             if (photo != null) {
@@ -86,7 +86,7 @@ public class PhotoService {
                 photoRepository.save(photo);
                 log.info("Photo {} processed successfully", photoId);
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             log.error("Failed to process photo {}", photoId, e);
             var photo = photoRepository.findById(photoId).orElse(null);
             if (photo != null) {

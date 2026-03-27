@@ -4,10 +4,11 @@ interface PhotoCardProps {
   photo: PhotoResponse;
   selected: boolean;
   onToggle: () => void;
+  onView: () => void;
   selectable: boolean;
 }
 
-export default function PhotoCard({ photo, selected, onToggle, selectable }: PhotoCardProps) {
+export default function PhotoCard({ photo, selected, onToggle, onView, selectable }: PhotoCardProps) {
   if (!photo.thumbnailUrl) {
     return (
       <div className="aspect-square bg-gray-200 rounded-lg flex items-center justify-center text-gray-400">
@@ -21,7 +22,7 @@ export default function PhotoCard({ photo, selected, onToggle, selectable }: Pho
       className={`relative aspect-square rounded-lg overflow-hidden cursor-pointer border-2 transition-all ${
         selected ? 'border-indigo-600 ring-2 ring-indigo-300' : 'border-transparent'
       }`}
-      onClick={selectable ? onToggle : undefined}
+      onClick={onView}
     >
       <img
         src={photo.thumbnailUrl}
@@ -36,6 +37,10 @@ export default function PhotoCard({ photo, selected, onToggle, selectable }: Pho
               ? 'bg-indigo-600 border-indigo-600 text-white'
               : 'bg-white/80 border-gray-300'
           }`}
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggle();
+          }}
         >
           {selected && (
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
