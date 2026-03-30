@@ -33,7 +33,7 @@ resource "aws_ecs_task_definition" "app" {
         { name = "DATABASE_URL", value = "jdbc:postgresql://${aws_db_instance.main.endpoint}/${var.db_name}" },
         { name = "DB_USERNAME", value = var.db_username },
         { name = "S3_BUCKET", value = aws_s3_bucket.photos.id },
-        { name = "CORS_ALLOWED_ORIGINS", value = "https://${var.domain_name}" },
+        { name = "CORS_ALLOWED_ORIGINS", value = "https://${var.domain_name},https://www.${var.domain_name}" },
         { name = "AWS_REGION", value = var.aws_region },
       ]
 
