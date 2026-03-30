@@ -11,6 +11,7 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -19,11 +20,9 @@ import java.io.IOException;
 public class ImageProcessingService {
 
     private static final int THUMBNAIL_MAX_WIDTH = 800;
-    private static final String WATERMARK_TEXT = "PicMeUp";
+    private static final String WATERMARK_TEXT = "Elite Sport Photos";
     private static final float WATERMARK_OPACITY = 0.35f;
-    private static final float WATERMARK_OPACITY_SECONDARY = 0.2f;
-    private static final double WATERMARK_ROTATION = -30.0;
-    private static final double WATERMARK_ROTATION_SECONDARY = 30.0;
+    private static final double WATERMARK_ROTATION = -25.0;
 
     public byte[] generateThumbnail(byte[] originalBytes) throws IOException {
         var original = ImageIO.read(new ByteArrayInputStream(originalBytes));
@@ -57,49 +56,32 @@ public class ImageProcessingService {
             g2d.drawImage(image, 0, 0, null);
             g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
             g2d.setColor(Color.WHITE);
+            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, WATERMARK_OPACITY));
 
             int fontSize = Math.max(image.getWidth() / 10, 28);
             g2d.setFont(new Font("SansSerif", Font.BOLD, fontSize));
 
             var fontMetrics = g2d.getFontMetrics();
             int textWidth = fontMetrics.stringWidth(WATERMARK_TEXT);
-            int textHeight = fontMetrics.getHeight();
-            int spacing = (int) (textWidth * 0.8);
+            int textAscent = fontMetrics.getAscent();
 
-            var originalTransform = g2d.getTransform();
+            int imgW = image.getWidth();
+            int imgH = image.getHeight();
+            int centerX = (imgW - textWidth) / 2;
 
-            // Primary watermark layer
-            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, WATERMARK_OPACITY));
-            g2d.setTransform(AffineTransform.getRotateInstance(
-                    Math.toRadians(WATERMARK_ROTATION),
-                    image.getWidth() / 2.0,
-                    image.getHeight() / 2.0
-            ));
+            // Three watermarks: top, center, bottom — each rotated at its own position
+            int topY = imgH / 5;
+            int centerY = imgH / 2;
+            int bottomY = imgH * 4 / 5;
 
-            for (int y = -image.getHeight(); y < image.getHeight() * 2; y += spacing) {
-                for (int x = -image.getWidth(); x < image.getWidth() * 2; x += spacing) {
-                    g2d.drawString(WATERMARK_TEXT, x, y);
-                }
+            for (int y : new int[]{topY, centerY, bottomY}) {
+                var transform = AffineTransform.getRotateInstance(
+                        Math.toRadians(WATERMARK_ROTATION), centerX + textWidth / 2.0, y);
+                g2d.setTransform(transform);
+                g2d.drawString(WATERMARK_TEXT, centerX, y + textAscent / 2);
             }
 
-            // Secondary watermark layer (opposite angle, smaller, offset)
-            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, WATERMARK_OPACITY_SECONDARY));
-            int smallerFontSize = Math.max(fontSize * 2 / 3, 20);
-            g2d.setFont(new Font("SansSerif", Font.ITALIC, smallerFontSize));
-            g2d.setTransform(AffineTransform.getRotateInstance(
-                    Math.toRadians(WATERMARK_ROTATION_SECONDARY),
-                    image.getWidth() / 2.0,
-                    image.getHeight() / 2.0
-            ));
-
-            int smallSpacing = (int) (spacing * 0.7);
-            for (int y = -image.getHeight(); y < image.getHeight() * 2; y += smallSpacing) {
-                for (int x = -image.getWidth(); x < image.getWidth() * 2; x += smallSpacing) {
-                    g2d.drawString(WATERMARK_TEXT, x, y);
-                }
-            }
-
-            g2d.setTransform(originalTransform);
+            g2d.setTransform(new AffineTransform());
         } finally {
             g2d.dispose();
         }

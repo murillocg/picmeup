@@ -1,5 +1,5 @@
 output "alb_dns_name" {
-  description = "ALB DNS name"
+  description = "ALB DNS name — use as CNAME target in GoDaddy"
   value       = aws_lb.main.dns_name
 }
 

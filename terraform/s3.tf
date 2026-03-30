@@ -27,7 +27,7 @@ resource "aws_s3_bucket_cors_configuration" "photos" {
   cors_rule {
     allowed_headers = ["*"]
     allowed_methods = ["GET"]
-    allowed_origins = ["http://${aws_lb.main.dns_name}"]
+    allowed_origins = ["https://${var.domain_name}"]
     max_age_seconds = 3600
   }
 }

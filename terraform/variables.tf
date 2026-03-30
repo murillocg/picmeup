@@ -76,6 +76,12 @@ variable "rekognition_confidence_threshold" {
   default     = 85.0
 }
 
+variable "domain_name" {
+  description = "Custom domain name for the application"
+  type        = string
+  default     = "elitesportphotos.com"
+}
+
 variable "admin_password" {
   description = "Admin password (plaintext) for HTTP Basic Auth — stored BCrypt-hashed in Secrets Manager"
   type        = string

@@ -23,7 +23,6 @@ export default function EventDetailPage() {
   const [loading, setLoading] = useState(true);
   const [searching, setSearching] = useState(false);
   const [error, setError] = useState('');
-  const [showAll, setShowAll] = useState(false);
   const [consentGiven, setConsentGiven] = useState(false);
 
   useEffect(() => {
@@ -50,7 +49,6 @@ export default function EventDetailPage() {
     try {
       const results = await searchByFace(slug, file);
       setMatchedPhotos(results);
-      setShowAll(false);
     } catch {
       setError('Face search failed. Please try a clearer photo.');
     } finally {
@@ -74,7 +72,7 @@ export default function EventDetailPage() {
   if (error && !event) return <ErrorMessage message={error} />;
   if (!event) return <ErrorMessage message="Event not found" />;
 
-  const displayPhotos = authenticated ? photos : (showAll ? photos : (matchedPhotos ?? []));
+  const displayPhotos = authenticated ? photos : (matchedPhotos ?? []);
   const totalPrice = selectedIds.size * 10;
 
   return (
@@ -145,26 +143,11 @@ export default function EventDetailPage() {
         </div>
       )}
 
-      {!authenticated && (
+      {!authenticated && matchedPhotos && (
         <div className="flex items-center justify-between mb-4">
-          <div className="flex gap-2">
-            <button
-              onClick={() => setShowAll(false)}
-              className={`px-4 py-2 rounded-lg text-sm ${
-                !showAll ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-700'
-              }`}
-            >
-              My photos {matchedPhotos ? `(${matchedPhotos.length})` : ''}
-            </button>
-            <button
-              onClick={() => setShowAll(true)}
-              className={`px-4 py-2 rounded-lg text-sm ${
-                showAll ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-700'
-              }`}
-            >
-              All photos ({photos.length})
-            </button>
-          </div>
+          <span className="text-sm text-gray-600">
+            {matchedPhotos.length} photo{matchedPhotos.length !== 1 ? 's' : ''} found
+          </span>
 
           {selectedIds.size > 0 && (
             <div className="flex items-center gap-4">
@@ -188,7 +171,7 @@ export default function EventDetailPage() {
             onToggleSelect={toggleSelect}
           />
         </div>
-      ) : !showAll && !matchedPhotos ? (
+      ) : !matchedPhotos ? (
         <div className="text-center py-12 text-gray-500">
           Upload a selfie to find photos you appear in
         </div>

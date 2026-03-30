@@ -44,7 +44,7 @@ public class SecurityConfig {
                 .httpBasic(Customizer.withDefaults())
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint((request, response, authException) -> {
-                            response.setHeader("WWW-Authenticate", "Basic realm=\"PicMeUp Admin\"");
+                            response.setHeader("WWW-Authenticate", "Basic realm=\"Elite Sport Photos Admin\"");
                             response.setStatus(HttpStatus.UNAUTHORIZED.value());
                             response.setContentType("application/json");
                             response.getWriter().write("{\"status\":401,\"message\":\"Unauthorized\"}");

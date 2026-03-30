@@ -9,7 +9,7 @@ export default function Layout() {
       <header className="bg-white shadow-sm">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
           <Link to="/" className="text-2xl font-bold text-indigo-600">
-            PicMeUp
+            Elite Sport Photos
           </Link>
           <nav className="flex items-center gap-4">
             <Link to="/" className="text-gray-600 hover:text-gray-900">
@@ -48,7 +48,7 @@ export default function Layout() {
 
       <footer className="bg-white border-t">
         <div className="max-w-6xl mx-auto px-4 py-4 text-center text-gray-500 text-sm">
-          PicMeUp — Find yourself in event photos
+          Elite Sport Photos — Find yourself in event photos
         </div>
       </footer>
     </div>
