@@ -13,9 +13,10 @@ public record EventResponse(
         String location,
         String slug,
         LocalDateTime createdAt,
-        LocalDateTime expiresAt
+        LocalDateTime expiresAt,
+        String coverImageUrl
 ) {
-    public static EventResponse from(Event event) {
+    public static EventResponse from(Event event, String coverImageUrl) {
         return new EventResponse(
                 event.getId(),
                 event.getName(),
@@ -23,7 +24,8 @@ public record EventResponse(
                 event.getLocation(),
                 event.getSlug(),
                 event.getCreatedAt(),
-                event.getExpiresAt()
+                event.getExpiresAt(),
+                coverImageUrl
         );
     }
 }

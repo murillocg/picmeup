@@ -31,11 +31,14 @@ class EventServiceTest {
     @Mock
     private FaceRecognitionService faceRecognitionService;
 
+    @Mock
+    private ImageProcessingService imageProcessingService;
+
     private EventService eventService;
 
     @BeforeEach
     void setUp() {
-        eventService = new EventService(eventRepository, photoRepository, s3StorageService, faceRecognitionService);
+        eventService = new EventService(eventRepository, photoRepository, s3StorageService, faceRecognitionService, imageProcessingService);
     }
 
     @Test

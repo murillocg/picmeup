@@ -40,6 +40,13 @@ export async function uploadPhoto(
   return response.data[0];
 }
 
+export async function uploadCoverImage(slug: string, file: File): Promise<EventResponse> {
+  const formData = new FormData();
+  formData.append('cover', file);
+  const response = await api.post<EventResponse>(`/events/${slug}/cover`, formData);
+  return response.data;
+}
+
 export async function deleteEvent(slug: string): Promise<void> {
   await api.delete(`/events/${slug}`);
 }

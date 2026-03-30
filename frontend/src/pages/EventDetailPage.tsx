@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { getEvent, listPhotos, searchByFace, deleteEvent } from '../services/api';
+import { getEvent, listPhotos, searchByFace, deleteEvent, uploadCoverImage } from '../services/api';
 import type { EventResponse, PhotoResponse } from '../types/api';
 import { useAuth } from '../context/AuthContext';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -14,6 +14,7 @@ export default function EventDetailPage() {
   const { authenticated } = useAuth();
   const [event, setEvent] = useState<EventResponse | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [coverUploading, setCoverUploading] = useState(false);
   const [photos, setPhotos] = useState<PhotoResponse[]>([]);
   const [matchedPhotos, setMatchedPhotos] = useState<PhotoResponse[] | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => {
@@ -97,6 +98,29 @@ export default function EventDetailPage() {
             >
               Upload photos
             </Link>
+            <label className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 text-sm cursor-pointer">
+              {coverUploading ? 'Uploading...' : 'Set cover photo'}
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                disabled={coverUploading}
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file || !slug) return;
+                  setCoverUploading(true);
+                  try {
+                    const updated = await uploadCoverImage(slug, file);
+                    setEvent(updated);
+                  } catch {
+                    setError('Failed to upload cover image');
+                  } finally {
+                    setCoverUploading(false);
+                    e.target.value = '';
+                  }
+                }}
+              />
+            </label>
             <button
               onClick={async () => {
                 if (!slug || !window.confirm('Delete this event and all its photos? This cannot be undone.')) return;

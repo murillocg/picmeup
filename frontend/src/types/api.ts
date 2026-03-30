@@ -6,6 +6,7 @@ export interface EventResponse {
   slug: string;
   createdAt: string;
   expiresAt: string;
+  coverImageUrl: string | null;
 }
 
 export interface CreateEventRequest {

@@ -34,6 +34,9 @@ public class Event {
     @Column(nullable = false)
     private LocalDateTime expiresAt;
 
+    @Column
+    private String coverImageKey;
+
     protected Event() {
     }
 
@@ -82,6 +85,14 @@ public class Event {
 
     public LocalDateTime getExpiresAt() {
         return expiresAt;
+    }
+
+    public String getCoverImageKey() {
+        return coverImageKey;
+    }
+
+    public void setCoverImageKey(String coverImageKey) {
+        this.coverImageKey = coverImageKey;
     }
 
     public boolean isExpired() {

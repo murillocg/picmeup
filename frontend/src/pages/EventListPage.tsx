@@ -48,17 +48,30 @@ export default function EventListPage() {
             <Link
               key={event.id}
               to={`/events/${event.slug}`}
-              className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow"
+              className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow flex"
             >
-              <h2 className="text-xl font-semibold text-gray-900 mb-2">{event.name}</h2>
-              <p className="text-gray-600 mb-1">{event.location}</p>
-              <p className="text-sm text-gray-400">
-                {new Date(event.date).toLocaleDateString('en-AU', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric',
-                })}
-              </p>
+              <div className="w-28 h-28 flex-shrink-0 bg-gray-100 flex items-center justify-center">
+                {event.coverImageUrl ? (
+                  <img
+                    src={event.coverImageUrl}
+                    alt={event.name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span className="text-xs text-gray-400 text-center px-2">No Image Available</span>
+                )}
+              </div>
+              <div className="p-4 flex flex-col justify-center min-w-0">
+                <h2 className="text-lg font-semibold text-gray-900 mb-1 truncate">{event.name}</h2>
+                <p className="text-gray-600 text-sm mb-1 truncate">{event.location}</p>
+                <p className="text-xs text-gray-400">
+                  {new Date(event.date).toLocaleDateString('en-AU', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                  })}
+                </p>
+              </div>
             </Link>
           ))}
         </div>
