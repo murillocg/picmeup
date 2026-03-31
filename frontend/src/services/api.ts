@@ -4,6 +4,8 @@ import type {
   CreateEventRequest,
   PhotoResponse,
   PhotoUploadResponse,
+  OrderResponse,
+  OrderItemResponse,
 } from '../types/api';
 
 const api = axios.create({
@@ -67,6 +69,21 @@ export async function searchByFace(
     `/events/${slug}/search`,
     formData,
   );
+  return response.data;
+}
+
+export async function createOrder(email: string, photoIds: string[]): Promise<OrderResponse> {
+  const response = await api.post<OrderResponse>('/orders', { email, photoIds });
+  return response.data;
+}
+
+export async function getOrder(orderId: string): Promise<OrderResponse> {
+  const response = await api.get<OrderResponse>(`/orders/${orderId}`);
+  return response.data;
+}
+
+export async function getDownloads(orderId: string): Promise<OrderItemResponse[]> {
+  const response = await api.get<OrderItemResponse[]>(`/orders/${orderId}/downloads`);
   return response.data;
 }
 

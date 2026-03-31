@@ -2,6 +2,7 @@ package com.picmeup.common;
 
 import com.picmeup.common.dto.ErrorResponse;
 import com.picmeup.common.exception.ResourceNotFoundException;
+import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.HashMap;
@@ -47,7 +49,11 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(NoResourceFoundException.class)
-    public ResponseEntity<ErrorResponse> handleNoResource(NoResourceFoundException ex) {
+    public Object handleNoResource(NoResourceFoundException ex, HttpServletRequest request) {
+        String path = request.getRequestURI();
+        if (!path.startsWith("/api/") && !path.startsWith("/actuator/")) {
+            return new ModelAndView("forward:/index.html");
+        }
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(new ErrorResponse(404, "Not found"));
     }

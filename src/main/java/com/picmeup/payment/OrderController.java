@@ -1,0 +1,53 @@
+package com.picmeup.payment;
+
+import com.picmeup.payment.dto.CreateOrderRequest;
+import com.picmeup.payment.dto.OrderItemResponse;
+import com.picmeup.payment.dto.OrderResponse;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.UUID;
+
+@RestController
+@RequestMapping("/api/orders")
+public class OrderController {
+
+    private final OrderService orderService;
+
+    public OrderController(OrderService orderService) {
+        this.orderService = orderService;
+    }
+
+    @PostMapping
+    public ResponseEntity<OrderResponse> createOrder(@Valid @RequestBody CreateOrderRequest request) {
+        var photoIds = request.photoIds().stream().map(UUID::fromString).toList();
+        var order = orderService.createOrder(request.email(), photoIds);
+        var items = orderService.getOrderItems(order.getId());
+        return ResponseEntity.status(HttpStatus.CREATED).body(OrderResponse.from(order, items));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<OrderResponse> getOrder(@PathVariable UUID id) {
+        var order = orderService.getOrder(id);
+        var items = orderService.getOrderItems(id);
+        return ResponseEntity.ok(OrderResponse.from(order, items));
+    }
+
+    @GetMapping("/{id}/downloads")
+    public ResponseEntity<?> getDownloads(@PathVariable UUID id) {
+        var order = orderService.getOrder(id);
+        if (order.getStatus() != Order.Status.PAID) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(java.util.Map.of("message", "Order is not paid"));
+        }
+        var items = orderService.getOrderItems(id);
+        return ResponseEntity.ok(items);
+    }
+}

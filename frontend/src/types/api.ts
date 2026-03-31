@@ -27,6 +27,23 @@ export interface PhotoUploadResponse {
   status: string;
 }
 
+export interface OrderItemResponse {
+  id: string;
+  photoId: string;
+  price: number;
+  downloadUrl: string | null;
+}
+
+export interface OrderResponse {
+  id: string;
+  buyerEmail: string;
+  status: string;
+  totalAmount: number;
+  currency: string;
+  createdAt: string;
+  items: OrderItemResponse[];
+}
+
 export interface ErrorResponse {
   status: number;
   message: string;

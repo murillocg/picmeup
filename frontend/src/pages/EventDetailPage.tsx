@@ -178,7 +178,10 @@ export default function EventDetailPage() {
               <span className="text-gray-600">
                 {selectedIds.size} selected — ${totalPrice} AUD
               </span>
-              <button className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700">
+              <button
+                onClick={() => navigate(`/events/${slug}/checkout`)}
+                className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700"
+              >
                 Buy selected photos
               </button>
             </div>
