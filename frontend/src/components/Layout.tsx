@@ -53,7 +53,8 @@ export default function Layout() {
 
       <footer className="bg-white border-t">
         <div className="max-w-6xl mx-auto px-4 py-4 text-center text-gray-500 text-sm">
-          Elite Sport Photos — Find yourself in event photos
+          <p>Elite Sport Photos — Find yourself in event photos</p>
+          <p className="text-xs text-gray-400 mt-1">v{__APP_VERSION__}</p>
         </div>
       </footer>
     </div>
