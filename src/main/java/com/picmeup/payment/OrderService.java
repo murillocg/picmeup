@@ -10,10 +10,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 @Service
 @Transactional(readOnly = true)
@@ -92,5 +96,34 @@ public class OrderService {
                     return OrderItemResponse.from(item, downloadUrl);
                 })
                 .toList();
+    }
+
+    public void streamOrderAsZip(UUID orderId, OutputStream outputStream) throws IOException {
+        var order = getOrder(orderId);
+        if (order.getStatus() != Order.Status.PAID) {
+            throw new IllegalStateException("Order is not paid");
+        }
+
+        var items = orderItemRepository.findByOrderId(orderId);
+
+        try (var zipOut = new ZipOutputStream(outputStream)) {
+            int index = 1;
+            for (OrderItem item : items) {
+                var photo = photoRepository.findById(item.getPhotoId()).orElse(null);
+                if (photo == null || photo.getOriginalS3Key() == null) {
+                    continue;
+                }
+
+                String filename = "photo-" + index + ".jpg";
+                zipOut.putNextEntry(new ZipEntry(filename));
+
+                try (var s3Stream = s3StorageService.getObject(photo.getOriginalS3Key())) {
+                    s3Stream.transferTo(zipOut);
+                }
+
+                zipOut.closeEntry();
+                index++;
+            }
+        }
     }
 }

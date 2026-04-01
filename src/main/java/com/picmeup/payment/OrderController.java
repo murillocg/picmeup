@@ -3,6 +3,7 @@ package com.picmeup.payment;
 import com.picmeup.payment.dto.CreateOrderRequest;
 import com.picmeup.payment.dto.OrderItemResponse;
 import com.picmeup.payment.dto.OrderResponse;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.io.IOException;
 import java.util.UUID;
 
 @RestController
@@ -49,5 +51,19 @@ public class OrderController {
         }
         var items = orderService.getOrderItems(id);
         return ResponseEntity.ok(items);
+    }
+
+    @GetMapping("/{id}/downloads/zip")
+    public void downloadZip(@PathVariable UUID id, HttpServletResponse response) throws IOException {
+        var order = orderService.getOrder(id);
+        if (order.getStatus() != Order.Status.PAID) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Order is not paid");
+            return;
+        }
+
+        response.setContentType("application/zip");
+        response.setHeader("Content-Disposition", "attachment; filename=\"order-" + id + ".zip\"");
+
+        orderService.streamOrderAsZip(id, response.getOutputStream());
     }
 }

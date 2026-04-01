@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.S3Object;
@@ -65,6 +66,15 @@ public class S3StorageService {
                 .build();
 
         return s3Presigner.presignGetObject(presignRequest).url().toString();
+    }
+
+    public InputStream getObject(String key) {
+        var request = GetObjectRequest.builder()
+                .bucket(bucket)
+                .key(key)
+                .build();
+
+        return s3Client.getObject(request);
     }
 
     public void deleteFile(String key) {

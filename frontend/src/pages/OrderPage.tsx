@@ -83,23 +83,13 @@ export default function OrderPage() {
       </div>
 
       {isPaid && (
-        <button
-          onClick={() => {
-            const downloadable = order.items.filter((item) => item.downloadUrl);
-            downloadable.forEach((item, index) => {
-              setTimeout(() => {
-                const iframe = document.createElement('iframe');
-                iframe.style.display = 'none';
-                iframe.src = item.downloadUrl!;
-                document.body.appendChild(iframe);
-                setTimeout(() => iframe.remove(), 10000);
-              }, index * 500);
-            });
-          }}
-          className="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 font-semibold"
+        <a
+          href={`/api/orders/${order.id}/downloads/zip`}
+          download
+          className="block w-full text-center bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 font-semibold"
         >
-          Download all photos
-        </button>
+          Download all photos (ZIP)
+        </a>
       )}
     </div>
   );
