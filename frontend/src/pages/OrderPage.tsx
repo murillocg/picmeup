@@ -14,14 +14,6 @@ export default function OrderPage() {
   useEffect(() => {
     if (!id) return;
 
-    // Check that this order belongs to the user (stored in localStorage)
-    const orders: string[] = JSON.parse(localStorage.getItem('orders') || '[]');
-    if (!orders.includes(id)) {
-      setError('Order not found');
-      setLoading(false);
-      return;
-    }
-
     getOrder(id)
       .then(setOrder)
       .catch(() => setError('Failed to load order'))

@@ -3,6 +3,7 @@ package com.picmeup.payment;
 import com.picmeup.payment.dto.CreateOrderRequest;
 import com.picmeup.payment.dto.OrderItemResponse;
 import com.picmeup.payment.dto.OrderResponse;
+import com.picmeup.payment.dto.OrderSummaryResponse;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -25,6 +27,14 @@ public class OrderController {
 
     public OrderController(OrderService orderService) {
         this.orderService = orderService;
+    }
+
+    @GetMapping
+    public ResponseEntity<List<OrderSummaryResponse>> listOrders() {
+        var orders = orderService.getAllOrders().stream()
+                .map(OrderSummaryResponse::from)
+                .toList();
+        return ResponseEntity.ok(orders);
     }
 
     @PostMapping

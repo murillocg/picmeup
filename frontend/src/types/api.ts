@@ -44,6 +44,15 @@ export interface OrderResponse {
   items: OrderItemResponse[];
 }
 
+export interface OrderSummaryResponse {
+  id: string;
+  buyerEmail: string;
+  status: string;
+  totalAmount: number;
+  currency: string;
+  createdAt: string;
+}
+
 export interface ErrorResponse {
   status: number;
   message: string;

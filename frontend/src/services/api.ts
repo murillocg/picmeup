@@ -6,6 +6,7 @@ import type {
   PhotoUploadResponse,
   OrderResponse,
   OrderItemResponse,
+  OrderSummaryResponse,
 } from '../types/api';
 
 const api = axios.create({
@@ -69,6 +70,11 @@ export async function searchByFace(
     `/events/${slug}/search`,
     formData,
   );
+  return response.data;
+}
+
+export async function listOrders(): Promise<OrderSummaryResponse[]> {
+  const response = await api.get<OrderSummaryResponse[]>('/orders');
   return response.data;
 }
 
