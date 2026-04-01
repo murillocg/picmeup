@@ -85,13 +85,15 @@ export default function OrderPage() {
       {isPaid && (
         <button
           onClick={() => {
-            order.items.forEach((item) => {
-              if (item.downloadUrl) {
-                const a = document.createElement('a');
-                a.href = item.downloadUrl;
-                a.download = '';
-                a.click();
-              }
+            const downloadable = order.items.filter((item) => item.downloadUrl);
+            downloadable.forEach((item, index) => {
+              setTimeout(() => {
+                const iframe = document.createElement('iframe');
+                iframe.style.display = 'none';
+                iframe.src = item.downloadUrl!;
+                document.body.appendChild(iframe);
+                setTimeout(() => iframe.remove(), 10000);
+              }, index * 500);
             });
           }}
           className="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 font-semibold"

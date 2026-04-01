@@ -84,8 +84,9 @@ public class OrderService {
                     if (order.getStatus() == Order.Status.PAID) {
                         var photo = photoRepository.findById(item.getPhotoId()).orElse(null);
                         if (photo != null && photo.getOriginalS3Key() != null) {
+                            String filename = "photo-" + photo.getId() + ".jpg";
                             downloadUrl = s3StorageService.generatePresignedUrl(
-                                    photo.getOriginalS3Key(), Duration.ofHours(24));
+                                    photo.getOriginalS3Key(), Duration.ofHours(24), filename);
                         }
                     }
                     return OrderItemResponse.from(item, downloadUrl);
