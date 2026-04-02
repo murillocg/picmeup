@@ -13,11 +13,12 @@ COPY frontend/package.json frontend/package-lock.json ./
 RUN npm ci
 
 FROM deps AS build
+ARG APP_VERSION=unknown
 WORKDIR /app
 COPY --from=npm-deps /app/frontend/node_modules frontend/node_modules
 COPY frontend frontend
 COPY src src
-RUN ./mvnw package -DskipTests -B
+RUN APP_VERSION=${APP_VERSION} ./mvnw package -DskipTests -B
 
 FROM eclipse-temurin:21-jre-alpine
 RUN addgroup -S app && adduser -S app -G app

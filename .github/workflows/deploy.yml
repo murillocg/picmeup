@@ -34,7 +34,7 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
 
       - name: Build frontend
-        run: cd frontend && npm ci && npm run build
+        run: cd frontend && npm ci && APP_VERSION=${{ github.sha }} npm run build
 
       - name: Run tests
         run: mvn test -DskipFrontend -B
@@ -69,6 +69,8 @@ jobs:
         with:
           context: .
           push: true
+          build-args: |
+            APP_VERSION=${{ github.sha }}
           tags: |
             ${{ steps.ecr-login.outputs.registry }}/${{ vars.ECR_REPOSITORY }}:${{ github.sha }}
             ${{ steps.ecr-login.outputs.registry }}/${{ vars.ECR_REPOSITORY }}:latest
