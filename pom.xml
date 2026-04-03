@@ -22,6 +22,7 @@
         <aws.sdk.version>2.29.45</aws.sdk.version>
         <thumbnailator.version>0.4.20</thumbnailator.version>
         <stripe.version>28.2.0</stripe.version>
+        <skipGitPlugin>false</skipGitPlugin>
     </properties>
 
     <dependencyManagement>
@@ -197,6 +198,8 @@
                 <configuration>
                     <generateGitPropertiesFile>false</generateGitPropertiesFile>
                     <failOnNoGitDirectory>false</failOnNoGitDirectory>
+                    <offline>true</offline>
+                    <skip>${skipGitPlugin}</skip>
                 </configuration>
             </plugin>
             <plugin>
