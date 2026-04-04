@@ -35,13 +35,16 @@ class PhotoServiceTest {
     private ImageProcessingService imageProcessingService;
     @Mock
     private FaceRecognitionService faceRecognitionService;
+    @Mock
+    private com.picmeup.payment.OrderItemRepository orderItemRepository;
 
     private PhotoService photoService;
 
     @BeforeEach
     void setUp() {
         photoService = new PhotoService(photoRepository, photographerRepository,
-                eventRepository, s3StorageService, imageProcessingService, faceRecognitionService);
+                eventRepository, s3StorageService, imageProcessingService, faceRecognitionService,
+                orderItemRepository);
     }
 
     @Test

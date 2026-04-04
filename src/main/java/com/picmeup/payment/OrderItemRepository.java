@@ -7,4 +7,5 @@ import java.util.UUID;
 
 public interface OrderItemRepository extends JpaRepository<OrderItem, UUID> {
     List<OrderItem> findByOrderId(UUID orderId);
+    boolean existsByPhotoId(UUID photoId);
 }

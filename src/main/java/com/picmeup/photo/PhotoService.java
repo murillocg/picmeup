@@ -1,6 +1,7 @@
 package com.picmeup.photo;
 
 import com.picmeup.common.exception.ResourceNotFoundException;
+import com.picmeup.payment.OrderItemRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;
@@ -25,19 +26,22 @@ public class PhotoService {
     private final S3StorageService s3StorageService;
     private final ImageProcessingService imageProcessingService;
     private final FaceRecognitionService faceRecognitionService;
+    private final OrderItemRepository orderItemRepository;
 
     public PhotoService(PhotoRepository photoRepository,
                         PhotographerRepository photographerRepository,
                         EventRepository eventRepository,
                         S3StorageService s3StorageService,
                         ImageProcessingService imageProcessingService,
-                        FaceRecognitionService faceRecognitionService) {
+                        FaceRecognitionService faceRecognitionService,
+                        OrderItemRepository orderItemRepository) {
         this.photoRepository = photoRepository;
         this.photographerRepository = photographerRepository;
         this.eventRepository = eventRepository;
         this.s3StorageService = s3StorageService;
         this.imageProcessingService = imageProcessingService;
         this.faceRecognitionService = faceRecognitionService;
+        this.orderItemRepository = orderItemRepository;
     }
 
     @Transactional
@@ -122,6 +126,10 @@ public class PhotoService {
     public void deletePhoto(UUID photoId) {
         var photo = photoRepository.findById(photoId)
                 .orElseThrow(() -> new ResourceNotFoundException("Photo", photoId.toString()));
+
+        if (orderItemRepository.existsByPhotoId(photoId)) {
+            throw new IllegalArgumentException("This photo has been purchased and cannot be deleted");
+        }
 
         if (photo.getOriginalS3Key() != null) {
             s3StorageService.deleteFile(photo.getOriginalS3Key());
