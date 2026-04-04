@@ -1,5 +1,6 @@
 package com.picmeup.payment;
 
+import com.picmeup.common.EmailService;
 import com.picmeup.common.exception.ResourceNotFoundException;
 import com.picmeup.payment.dto.OrderItemResponse;
 import com.picmeup.photo.Photo;
@@ -30,15 +31,18 @@ public class OrderService {
     private final OrderItemRepository orderItemRepository;
     private final PhotoRepository photoRepository;
     private final S3StorageService s3StorageService;
+    private final EmailService emailService;
 
     public OrderService(OrderRepository orderRepository,
                         OrderItemRepository orderItemRepository,
                         PhotoRepository photoRepository,
-                        S3StorageService s3StorageService) {
+                        S3StorageService s3StorageService,
+                        EmailService emailService) {
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
         this.photoRepository = photoRepository;
         this.s3StorageService = s3StorageService;
+        this.emailService = emailService;
     }
 
     @Transactional
@@ -70,6 +74,16 @@ public class OrderService {
         orderRepository.save(order);
 
         log.info("Order {} created for {} ({} photos, ${} AUD)", order.getId(), buyerEmail, photos.size(), totalAmount);
+
+        emailService.sendAdminNotification(
+                "New order — $" + totalAmount + " AUD",
+                "<h2>New Order Received</h2>"
+                        + "<p><strong>Order ID:</strong> " + order.getId() + "</p>"
+                        + "<p><strong>Buyer:</strong> " + buyerEmail + "</p>"
+                        + "<p><strong>Photos:</strong> " + photos.size() + "</p>"
+                        + "<p><strong>Total:</strong> $" + totalAmount + " AUD</p>"
+        );
+
         return order;
     }
 

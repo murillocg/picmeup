@@ -82,6 +82,12 @@ variable "domain_name" {
   default     = "elitesportphotos.com"
 }
 
+variable "email_admin_recipients" {
+  description = "Comma-separated list of admin email addresses for order notifications"
+  type        = string
+  default     = "trent@elitesportphotos.com,murillo.cg@gmail.com"
+}
+
 variable "admin_password" {
   description = "Admin password (plaintext) for HTTP Basic Auth — stored BCrypt-hashed in Secrets Manager"
   type        = string

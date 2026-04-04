@@ -22,3 +22,6 @@ app:
   admin:
     username: admin
     password: "{noop}admin123"
+  email:
+    sender: test@example.com
+    admin-recipients: admin@example.com
