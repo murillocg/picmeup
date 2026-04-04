@@ -51,7 +51,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(NoResourceFoundException.class)
     public Object handleNoResource(NoResourceFoundException ex, HttpServletRequest request) {
         String path = request.getRequestURI();
-        if (!path.startsWith("/api/") && !path.startsWith("/actuator/")) {
+        if (!path.startsWith("/api/") && !path.startsWith("/actuator/") && !path.equals("/index.html")) {
             return new ModelAndView("forward:/index.html");
         }
         return ResponseEntity.status(HttpStatus.NOT_FOUND)

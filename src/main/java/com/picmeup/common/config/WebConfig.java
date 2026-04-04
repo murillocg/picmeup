@@ -1,8 +1,12 @@
 package com.picmeup.common.config;
 
+import jakarta.servlet.Filter;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.CacheControl;
+import org.springframework.http.HttpHeaders;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -21,11 +25,22 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addResourceHandler("/assets/**")
                 .addResourceLocations("classpath:/static/assets/")
                 .setCacheControl(CacheControl.maxAge(Duration.ofDays(365)).cachePublic());
+    }
 
-        // index.html and other root files — no cache so new deployments are picked up
-        registry.addResourceHandler("/index.html")
-                .addResourceLocations("classpath:/static/index.html")
-                .setCacheControl(CacheControl.noCache());
+    @Bean
+    public FilterRegistrationBean<Filter> noCacheIndexHtmlFilter() {
+        var registration = new FilterRegistrationBean<Filter>();
+        registration.setFilter((request, response, chain) -> {
+            chain.doFilter(request, response);
+            var httpRequest = (jakarta.servlet.http.HttpServletRequest) request;
+            String path = httpRequest.getRequestURI();
+            if (path.equals("/") || path.equals("/index.html")) {
+                var httpResponse = (jakarta.servlet.http.HttpServletResponse) response;
+                httpResponse.setHeader(HttpHeaders.CACHE_CONTROL, "no-cache, no-store, must-revalidate");
+            }
+        });
+        registration.addUrlPatterns("/", "/index.html");
+        return registration;
     }
 
     @Override
