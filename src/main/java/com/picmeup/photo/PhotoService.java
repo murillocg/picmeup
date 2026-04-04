@@ -118,6 +118,22 @@ public class PhotoService {
         return photoRepository.findByIdInAndStatus(matchedPhotoIds, Photo.Status.ACTIVE);
     }
 
+    @Transactional
+    public void deletePhoto(UUID photoId) {
+        var photo = photoRepository.findById(photoId)
+                .orElseThrow(() -> new ResourceNotFoundException("Photo", photoId.toString()));
+
+        if (photo.getOriginalS3Key() != null) {
+            s3StorageService.deleteFile(photo.getOriginalS3Key());
+        }
+        if (photo.getThumbnailS3Key() != null) {
+            s3StorageService.deleteFile(photo.getThumbnailS3Key());
+        }
+
+        photoRepository.delete(photo);
+        log.info("Photo {} deleted", photoId);
+    }
+
     public String getThumbnailUrl(Photo photo) {
         if (photo.getThumbnailS3Key() == null) {
             return null;

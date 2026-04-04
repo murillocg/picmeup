@@ -5,6 +5,7 @@ import com.picmeup.photo.dto.PhotoUploadResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -12,6 +13,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.UUID;
 
 import java.util.List;
 
@@ -49,12 +52,24 @@ public class PhotoController {
     }
 
     @GetMapping
-    public ResponseEntity<List<PhotoResponse>> listPhotos(@PathVariable String slug) {
+    public ResponseEntity<List<PhotoResponse>> listPhotos(
+            @PathVariable String slug,
+            @RequestParam(required = false, defaultValue = "false") boolean includeOriginal) {
         var photos = photoService.getActivePhotos(slug);
         var response = photos.stream()
-                .map(photo -> PhotoResponse.from(photo, photoService.getThumbnailUrl(photo)))
+                .map(photo -> {
+                    String thumbnailUrl = photoService.getThumbnailUrl(photo);
+                    String originalUrl = includeOriginal ? photoService.getOriginalUrl(photo) : null;
+                    return PhotoResponse.from(photo, thumbnailUrl, originalUrl);
+                })
                 .toList();
 
         return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/{photoId}")
+    public ResponseEntity<Void> deletePhoto(@PathVariable String slug, @PathVariable UUID photoId) {
+        photoService.deletePhoto(photoId);
+        return ResponseEntity.noContent().build();
     }
 }

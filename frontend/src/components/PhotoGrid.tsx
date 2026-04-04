@@ -8,6 +8,8 @@ interface PhotoGridProps {
   selectedIds: Set<string>;
   onToggleSelect: (id: string) => void;
   selectable?: boolean;
+  adminMode?: boolean;
+  onDelete?: (id: string) => void;
 }
 
 export default function PhotoGrid({
@@ -15,6 +17,8 @@ export default function PhotoGrid({
   selectedIds,
   onToggleSelect,
   selectable = true,
+  adminMode,
+  onDelete,
 }: PhotoGridProps) {
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
 
@@ -37,6 +41,8 @@ export default function PhotoGrid({
             onToggle={() => onToggleSelect(photo.id)}
             onView={() => setLightboxUrl(photo.thumbnailUrl ?? null)}
             selectable={selectable}
+            adminMode={adminMode}
+            onDelete={() => onDelete?.(photo.id)}
           />
         ))}
       </div>

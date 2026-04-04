@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { getEvent, listPhotos, searchByFace, deleteEvent, uploadCoverImage } from '../services/api';
+import { getEvent, listPhotos, searchByFace, deleteEvent, deletePhoto, uploadCoverImage } from '../services/api';
 import type { EventResponse, PhotoResponse } from '../types/api';
 import { useAuth } from '../context/AuthContext';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -28,14 +28,14 @@ export default function EventDetailPage() {
 
   useEffect(() => {
     if (!slug) return;
-    Promise.all([getEvent(slug), listPhotos(slug)])
+    Promise.all([getEvent(slug), listPhotos(slug, authenticated)])
       .then(([eventData, photosData]) => {
         setEvent(eventData);
         setPhotos(photosData);
       })
       .catch(() => setError('Failed to load event'))
       .finally(() => setLoading(false));
-  }, [slug]);
+  }, [slug, authenticated]);
 
   useEffect(() => {
     if (slug) {
@@ -54,6 +54,16 @@ export default function EventDetailPage() {
       setError('Face search failed. Please try a clearer photo.');
     } finally {
       setSearching(false);
+    }
+  }
+
+  async function handleDeletePhoto(photoId: string) {
+    if (!slug || !window.confirm('Delete this photo? This cannot be undone.')) return;
+    try {
+      await deletePhoto(slug, photoId);
+      setPhotos((prev) => prev.filter((p) => p.id !== photoId));
+    } catch {
+      setError('Failed to delete photo');
     }
   }
 
@@ -194,8 +204,11 @@ export default function EventDetailPage() {
           <h2 className="text-lg font-semibold text-gray-900 mb-4">All photos ({photos.length})</h2>
           <PhotoGrid
             photos={photos}
-            selectedIds={selectedIds}
-            onToggleSelect={toggleSelect}
+            selectedIds={new Set()}
+            onToggleSelect={() => {}}
+            selectable={false}
+            adminMode
+            onDelete={handleDeletePhoto}
           />
         </div>
       ) : !matchedPhotos ? (

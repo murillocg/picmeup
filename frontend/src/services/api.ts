@@ -54,9 +54,15 @@ export async function deleteEvent(slug: string): Promise<void> {
   await api.delete(`/events/${slug}`);
 }
 
-export async function listPhotos(slug: string): Promise<PhotoResponse[]> {
-  const response = await api.get<PhotoResponse[]>(`/events/${slug}/photos`);
+export async function listPhotos(slug: string, includeOriginal = false): Promise<PhotoResponse[]> {
+  const response = await api.get<PhotoResponse[]>(`/events/${slug}/photos`, {
+    params: includeOriginal ? { includeOriginal: true } : undefined,
+  });
   return response.data;
+}
+
+export async function deletePhoto(slug: string, photoId: string): Promise<void> {
+  await api.delete(`/events/${slug}/photos/${photoId}`);
 }
 
 export async function searchByFace(

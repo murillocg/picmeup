@@ -19,6 +19,7 @@ export interface PhotoResponse {
   id: string;
   status: string;
   thumbnailUrl: string | null;
+  originalUrl: string | null;
   uploadedAt: string;
 }
 
