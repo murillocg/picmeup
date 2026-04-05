@@ -7,6 +7,7 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorMessage from '../components/ErrorMessage';
 import SelfieCapture from '../components/SelfieCapture';
 import PhotoGrid from '../components/PhotoGrid';
+import { getErrorMessage } from '../utils/errors';
 
 export default function EventDetailPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -62,8 +63,8 @@ export default function EventDetailPage() {
     try {
       await deletePhoto(slug, photoId);
       setPhotos((prev) => prev.filter((p) => p.id !== photoId));
-    } catch {
-      setError('Failed to delete photo');
+    } catch (err) {
+      setError(getErrorMessage(err, 'Failed to delete photo'));
     }
   }
 
@@ -179,9 +180,30 @@ export default function EventDetailPage() {
 
       {!authenticated && matchedPhotos && (
         <div className="flex items-center justify-between mb-4">
-          <span className="text-sm text-gray-600">
-            {matchedPhotos.length} photo{matchedPhotos.length !== 1 ? 's' : ''} found
-          </span>
+          <div className="flex items-center gap-4">
+            <span className="text-sm text-gray-600">
+              {matchedPhotos.length} photo{matchedPhotos.length !== 1 ? 's' : ''} found
+            </span>
+            {matchedPhotos.length > 0 && (
+              <button
+                onClick={() => {
+                  const allSelected = matchedPhotos.every((p) => selectedIds.has(p.id));
+                  setSelectedIds((prev) => {
+                    const next = new Set(prev);
+                    if (allSelected) {
+                      matchedPhotos.forEach((p) => next.delete(p.id));
+                    } else {
+                      matchedPhotos.forEach((p) => next.add(p.id));
+                    }
+                    return next;
+                  });
+                }}
+                className="text-sm text-indigo-600 hover:text-indigo-700 font-medium"
+              >
+                {matchedPhotos.every((p) => selectedIds.has(p.id)) ? 'Deselect all' : 'Select all'}
+              </button>
+            )}
+          </div>
 
           {selectedIds.size > 0 && (
             <div className="flex items-center gap-4">
