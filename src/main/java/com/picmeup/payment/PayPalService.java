@@ -34,6 +34,7 @@ public class PayPalService {
         this.restClient = RestClient.builder()
                 .baseUrl(baseUrl)
                 .build();
+        log.info("PayPal configured: clientId={}..., baseUrl={}", clientId.substring(0, Math.min(8, clientId.length())), baseUrl);
     }
 
     private String getAccessToken() {
