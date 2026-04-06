@@ -123,7 +123,7 @@ export default function CheckoutPage() {
           >
             <PayPalButtons
               style={{ layout: 'vertical', shape: 'rect' }}
-              createOrder={() => {
+              createOrder={async () => {
                 return paypalOrderId;
               }}
               onApprove={async () => {
