@@ -26,7 +26,7 @@ public class Order {
     private String buyerEmail;
 
     @Column
-    private String stripeSessionId;
+    private String paypalOrderId;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -61,12 +61,12 @@ public class Order {
         return buyerEmail;
     }
 
-    public String getStripeSessionId() {
-        return stripeSessionId;
+    public String getPaypalOrderId() {
+        return paypalOrderId;
     }
 
-    public void setStripeSessionId(String stripeSessionId) {
-        this.stripeSessionId = stripeSessionId;
+    public void setPaypalOrderId(String paypalOrderId) {
+        this.paypalOrderId = paypalOrderId;
     }
 
     public Status getStatus() {

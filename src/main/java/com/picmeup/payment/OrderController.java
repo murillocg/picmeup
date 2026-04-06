@@ -24,9 +24,11 @@ import java.util.UUID;
 public class OrderController {
 
     private final OrderService orderService;
+    private final PayPalService payPalService;
 
-    public OrderController(OrderService orderService) {
+    public OrderController(OrderService orderService, PayPalService payPalService) {
         this.orderService = orderService;
+        this.payPalService = payPalService;
     }
 
     @GetMapping
@@ -50,6 +52,18 @@ public class OrderController {
         var order = orderService.getOrder(id);
         var items = orderService.getOrderItems(id);
         return ResponseEntity.ok(OrderResponse.from(order, items));
+    }
+
+    @PostMapping("/{id}/capture")
+    public ResponseEntity<OrderResponse> capturePayment(@PathVariable UUID id) {
+        var order = orderService.capturePayment(id);
+        var items = orderService.getOrderItems(id);
+        return ResponseEntity.ok(OrderResponse.from(order, items));
+    }
+
+    @GetMapping("/paypal-client-id")
+    public ResponseEntity<?> getPayPalClientId() {
+        return ResponseEntity.ok(java.util.Map.of("clientId", payPalService.getClientId()));
     }
 
     @GetMapping("/{id}/downloads")

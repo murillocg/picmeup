@@ -25,3 +25,8 @@ app:
   email:
     sender: test@example.com
     admin-recipients: admin@example.com
+
+paypal:
+  client-id: test-client-id
+  client-secret: test-client-secret
+  base-url: https://api-m.sandbox.paypal.com

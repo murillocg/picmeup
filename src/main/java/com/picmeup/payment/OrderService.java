@@ -32,17 +32,20 @@ public class OrderService {
     private final PhotoRepository photoRepository;
     private final S3StorageService s3StorageService;
     private final EmailService emailService;
+    private final PayPalService payPalService;
 
     public OrderService(OrderRepository orderRepository,
                         OrderItemRepository orderItemRepository,
                         PhotoRepository photoRepository,
                         S3StorageService s3StorageService,
-                        EmailService emailService) {
+                        EmailService emailService,
+                        PayPalService payPalService) {
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
         this.photoRepository = photoRepository;
         this.s3StorageService = s3StorageService;
         this.emailService = emailService;
+        this.payPalService = payPalService;
     }
 
     @Transactional
@@ -68,22 +71,46 @@ public class OrderService {
             orderItemRepository.save(item);
         }
 
-        // TODO: When Stripe is integrated, keep as PENDING and create checkout session.
-        // For now, mark as PAID immediately so downloads are available.
-        order.setStatus(Order.Status.PAID);
+        String paypalOrderId = payPalService.createOrder(totalAmount, order.getCurrency());
+        order.setPaypalOrderId(paypalOrderId);
         orderRepository.save(order);
 
-        log.info("Order {} created for {} ({} photos, ${} AUD)", order.getId(), buyerEmail, photos.size(), totalAmount);
+        log.info("Order {} created for {} ({} photos, ${} AUD, PayPal: {})",
+                order.getId(), buyerEmail, photos.size(), totalAmount, paypalOrderId);
+        return order;
+    }
 
-        emailService.sendAdminNotification(
-                "New order — $" + totalAmount + " AUD",
-                "<h2>New Order Received</h2>"
-                        + "<p><strong>Order ID:</strong> " + order.getId() + "</p>"
-                        + "<p><strong>Buyer:</strong> " + buyerEmail + "</p>"
-                        + "<p><strong>Photos:</strong> " + photos.size() + "</p>"
-                        + "<p><strong>Total:</strong> $" + totalAmount + " AUD</p>"
-        );
+    @Transactional
+    public Order capturePayment(UUID orderId) {
+        var order = getOrder(orderId);
 
+        if (order.getStatus() != Order.Status.PENDING) {
+            throw new IllegalStateException("Order is not in PENDING state");
+        }
+
+        if (order.getPaypalOrderId() == null) {
+            throw new IllegalStateException("Order has no PayPal order ID");
+        }
+
+        boolean captured = payPalService.captureOrder(order.getPaypalOrderId());
+
+        if (captured) {
+            order.setStatus(Order.Status.PAID);
+            log.info("Order {} payment captured successfully", orderId);
+
+            emailService.sendAdminNotification(
+                    "New order — $" + order.getTotalAmount() + " AUD",
+                    "<h2>New Order Received</h2>"
+                            + "<p><strong>Order ID:</strong> " + order.getId() + "</p>"
+                            + "<p><strong>Buyer:</strong> " + order.getBuyerEmail() + "</p>"
+                            + "<p><strong>Total:</strong> $" + order.getTotalAmount() + " AUD</p>"
+            );
+        } else {
+            order.setStatus(Order.Status.FAILED);
+            log.warn("Order {} payment capture failed", orderId);
+        }
+
+        orderRepository.save(order);
         return order;
     }
 

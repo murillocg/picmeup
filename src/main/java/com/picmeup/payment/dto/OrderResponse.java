@@ -14,6 +14,7 @@ public record OrderResponse(
         BigDecimal totalAmount,
         String currency,
         LocalDateTime createdAt,
+        String paypalOrderId,
         List<OrderItemResponse> items
 ) {
     public static OrderResponse from(Order order, List<OrderItemResponse> items) {
@@ -24,6 +25,7 @@ public record OrderResponse(
                 order.getTotalAmount(),
                 order.getCurrency(),
                 order.getCreatedAt(),
+                order.getPaypalOrderId(),
                 items
         );
     }

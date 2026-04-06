@@ -21,7 +21,6 @@
         <java.version>21</java.version>
         <aws.sdk.version>2.29.45</aws.sdk.version>
         <thumbnailator.version>0.4.20</thumbnailator.version>
-        <stripe.version>28.2.0</stripe.version>
         <skipGitPlugin>false</skipGitPlugin>
     </properties>
 
@@ -94,13 +93,6 @@
             <groupId>net.coobird</groupId>
             <artifactId>thumbnailator</artifactId>
             <version>${thumbnailator.version}</version>
-        </dependency>
-
-        <!-- Stripe -->
-        <dependency>
-            <groupId>com.stripe</groupId>
-            <artifactId>stripe-java</artifactId>
-            <version>${stripe.version}</version>
         </dependency>
 
         <!-- Test -->

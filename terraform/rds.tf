@@ -21,12 +21,12 @@ resource "aws_secretsmanager_secret_version" "db_password" {
   secret_string = random_password.db.result
 }
 
-resource "aws_secretsmanager_secret" "stripe_api_key" {
-  name = "${var.app_name}/stripe-api-key"
+resource "aws_secretsmanager_secret" "paypal_client_id" {
+  name = "${var.app_name}/paypal-client-id"
 }
 
-resource "aws_secretsmanager_secret" "stripe_webhook_secret" {
-  name = "${var.app_name}/stripe-webhook-secret"
+resource "aws_secretsmanager_secret" "paypal_client_secret" {
+  name = "${var.app_name}/paypal-client-secret"
 }
 
 resource "aws_secretsmanager_secret" "admin_password" {

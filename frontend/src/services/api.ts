@@ -94,6 +94,16 @@ export async function getOrder(orderId: string): Promise<OrderResponse> {
   return response.data;
 }
 
+export async function capturePayment(orderId: string): Promise<OrderResponse> {
+  const response = await api.post<OrderResponse>(`/orders/${orderId}/capture`);
+  return response.data;
+}
+
+export async function getPayPalClientId(): Promise<string> {
+  const response = await api.get<{ clientId: string }>('/orders/paypal-client-id');
+  return response.data.clientId;
+}
+
 export async function getDownloads(orderId: string): Promise<OrderItemResponse[]> {
   const response = await api.get<OrderItemResponse[]>(`/orders/${orderId}/downloads`);
   return response.data;

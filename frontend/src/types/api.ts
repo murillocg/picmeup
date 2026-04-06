@@ -42,6 +42,7 @@ export interface OrderResponse {
   totalAmount: number;
   currency: string;
   createdAt: string;
+  paypalOrderId: string | null;
   items: OrderItemResponse[];
 }
 
