@@ -88,6 +88,12 @@ variable "email_admin_recipients" {
   default     = "trent@elitesportphotos.com,murillo.cg@gmail.com"
 }
 
+variable "paypal_base_url" {
+  description = "PayPal API base URL (sandbox or live)"
+  type        = string
+  default     = "https://api-m.sandbox.paypal.com"
+}
+
 variable "admin_password" {
   description = "Admin password (plaintext) for HTTP Basic Auth — stored BCrypt-hashed in Secrets Manager"
   type        = string

@@ -37,6 +37,7 @@ resource "aws_ecs_task_definition" "app" {
         { name = "AWS_REGION", value = var.aws_region },
         { name = "EMAIL_SENDER", value = "noreply@${var.domain_name}" },
         { name = "EMAIL_ADMIN_RECIPIENTS", value = var.email_admin_recipients },
+        { name = "PAYPAL_BASE_URL", value = var.paypal_base_url },
       ]
 
       secrets = [
