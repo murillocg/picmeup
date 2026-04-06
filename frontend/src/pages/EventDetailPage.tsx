@@ -18,10 +18,7 @@ export default function EventDetailPage() {
   const [coverUploading, setCoverUploading] = useState(false);
   const [photos, setPhotos] = useState<PhotoResponse[]>([]);
   const [matchedPhotos, setMatchedPhotos] = useState<PhotoResponse[] | null>(null);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => {
-    const saved = localStorage.getItem(`cart-${slug}`);
-    return saved ? new Set(JSON.parse(saved)) : new Set();
-  });
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [searching, setSearching] = useState(false);
   const [error, setError] = useState('');
