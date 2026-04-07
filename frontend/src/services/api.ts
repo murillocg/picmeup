@@ -7,6 +7,7 @@ import type {
   OrderResponse,
   OrderItemResponse,
   OrderSummaryResponse,
+  EventPassResponse,
 } from '../types/api';
 
 const api = axios.create({
@@ -106,6 +107,34 @@ export async function getPayPalClientId(): Promise<string> {
 
 export async function getDownloads(orderId: string): Promise<OrderItemResponse[]> {
   const response = await api.get<OrderItemResponse[]>(`/orders/${orderId}/downloads`);
+  return response.data;
+}
+
+export async function getPassPrice(slug: string): Promise<number> {
+  const response = await api.get<{ price: number }>(`/events/${slug}/passes/price`);
+  return response.data.price;
+}
+
+export async function createPass(slug: string, email: string): Promise<EventPassResponse> {
+  const response = await api.post<EventPassResponse>(`/events/${slug}/passes`, { email });
+  return response.data;
+}
+
+export async function capturePassPayment(slug: string, passId: string): Promise<EventPassResponse> {
+  const response = await api.post<EventPassResponse>(`/events/${slug}/passes/${passId}/capture`);
+  return response.data;
+}
+
+export async function redeemPass(slug: string, email: string, selfie: File): Promise<string[]> {
+  const formData = new FormData();
+  formData.append('email', email);
+  formData.append('selfie', selfie);
+  const response = await api.post<{ downloadUrls: string[] }>(`/events/${slug}/passes/redeem`, formData);
+  return response.data.downloadUrls;
+}
+
+export async function listPasses(): Promise<EventPassResponse[]> {
+  const response = await api.get<EventPassResponse[]>('/passes');
   return response.data;
 }
 

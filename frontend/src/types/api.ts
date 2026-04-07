@@ -55,6 +55,18 @@ export interface OrderSummaryResponse {
   createdAt: string;
 }
 
+export interface EventPassResponse {
+  id: string;
+  eventId: string;
+  buyerEmail: string;
+  status: string;
+  price: number;
+  currency: string;
+  createdAt: string;
+  redeemedAt: string | null;
+  paypalOrderId: string | null;
+}
+
 export interface ErrorResponse {
   status: number;
   message: string;
