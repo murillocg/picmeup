@@ -7,6 +7,7 @@ import CreateEventPage from './pages/CreateEventPage';
 import UploadPage from './pages/UploadPage';
 import CheckoutPage from './pages/CheckoutPage';
 import OrderPage from './pages/OrderPage';
+import AdminLoginPage from './pages/AdminLoginPage';
 import AdminOrdersPage from './pages/AdminOrdersPage';
 // import PassCheckoutPage from './pages/PassCheckoutPage';
 // import AdminPassesPage from './pages/AdminPassesPage';
@@ -23,6 +24,7 @@ export default function App() {
             <Route path="/events/:slug/upload" element={<UploadPage />} />
             <Route path="/events/:slug/checkout" element={<CheckoutPage />} />
             {/* <Route path="/events/:slug/pass" element={<PassCheckoutPage />} /> */}
+            <Route path="/admin" element={<AdminLoginPage />} />
             <Route path="/admin/orders" element={<AdminOrdersPage />} />
             {/* <Route path="/admin/passes" element={<AdminPassesPage />} /> */}
             <Route path="/orders/:id" element={<OrderPage />} />
