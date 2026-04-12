@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { getEvent, listPhotos, searchByFace, deleteEvent, deletePhoto, uploadCoverImage, redeemPass } from '../services/api';
+import { getEvent, listPhotos, searchByFace, deleteEvent, deletePhoto, uploadCoverImage } from '../services/api';
 import type { EventResponse, PhotoResponse } from '../types/api';
 import { useAuth } from '../context/AuthContext';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -23,11 +23,6 @@ export default function EventDetailPage() {
   const [searching, setSearching] = useState(false);
   const [error, setError] = useState('');
   const [consentGiven, setConsentGiven] = useState(false);
-  const [selfieFile, setSelfieFile] = useState<File | null>(null);
-  const [showPassRedeem, setShowPassRedeem] = useState(false);
-  const [passEmail, setPassEmail] = useState('');
-  const [redeeming, setRedeeming] = useState(false);
-  const [downloadUrls, setDownloadUrls] = useState<string[] | null>(null);
 
   useEffect(() => {
     if (!slug) return;
@@ -50,7 +45,6 @@ export default function EventDetailPage() {
     if (!slug) return;
     setSearching(true);
     setError('');
-    setSelfieFile(file);
     try {
       const results = await searchByFace(slug, file);
       setMatchedPhotos(results);
@@ -61,20 +55,6 @@ export default function EventDetailPage() {
     }
   }
 
-  async function handleRedeemPass(e: React.FormEvent) {
-    e.preventDefault();
-    if (!slug || !selfieFile) return;
-    setRedeeming(true);
-    setError('');
-    try {
-      const urls = await redeemPass(slug, passEmail, selfieFile);
-      setDownloadUrls(urls);
-    } catch (err) {
-      setError(getErrorMessage(err, 'Failed to redeem pass. Please check your email and try again.'));
-    } finally {
-      setRedeeming(false);
-    }
-  }
 
   async function handleDeletePhoto(photoId: string) {
     if (!slug || !window.confirm('Delete this photo? This cannot be undone.')) return;
@@ -174,23 +154,6 @@ export default function EventDetailPage() {
       {error && <ErrorMessage message={error} />}
 
       {!authenticated && (
-        <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-6 mb-8 flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-semibold text-indigo-900">Photo Pass</h2>
-            <p className="text-indigo-700 text-sm">
-              Buy a pass and get access to all your photos from this event.
-            </p>
-          </div>
-          <Link
-            to={`/events/${slug}/pass`}
-            className="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 font-semibold whitespace-nowrap"
-          >
-            Buy Photo Pass
-          </Link>
-        </div>
-      )}
-
-      {!authenticated && (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">Find your photos</h2>
 
@@ -213,27 +176,7 @@ export default function EventDetailPage() {
         </div>
       )}
 
-      {!authenticated && matchedPhotos && downloadUrls && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-8">
-          <h2 className="text-lg font-semibold text-green-900 mb-4">
-            Your photos are ready! ({downloadUrls.length} photos)
-          </h2>
-          <div className="space-y-2">
-            {downloadUrls.map((url, i) => (
-              <a
-                key={i}
-                href={url}
-                download
-                className="block text-indigo-600 hover:text-indigo-700 underline"
-              >
-                Download photo {i + 1}
-              </a>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {!authenticated && matchedPhotos && !downloadUrls && (
+      {!authenticated && matchedPhotos && (
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-4">
             <span className="text-sm text-gray-600">
@@ -260,51 +203,20 @@ export default function EventDetailPage() {
             )}
           </div>
 
-          <div className="flex items-center gap-4">
-            {selectedIds.size > 0 && (
-              <>
-                <span className="text-gray-600">
-                  {selectedIds.size} selected — ${totalPrice} AUD
-                </span>
-                <button
-                  onClick={() => navigate(`/events/${slug}/checkout`)}
-                  className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700"
-                >
-                  Buy selected photos
-                </button>
-              </>
-            )}
-            <button
-              onClick={() => setShowPassRedeem(true)}
-              className="text-sm text-indigo-600 hover:text-indigo-700 font-medium"
-            >
-              I have a Photo Pass
-            </button>
-          </div>
+          {selectedIds.size > 0 && (
+            <div className="flex items-center gap-4">
+              <span className="text-gray-600">
+                {selectedIds.size} selected — ${totalPrice} AUD
+              </span>
+              <button
+                onClick={() => navigate(`/events/${slug}/checkout`)}
+                className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700"
+              >
+                Buy selected photos
+              </button>
+            </div>
+          )}
         </div>
-      )}
-
-      {!authenticated && showPassRedeem && !downloadUrls && (
-        <form onSubmit={handleRedeemPass} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-4">
-          <h3 className="text-sm font-semibold text-gray-900 mb-3">Redeem your Photo Pass</h3>
-          <div className="flex gap-3">
-            <input
-              type="email"
-              required
-              value={passEmail}
-              onChange={(e) => setPassEmail(e.target.value)}
-              placeholder="Email used to purchase the pass"
-              className="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
-            />
-            <button
-              type="submit"
-              disabled={redeeming}
-              className="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 disabled:opacity-50 text-sm font-medium"
-            >
-              {redeeming ? 'Redeeming...' : 'Redeem'}
-            </button>
-          </div>
-        </form>
       )}
 
       {authenticated ? (
