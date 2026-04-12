@@ -15,6 +15,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import software.amazon.awssdk.services.s3.model.StorageClass;
+
 @Service
 public class PhotoService {
 
@@ -76,7 +78,7 @@ public class PhotoService {
             String contentType = file.getContentType() != null ? file.getContentType() : "image/jpeg";
 
             String originalKey = "originals/%s/%s.jpg".formatted(eventId, photoId);
-            s3StorageService.uploadFile(originalKey, originalBytes, contentType);
+            s3StorageService.uploadFile(originalKey, originalBytes, contentType, StorageClass.STANDARD_IA);
 
             byte[] watermarkedThumbnail = imageProcessingService.processPhoto(originalBytes);
             String thumbnailKey = "thumbnails/%s/%s.jpg".formatted(eventId, photoId);

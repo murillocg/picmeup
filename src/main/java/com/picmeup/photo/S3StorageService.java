@@ -8,6 +8,7 @@ import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.StorageClass;
 import software.amazon.awssdk.services.s3.model.S3Object;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
@@ -31,23 +32,37 @@ public class S3StorageService {
     }
 
     public void uploadFile(String key, InputStream inputStream, long contentLength, String contentType) {
-        var request = PutObjectRequest.builder()
+        uploadFile(key, inputStream, contentLength, contentType, null);
+    }
+
+    public void uploadFile(String key, InputStream inputStream, long contentLength, String contentType, StorageClass storageClass) {
+        var builder = PutObjectRequest.builder()
                 .bucket(bucket)
                 .key(key)
-                .contentType(contentType)
-                .build();
+                .contentType(contentType);
 
-        s3Client.putObject(request, RequestBody.fromInputStream(inputStream, contentLength));
+        if (storageClass != null) {
+            builder.storageClass(storageClass);
+        }
+
+        s3Client.putObject(builder.build(), RequestBody.fromInputStream(inputStream, contentLength));
     }
 
     public void uploadFile(String key, byte[] data, String contentType) {
-        var request = PutObjectRequest.builder()
+        uploadFile(key, data, contentType, null);
+    }
+
+    public void uploadFile(String key, byte[] data, String contentType, StorageClass storageClass) {
+        var builder = PutObjectRequest.builder()
                 .bucket(bucket)
                 .key(key)
-                .contentType(contentType)
-                .build();
+                .contentType(contentType);
 
-        s3Client.putObject(request, RequestBody.fromBytes(data));
+        if (storageClass != null) {
+            builder.storageClass(storageClass);
+        }
+
+        s3Client.putObject(builder.build(), RequestBody.fromBytes(data));
     }
 
     public String generatePresignedUrl(String key, Duration expiration) {
