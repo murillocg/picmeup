@@ -31,13 +31,11 @@ public class WebConfig implements WebMvcConfigurer {
     public FilterRegistrationBean<Filter> noCacheIndexHtmlFilter() {
         var registration = new FilterRegistrationBean<Filter>();
         registration.setFilter((request, response, chain) -> {
+            var httpResponse = (jakarta.servlet.http.HttpServletResponse) response;
+            httpResponse.setHeader(HttpHeaders.CACHE_CONTROL, "no-cache, no-store, must-revalidate");
+            httpResponse.setHeader(HttpHeaders.PRAGMA, "no-cache");
+            httpResponse.setHeader(HttpHeaders.EXPIRES, "0");
             chain.doFilter(request, response);
-            var httpRequest = (jakarta.servlet.http.HttpServletRequest) request;
-            String path = httpRequest.getRequestURI();
-            if (path.equals("/") || path.equals("/index.html")) {
-                var httpResponse = (jakarta.servlet.http.HttpServletResponse) response;
-                httpResponse.setHeader(HttpHeaders.CACHE_CONTROL, "no-cache, no-store, must-revalidate");
-            }
         });
         registration.addUrlPatterns("/", "/index.html");
         return registration;
