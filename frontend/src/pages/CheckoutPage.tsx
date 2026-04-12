@@ -36,7 +36,7 @@ export default function CheckoutPage() {
     );
   }
 
-  const totalPrice = cart.length * 10;
+  const totalPrice = cart.length * 25;
 
   async function handleEmailSubmit(e: React.FormEvent) {
     e.preventDefault();

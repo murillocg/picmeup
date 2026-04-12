@@ -103,7 +103,7 @@ export default function EventDetailPage() {
   if (!event) return <ErrorMessage message="Event not found" />;
 
   const displayPhotos = authenticated ? photos : (matchedPhotos ?? []);
-  const totalPrice = selectedIds.size * 10;
+  const totalPrice = selectedIds.size * 25;
 
   return (
     <div>
