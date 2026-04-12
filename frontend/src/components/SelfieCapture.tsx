@@ -23,6 +23,12 @@ export default function SelfieCapture({ onCapture, loading }: SelfieCaptureProps
   }, []);
 
   useEffect(() => {
+    if (webcamActive && videoRef.current && streamRef.current) {
+      videoRef.current.srcObject = streamRef.current;
+    }
+  }, [webcamActive]);
+
+  useEffect(() => {
     return () => {
       if (streamRef.current) {
         streamRef.current.getTracks().forEach((t) => t.stop());
@@ -45,9 +51,6 @@ export default function SelfieCapture({ onCapture, loading }: SelfieCaptureProps
         video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } },
       });
       streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-      }
       setWebcamActive(true);
     } catch {
       setWebcamError('Could not access camera. Please allow camera access or upload a photo instead.');
