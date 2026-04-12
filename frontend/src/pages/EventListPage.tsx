@@ -48,9 +48,9 @@ export default function EventListPage() {
             <Link
               key={event.id}
               to={`/events/${event.slug}`}
-              className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow flex"
+              className="group bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-200"
             >
-              <div className="w-28 h-28 flex-shrink-0 bg-gray-100 flex items-center justify-center">
+              <div className="relative h-48 bg-gradient-to-br from-indigo-100 to-gray-100">
                 {event.coverImageUrl ? (
                   <img
                     src={event.coverImageUrl}
@@ -58,18 +58,29 @@ export default function EventListPage() {
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <span className="text-xs text-gray-400 text-center px-2">No Image Available</span>
+                  <div className="flex items-center justify-center h-full">
+                    <svg className="w-12 h-12 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Z" />
+                    </svg>
+                  </div>
                 )}
-              </div>
-              <div className="p-4 flex flex-col justify-center min-w-0">
-                <h2 className="text-lg font-semibold text-gray-900 mb-1 truncate">{event.name}</h2>
-                <p className="text-gray-600 text-sm mb-1 truncate">{event.location}</p>
-                <p className="text-xs text-gray-400">
+                <span className="absolute bottom-3 left-3 bg-indigo-600 text-white text-xs font-semibold px-2.5 py-1 rounded-full shadow-sm">
                   {new Date(event.date).toLocaleDateString('en-AU', {
                     year: 'numeric',
-                    month: 'long',
+                    month: 'short',
                     day: 'numeric',
                   })}
+                </span>
+              </div>
+              <div className="p-4">
+                <h2 className="text-lg font-semibold text-gray-900 mb-1 truncate group-hover:text-indigo-600 transition-colors">{event.name}</h2>
+                <p className="text-sm text-gray-500 truncate flex items-center gap-1.5">
+                  <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
+                  </svg>
+                  {event.location}
                 </p>
               </div>
             </Link>
