@@ -13,6 +13,7 @@ export default function CheckoutPage() {
   const [orderId, setOrderId] = useState<string | null>(null);
   const [paypalOrderId, setPaypalOrderId] = useState<string | null>(null);
   const [paypalClientId, setPaypalClientId] = useState<string | null>(null);
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
 
@@ -111,9 +112,33 @@ export default function CheckoutPage() {
             placeholder="you@example.com"
             className="w-full border border-gray-300 rounded-lg px-4 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
+
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
+            <p className="text-xs text-gray-600 mb-2">
+              These images are provided strictly for personal use only. They may not be used for any
+              commercial purpose, including but not limited to advertising, marketing, or resale. All
+              rights are reserved by Elite Sport Photos.
+            </p>
+            <p className="text-xs text-gray-600 mb-3">
+              When sharing on social media, please tag the official event page and @elitesportphotos.
+            </p>
+            <label className="flex items-start gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={termsAccepted}
+                onChange={(e) => setTermsAccepted(e.target.checked)}
+                className="mt-0.5 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+              />
+              <span className="text-sm text-gray-700">
+                I agree to the terms of use for these images
+              </span>
+            </label>
+          </div>
+
           <button
             type="submit"
-            className="w-full bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700 font-semibold"
+            disabled={!termsAccepted}
+            className="w-full bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
           >
             Continue to payment
           </button>
