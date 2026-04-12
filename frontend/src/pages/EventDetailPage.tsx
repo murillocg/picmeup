@@ -83,7 +83,11 @@ export default function EventDetailPage() {
   if (!event) return <ErrorMessage message="Event not found" />;
 
   const displayPhotos = authenticated ? photos : (matchedPhotos ?? []);
-  const totalPrice = selectedIds.size * 25;
+  const perPhotoTotal = selectedIds.size * 25;
+  const totalPrice = Math.min(perPhotoTotal, 100);
+  const hasBulkDiscount = perPhotoTotal > 100;
+  const allSelected = matchedPhotos !== null && matchedPhotos.length > 0 && matchedPhotos.every((p) => selectedIds.has(p.id));
+  const savings = perPhotoTotal - 100;
 
   return (
     <div>
@@ -198,7 +202,7 @@ export default function EventDetailPage() {
                 }}
                 className="text-sm text-indigo-600 hover:text-indigo-700 font-medium"
               >
-                {matchedPhotos.every((p) => selectedIds.has(p.id)) ? 'Deselect all' : 'Select all'}
+                {allSelected ? 'Deselect all' : 'Select all'}
               </button>
             )}
           </div>
@@ -206,7 +210,16 @@ export default function EventDetailPage() {
           {selectedIds.size > 0 && (
             <div className="flex items-center gap-4">
               <span className="text-gray-600">
-                {selectedIds.size} selected — ${totalPrice} AUD
+                {selectedIds.size} selected —{' '}
+                {hasBulkDiscount ? (
+                  <>
+                    <span className="line-through text-gray-400">${perPhotoTotal}</span>{' '}
+                    <span className="text-green-600 font-semibold">${totalPrice} AUD</span>
+                    <span className="text-green-600 text-sm ml-1">(save ${savings}!)</span>
+                  </>
+                ) : (
+                  <>${totalPrice} AUD</>
+                )}
               </span>
               <button
                 onClick={() => navigate(`/events/${slug}/checkout`)}
@@ -216,6 +229,14 @@ export default function EventDetailPage() {
               </button>
             </div>
           )}
+        </div>
+      )}
+
+      {!authenticated && matchedPhotos && matchedPhotos.length >= 5 && !allSelected && selectedIds.size === 0 && (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4 text-center">
+          <p className="text-green-800 text-sm">
+            Select all {matchedPhotos.length} photos for just <span className="font-semibold">$100 AUD</span> instead of ${matchedPhotos.length * 25} AUD!
+          </p>
         </div>
       )}
 

@@ -26,6 +26,7 @@ public class OrderService {
 
     private static final Logger log = LoggerFactory.getLogger(OrderService.class);
     private static final BigDecimal PHOTO_PRICE = new BigDecimal("25.00");
+    private static final BigDecimal BULK_PRICE = new BigDecimal("100.00");
 
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
@@ -62,12 +63,14 @@ public class OrderService {
             }
         }
 
-        BigDecimal totalAmount = PHOTO_PRICE.multiply(new BigDecimal(photos.size()));
+        BigDecimal perPhotoTotal = PHOTO_PRICE.multiply(new BigDecimal(photos.size()));
+        BigDecimal totalAmount = perPhotoTotal.compareTo(BULK_PRICE) > 0 ? BULK_PRICE : perPhotoTotal;
+        BigDecimal itemPrice = totalAmount.divide(new BigDecimal(photos.size()), 2, java.math.RoundingMode.HALF_UP);
         var order = new Order(buyerEmail, totalAmount);
         orderRepository.save(order);
 
         for (Photo photo : photos) {
-            var item = new OrderItem(order, photo.getId(), PHOTO_PRICE);
+            var item = new OrderItem(order, photo.getId(), itemPrice);
             orderItemRepository.save(item);
         }
 
