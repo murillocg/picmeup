@@ -8,7 +8,7 @@ interface FileUploadProps {
 
 export default function FileUpload({
   onFilesSelected,
-  maxFiles = 50,
+  maxFiles = 1000,
   accept = 'image/jpeg,image/png',
 }: FileUploadProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);

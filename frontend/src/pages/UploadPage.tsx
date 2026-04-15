@@ -109,7 +109,7 @@ export default function UploadPage() {
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Photos</label>
           {!uploading && (
-            <FileUpload onFilesSelected={(newFiles) => setFiles((prev) => [...prev, ...newFiles].slice(0, 50))} />
+            <FileUpload onFilesSelected={(newFiles) => setFiles((prev) => [...prev, ...newFiles].slice(0, 1000))} />
           )}
 
           {files.length > 0 && (
@@ -128,28 +128,34 @@ export default function UploadPage() {
                   </button>
                 )}
               </div>
-              <div className="grid grid-cols-4 gap-2">
-                {files.map((file, index) => (
-                  <div key={`${file.name}-${index}`} className="relative group">
-                    <img
-                      src={URL.createObjectURL(file)}
-                      alt={file.name}
-                      className="w-full h-24 object-cover rounded-lg"
-                      onLoad={(e) => URL.revokeObjectURL((e.target as HTMLImageElement).src)}
-                    />
-                    {!uploading && (
-                      <button
-                        type="button"
-                        onClick={() => setFiles((prev) => prev.filter((_, i) => i !== index))}
-                        className="absolute top-1 right-1 bg-black/60 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        &times;
-                      </button>
-                    )}
-                    <p className="text-xs text-gray-400 mt-1 truncate">{file.name}</p>
-                  </div>
-                ))}
-              </div>
+              {files.length <= 50 ? (
+                <div className="grid grid-cols-4 gap-2">
+                  {files.map((file, index) => (
+                    <div key={`${file.name}-${index}`} className="relative group">
+                      <img
+                        src={URL.createObjectURL(file)}
+                        alt={file.name}
+                        className="w-full h-24 object-cover rounded-lg"
+                        onLoad={(e) => URL.revokeObjectURL((e.target as HTMLImageElement).src)}
+                      />
+                      {!uploading && (
+                        <button
+                          type="button"
+                          onClick={() => setFiles((prev) => prev.filter((_, i) => i !== index))}
+                          className="absolute top-1 right-1 bg-black/60 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          &times;
+                        </button>
+                      )}
+                      <p className="text-xs text-gray-400 mt-1 truncate">{file.name}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="bg-gray-50 rounded-lg p-4 text-sm text-gray-600">
+                  {files.length} photos ready to upload ({(files.reduce((sum, f) => sum + f.size, 0) / (1024 * 1024)).toFixed(0)} MB total)
+                </div>
+              )}
             </div>
           )}
         </div>
