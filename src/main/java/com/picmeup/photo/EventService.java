@@ -1,6 +1,7 @@
 package com.picmeup.photo;
 
 import com.picmeup.common.exception.ResourceNotFoundException;
+import com.picmeup.payment.OrderItemRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -25,17 +26,20 @@ public class EventService {
     private final S3StorageService s3StorageService;
     private final FaceRecognitionService faceRecognitionService;
     private final ImageProcessingService imageProcessingService;
+    private final OrderItemRepository orderItemRepository;
 
     public EventService(EventRepository eventRepository,
                         PhotoRepository photoRepository,
                         S3StorageService s3StorageService,
                         FaceRecognitionService faceRecognitionService,
-                        ImageProcessingService imageProcessingService) {
+                        ImageProcessingService imageProcessingService,
+                        OrderItemRepository orderItemRepository) {
         this.eventRepository = eventRepository;
         this.photoRepository = photoRepository;
         this.s3StorageService = s3StorageService;
         this.faceRecognitionService = faceRecognitionService;
         this.imageProcessingService = imageProcessingService;
+        this.orderItemRepository = orderItemRepository;
     }
 
     @Transactional
@@ -88,6 +92,12 @@ public class EventService {
     public void deleteEvent(String slug) {
         var event = getBySlug(slug);
         var eventId = event.getId();
+
+        var photoIds = photoRepository.findByEventIdAndStatus(eventId, Photo.Status.ACTIVE)
+                .stream().map(Photo::getId).toList();
+        if (!photoIds.isEmpty() && orderItemRepository.existsByPhotoIdIn(photoIds)) {
+            throw new IllegalArgumentException("Cannot delete event with purchased photos");
+        }
 
         log.info("Deleting event {} ({})", slug, eventId);
 
