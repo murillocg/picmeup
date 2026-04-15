@@ -8,6 +8,7 @@ import ErrorMessage from '../components/ErrorMessage';
 import SelfieCapture from '../components/SelfieCapture';
 import PhotoGrid from '../components/PhotoGrid';
 import { getErrorMessage } from '../utils/errors';
+import CoverImageCropper from '../components/CoverImageCropper';
 
 export default function EventDetailPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -16,6 +17,7 @@ export default function EventDetailPage() {
   const [event, setEvent] = useState<EventResponse | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [coverUploading, setCoverUploading] = useState(false);
+  const [cropImageUrl, setCropImageUrl] = useState<string | null>(null);
   const [photos, setPhotos] = useState<PhotoResponse[]>([]);
   const [matchedPhotos, setMatchedPhotos] = useState<PhotoResponse[] | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -118,19 +120,12 @@ export default function EventDetailPage() {
                 accept="image/*"
                 className="hidden"
                 disabled={coverUploading}
-                onChange={async (e) => {
+                onChange={(e) => {
                   const file = e.target.files?.[0];
-                  if (!file || !slug) return;
-                  setCoverUploading(true);
-                  try {
-                    const updated = await uploadCoverImage(slug, file);
-                    setEvent(updated);
-                  } catch {
-                    setError('Failed to upload cover image');
-                  } finally {
-                    setCoverUploading(false);
-                    e.target.value = '';
-                  }
+                  if (!file) return;
+                  const url = URL.createObjectURL(file);
+                  setCropImageUrl(url);
+                  e.target.value = '';
                 }}
               />
             </label>
@@ -261,6 +256,30 @@ export default function EventDetailPage() {
           photos={displayPhotos}
           selectedIds={selectedIds}
           onToggleSelect={toggleSelect}
+        />
+      )}
+      {cropImageUrl && (
+        <CoverImageCropper
+          imageUrl={cropImageUrl}
+          onCancel={() => {
+            URL.revokeObjectURL(cropImageUrl);
+            setCropImageUrl(null);
+          }}
+          onConfirm={async (blob) => {
+            URL.revokeObjectURL(cropImageUrl);
+            setCropImageUrl(null);
+            if (!slug) return;
+            setCoverUploading(true);
+            try {
+              const file = new File([blob], 'cover.jpg', { type: 'image/jpeg' });
+              const updated = await uploadCoverImage(slug, file);
+              setEvent(updated);
+            } catch {
+              setError('Failed to upload cover image');
+            } finally {
+              setCoverUploading(false);
+            }
+          }}
         />
       )}
     </div>
