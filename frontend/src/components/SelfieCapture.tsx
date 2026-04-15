@@ -137,19 +137,21 @@ export default function SelfieCapture({ onCapture, loading }: SelfieCaptureProps
 
       {!webcamActive && (
         <div className="flex gap-3">
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            disabled={loading}
-            className="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? 'Searching...' : preview ? 'Upload another photo' : 'Upload a photo'}
-          </button>
+          {'ontouchstart' in window && (
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={loading}
+              className="bg-white text-indigo-600 border border-indigo-600 px-6 py-3 rounded-lg hover:bg-indigo-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? 'Searching...' : 'Upload a photo'}
+            </button>
+          )}
           <button
             onClick={startWebcam}
             disabled={loading}
-            className="bg-white text-indigo-600 border border-indigo-600 px-6 py-3 rounded-lg hover:bg-indigo-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Use webcam
+            {loading ? 'Searching...' : preview ? 'Take another selfie' : 'Take a selfie'}
           </button>
         </div>
       )}
