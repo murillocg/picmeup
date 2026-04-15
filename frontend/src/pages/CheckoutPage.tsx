@@ -152,6 +152,7 @@ export default function CheckoutPage() {
             options={{
               clientId: paypalClientId,
               currency: 'AUD',
+              locale: 'en_AU',
             }}
           >
             <PayPalButtons

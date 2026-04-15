@@ -97,6 +97,7 @@ export default function PassCheckoutPage() {
             options={{
               clientId: paypalClientId,
               currency: 'AUD',
+              locale: 'en_AU',
             }}
           >
             <PayPalButtons
