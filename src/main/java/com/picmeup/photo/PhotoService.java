@@ -4,18 +4,14 @@ import com.picmeup.common.exception.ResourceNotFoundException;
 import com.picmeup.payment.OrderItemRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-
-import software.amazon.awssdk.services.s3.model.StorageClass;
 
 @Service
 public class PhotoService {
@@ -26,7 +22,7 @@ public class PhotoService {
     private final PhotographerRepository photographerRepository;
     private final EventRepository eventRepository;
     private final S3StorageService s3StorageService;
-    private final ImageProcessingService imageProcessingService;
+    private final PhotoProcessingService photoProcessingService;
     private final FaceRecognitionService faceRecognitionService;
     private final OrderItemRepository orderItemRepository;
 
@@ -34,14 +30,14 @@ public class PhotoService {
                         PhotographerRepository photographerRepository,
                         EventRepository eventRepository,
                         S3StorageService s3StorageService,
-                        ImageProcessingService imageProcessingService,
+                        PhotoProcessingService photoProcessingService,
                         FaceRecognitionService faceRecognitionService,
                         OrderItemRepository orderItemRepository) {
         this.photoRepository = photoRepository;
         this.photographerRepository = photographerRepository;
         this.eventRepository = eventRepository;
         this.s3StorageService = s3StorageService;
-        this.imageProcessingService = imageProcessingService;
+        this.photoProcessingService = photoProcessingService;
         this.faceRecognitionService = faceRecognitionService;
         this.orderItemRepository = orderItemRepository;
     }
@@ -65,41 +61,10 @@ public class PhotoService {
             photoRepository.save(photo);
             photos.add(photo);
 
-            processPhotoAsync(photo.getId(), event.getId(), file);
+            photoProcessingService.processPhotoAsync(photo.getId(), event.getId(), file);
         }
 
         return photos;
-    }
-
-    @Async
-    public void processPhotoAsync(UUID photoId, UUID eventId, MultipartFile file) {
-        try {
-            byte[] originalBytes = file.getBytes();
-            String contentType = file.getContentType() != null ? file.getContentType() : "image/jpeg";
-
-            String originalKey = "originals/%s/%s.jpg".formatted(eventId, photoId);
-            s3StorageService.uploadFile(originalKey, originalBytes, contentType, StorageClass.STANDARD_IA);
-
-            byte[] watermarkedThumbnail = imageProcessingService.processPhoto(originalBytes);
-            String thumbnailKey = "thumbnails/%s/%s.jpg".formatted(eventId, photoId);
-            s3StorageService.uploadFile(thumbnailKey, watermarkedThumbnail, "image/jpeg");
-
-            String[] faceIds = faceRecognitionService.indexFaces(eventId, photoId, originalKey);
-
-            var photo = photoRepository.findById(photoId).orElse(null);
-            if (photo != null) {
-                photo.markActive(originalKey, thumbnailKey, faceIds);
-                photoRepository.save(photo);
-                log.info("Photo {} processed successfully", photoId);
-            }
-        } catch (Exception e) {
-            log.error("Failed to process photo {}", photoId, e);
-            var photo = photoRepository.findById(photoId).orElse(null);
-            if (photo != null) {
-                photo.markFailed();
-                photoRepository.save(photo);
-            }
-        }
     }
 
     @Transactional(readOnly = true)

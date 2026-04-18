@@ -34,25 +34,32 @@ export default function UploadPage() {
     const startTime = Date.now();
     let completedCount = 0;
     let failedCount = 0;
+    const concurrency = 3;
 
-    for (let i = 0; i < total; i++) {
-      if (abortRef.current) break;
+    async function uploadNext(index: number) {
+      while (index < total && !abortRef.current) {
+        const currentIndex = index;
+        index += concurrency;
+        try {
+          await uploadPhoto(slug!, files[currentIndex]);
+          completedCount++;
+        } catch {
+          failedCount++;
+        }
 
-      try {
-        await uploadPhoto(slug, files[i]);
-        completedCount++;
-      } catch {
-        failedCount++;
+        setUploaded(completedCount);
+        setFailed(failedCount);
+
+        const done = completedCount + failedCount;
+        const elapsed = Date.now() - startTime;
+        const avgPerFile = elapsed / done;
+        const remaining = avgPerFile * (total - done);
+        setTimeRemaining(formatTime(remaining));
       }
-
-      setUploaded(completedCount);
-      setFailed(failedCount);
-
-      const elapsed = Date.now() - startTime;
-      const avgPerFile = elapsed / (i + 1);
-      const remaining = avgPerFile * (total - i - 1);
-      setTimeRemaining(formatTime(remaining));
     }
+
+    const workers = Array.from({ length: Math.min(concurrency, total) }, (_, i) => uploadNext(i));
+    await Promise.all(workers);
 
     setUploading(false);
     setDone(true);

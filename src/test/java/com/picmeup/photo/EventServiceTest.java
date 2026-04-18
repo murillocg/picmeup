@@ -34,11 +34,14 @@ class EventServiceTest {
     @Mock
     private ImageProcessingService imageProcessingService;
 
+    @Mock
+    private com.picmeup.payment.OrderItemRepository orderItemRepository;
+
     private EventService eventService;
 
     @BeforeEach
     void setUp() {
-        eventService = new EventService(eventRepository, photoRepository, s3StorageService, faceRecognitionService, imageProcessingService);
+        eventService = new EventService(eventRepository, photoRepository, s3StorageService, faceRecognitionService, imageProcessingService, orderItemRepository);
     }
 
     @Test

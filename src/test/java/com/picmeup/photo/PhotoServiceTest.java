@@ -32,7 +32,7 @@ class PhotoServiceTest {
     @Mock
     private S3StorageService s3StorageService;
     @Mock
-    private ImageProcessingService imageProcessingService;
+    private PhotoProcessingService photoProcessingService;
     @Mock
     private FaceRecognitionService faceRecognitionService;
     @Mock
@@ -43,7 +43,7 @@ class PhotoServiceTest {
     @BeforeEach
     void setUp() {
         photoService = new PhotoService(photoRepository, photographerRepository,
-                eventRepository, s3StorageService, imageProcessingService, faceRecognitionService,
+                eventRepository, s3StorageService, photoProcessingService, faceRecognitionService,
                 orderItemRepository);
     }
 
