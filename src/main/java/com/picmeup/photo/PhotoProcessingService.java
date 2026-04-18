@@ -8,11 +8,13 @@ import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.services.s3.model.StorageClass;
 
 import java.util.UUID;
+import java.util.concurrent.Semaphore;
 
 @Service
 public class PhotoProcessingService {
 
     private static final Logger log = LoggerFactory.getLogger(PhotoProcessingService.class);
+    private static final Semaphore PROCESSING_SEMAPHORE = new Semaphore(2);
 
     private final PhotoRepository photoRepository;
     private final S3StorageService s3StorageService;
@@ -31,6 +33,7 @@ public class PhotoProcessingService {
 
     @Async
     public void processPhotoAsync(UUID photoId, UUID eventId, MultipartFile file) {
+        PROCESSING_SEMAPHORE.acquireUninterruptibly();
         try {
             byte[] originalBytes = file.getBytes();
             String contentType = file.getContentType() != null ? file.getContentType() : "image/jpeg";
@@ -38,37 +41,48 @@ public class PhotoProcessingService {
             String originalKey = "originals/%s/%s.jpg".formatted(eventId, photoId);
             s3StorageService.uploadFile(originalKey, originalBytes, contentType, StorageClass.STANDARD_IA);
 
-            processFromS3(photoId, eventId, originalKey, originalBytes);
+            byte[] watermarkedThumbnail = imageProcessingService.processPhoto(originalBytes);
+            String thumbnailKey = "thumbnails/%s/%s.jpg".formatted(eventId, photoId);
+            s3StorageService.uploadFile(thumbnailKey, watermarkedThumbnail, "image/jpeg");
+
+            String[] faceIds = faceRecognitionService.indexFaces(eventId, photoId, originalKey);
+
+            var photo = photoRepository.findById(photoId).orElse(null);
+            if (photo != null) {
+                photo.markActive(originalKey, thumbnailKey, faceIds);
+                photoRepository.save(photo);
+                log.info("Photo {} processed successfully", photoId);
+            }
         } catch (Exception e) {
             log.error("Failed to process photo {}", photoId, e);
             markFailed(photoId);
+        } finally {
+            PROCESSING_SEMAPHORE.release();
         }
     }
 
     @Async
     public void processUploadedPhotoAsync(UUID photoId, UUID eventId, String originalKey) {
+        PROCESSING_SEMAPHORE.acquireUninterruptibly();
         try (var inputStream = s3StorageService.getObject(originalKey)) {
-            byte[] originalBytes = inputStream.readAllBytes();
+            // Stream directly from S3 into image processing — no byte[] of original in memory
+            byte[] watermarkedThumbnail = imageProcessingService.processPhoto(inputStream);
+            String thumbnailKey = "thumbnails/%s/%s.jpg".formatted(eventId, photoId);
+            s3StorageService.uploadFile(thumbnailKey, watermarkedThumbnail, "image/jpeg");
 
-            processFromS3(photoId, eventId, originalKey, originalBytes);
+            String[] faceIds = faceRecognitionService.indexFaces(eventId, photoId, originalKey);
+
+            var photo = photoRepository.findById(photoId).orElse(null);
+            if (photo != null) {
+                photo.markActive(originalKey, thumbnailKey, faceIds);
+                photoRepository.save(photo);
+                log.info("Photo {} processed successfully", photoId);
+            }
         } catch (Exception e) {
             log.error("Failed to process photo {}", photoId, e);
             markFailed(photoId);
-        }
-    }
-
-    private void processFromS3(UUID photoId, UUID eventId, String originalKey, byte[] originalBytes) throws Exception {
-        byte[] watermarkedThumbnail = imageProcessingService.processPhoto(originalBytes);
-        String thumbnailKey = "thumbnails/%s/%s.jpg".formatted(eventId, photoId);
-        s3StorageService.uploadFile(thumbnailKey, watermarkedThumbnail, "image/jpeg");
-
-        String[] faceIds = faceRecognitionService.indexFaces(eventId, photoId, originalKey);
-
-        var photo = photoRepository.findById(photoId).orElse(null);
-        if (photo != null) {
-            photo.markActive(originalKey, thumbnailKey, faceIds);
-            photoRepository.save(photo);
-            log.info("Photo {} processed successfully", photoId);
+        } finally {
+            PROCESSING_SEMAPHORE.release();
         }
     }
 

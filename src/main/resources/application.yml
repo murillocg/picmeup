@@ -1,6 +1,9 @@
 spring:
   application:
     name: picmeup
+  threads:
+    virtual:
+      enabled: true
   servlet:
     multipart:
       max-file-size: 20MB

@@ -15,6 +15,7 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 
 @Service
 public class ImageProcessingService {
@@ -94,5 +95,27 @@ public class ImageProcessingService {
     public byte[] processPhoto(byte[] originalBytes) throws IOException {
         byte[] thumbnail = generateThumbnail(originalBytes);
         return applyWatermark(thumbnail);
+    }
+
+    public byte[] processPhoto(InputStream inputStream) throws IOException {
+        var original = ImageIO.read(inputStream);
+        if (original == null) {
+            throw new IOException("Unable to read image");
+        }
+
+        // Resize to thumbnail directly from the parsed image (no intermediate byte[])
+        var thumbnailOutput = new ByteArrayOutputStream();
+        int targetWidth = Math.min(original.getWidth(), THUMBNAIL_MAX_WIDTH);
+        Thumbnails.of(original)
+                .width(targetWidth)
+                .keepAspectRatio(true)
+                .outputFormat("jpg")
+                .outputQuality(0.85)
+                .toOutputStream(thumbnailOutput);
+
+        // Release original image immediately
+        original.flush();
+
+        return applyWatermark(thumbnailOutput.toByteArray());
     }
 }
