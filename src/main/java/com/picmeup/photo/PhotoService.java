@@ -82,7 +82,7 @@ public class PhotoService {
         var photoId = UUID.randomUUID();
         String s3Key = "originals/%s/%s.jpg".formatted(event.getId(), photoId);
         String uploadUrl = s3StorageService.generatePresignedUploadUrl(
-                s3Key, Duration.ofMinutes(15), "image/jpeg", StorageClass.STANDARD_IA);
+                s3Key, Duration.ofMinutes(15), "image/jpeg", null);
 
         return Map.of(
                 "uploadUrl", uploadUrl,
