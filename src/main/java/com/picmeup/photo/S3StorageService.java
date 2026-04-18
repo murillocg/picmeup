@@ -12,6 +12,7 @@ import software.amazon.awssdk.services.s3.model.StorageClass;
 import software.amazon.awssdk.services.s3.model.S3Object;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
+import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
 
 import java.io.InputStream;
 import java.time.Duration;
@@ -81,6 +82,24 @@ public class S3StorageService {
                 .build();
 
         return s3Presigner.presignGetObject(presignRequest).url().toString();
+    }
+
+    public String generatePresignedUploadUrl(String key, Duration expiration, String contentType, StorageClass storageClass) {
+        var builder = PutObjectRequest.builder()
+                .bucket(bucket)
+                .key(key)
+                .contentType(contentType);
+
+        if (storageClass != null) {
+            builder.storageClass(storageClass);
+        }
+
+        var presignRequest = PutObjectPresignRequest.builder()
+                .signatureDuration(expiration)
+                .putObjectRequest(builder.build())
+                .build();
+
+        return s3Presigner.presignPutObject(presignRequest).url().toString();
     }
 
     public InputStream getObject(String key) {

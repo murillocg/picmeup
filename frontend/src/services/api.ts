@@ -34,14 +34,30 @@ export async function uploadPhoto(
   slug: string,
   file: File,
 ): Promise<PhotoUploadResponse> {
-  const formData = new FormData();
-  formData.append('files', file);
+  // Step 1: Get presigned URL from backend
+  const presignResponse = await api.post<{
+    uploadUrl: string;
+    s3Key: string;
+    photoId: string;
+  }>(`/events/${slug}/photos/presign`);
 
-  const response = await api.post<PhotoUploadResponse[]>(
-    `/events/${slug}/photos`,
-    formData,
+  const { uploadUrl, s3Key, photoId } = presignResponse.data;
+
+  // Step 2: Upload directly to S3
+  await fetch(uploadUrl, {
+    method: 'PUT',
+    body: file,
+    headers: { 'Content-Type': 'image/jpeg' },
+  });
+
+  // Step 3: Confirm upload with backend
+  const confirmResponse = await api.post<PhotoUploadResponse>(
+    `/events/${slug}/photos/confirm`,
+    null,
+    { params: { photoId, s3Key } },
   );
-  return response.data[0];
+
+  return confirmResponse.data;
 }
 
 export async function uploadCoverImage(slug: string, file: File): Promise<EventResponse> {

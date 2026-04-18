@@ -14,9 +14,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.UUID;
-
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/events/{slug}/photos")
@@ -49,6 +49,21 @@ public class PhotoController {
                 .toList();
 
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(response);
+    }
+
+    @PostMapping("/presign")
+    public ResponseEntity<Map<String, String>> presignUpload(@PathVariable String slug) {
+        var result = photoService.presignUpload(slug);
+        return ResponseEntity.ok(result);
+    }
+
+    @PostMapping("/confirm")
+    public ResponseEntity<PhotoUploadResponse> confirmUpload(
+            @PathVariable String slug,
+            @RequestParam String photoId,
+            @RequestParam String s3Key) {
+        var photo = photoService.confirmUpload(slug, photoId, s3Key);
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(PhotoUploadResponse.from(photo));
     }
 
     @GetMapping

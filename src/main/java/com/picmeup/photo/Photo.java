@@ -53,7 +53,11 @@ public class Photo {
     }
 
     public Photo(Event event, Photographer photographer) {
-        this.id = UUID.randomUUID();
+        this(UUID.randomUUID(), event, photographer);
+    }
+
+    public Photo(UUID id, Event event, Photographer photographer) {
+        this.id = id;
         this.event = event;
         this.photographer = photographer;
         this.uploadedAt = LocalDateTime.now();

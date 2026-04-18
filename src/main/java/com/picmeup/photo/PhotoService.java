@@ -8,9 +8,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import software.amazon.awssdk.services.s3.model.StorageClass;
+
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -65,6 +68,44 @@ public class PhotoService {
         }
 
         return photos;
+    }
+
+    @Transactional
+    public Map<String, String> presignUpload(String eventSlug) {
+        var event = eventRepository.findBySlug(eventSlug)
+                .orElseThrow(() -> new ResourceNotFoundException("Event", eventSlug));
+
+        if (event.isExpired()) {
+            throw new IllegalArgumentException("Cannot upload photos to an expired event");
+        }
+
+        var photoId = UUID.randomUUID();
+        String s3Key = "originals/%s/%s.jpg".formatted(event.getId(), photoId);
+        String uploadUrl = s3StorageService.generatePresignedUploadUrl(
+                s3Key, Duration.ofMinutes(15), "image/jpeg", StorageClass.STANDARD_IA);
+
+        return Map.of(
+                "uploadUrl", uploadUrl,
+                "s3Key", s3Key,
+                "photoId", photoId.toString(),
+                "eventId", event.getId().toString()
+        );
+    }
+
+    @Transactional
+    public Photo confirmUpload(String eventSlug, String photoId, String s3Key) {
+        var event = eventRepository.findBySlug(eventSlug)
+                .orElseThrow(() -> new ResourceNotFoundException("Event", eventSlug));
+
+        var photographer = photographerRepository.findAll().stream().findFirst()
+                .orElseGet(() -> photographerRepository.save(new Photographer("Admin", "admin@elitesportphotos.com")));
+
+        var photo = new Photo(UUID.fromString(photoId), event, photographer);
+
+        photoRepository.save(photo);
+        photoProcessingService.processUploadedPhotoAsync(photo.getId(), event.getId(), s3Key);
+
+        return photo;
     }
 
     @Transactional(readOnly = true)
