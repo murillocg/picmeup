@@ -91,7 +91,7 @@ variable "email_admin_recipients" {
 variable "paypal_base_url" {
   description = "PayPal API base URL (sandbox or live)"
   type        = string
-  default     = "https://api-m.sandbox.paypal.com"
+  default     = "https://api-m.paypal.com"
 }
 
 variable "admin_password" {
