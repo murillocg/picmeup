@@ -14,7 +14,7 @@ import java.util.concurrent.Semaphore;
 public class PhotoProcessingService {
 
     private static final Logger log = LoggerFactory.getLogger(PhotoProcessingService.class);
-    private static final Semaphore PROCESSING_SEMAPHORE = new Semaphore(2);
+    private static final Semaphore PROCESSING_SEMAPHORE = new Semaphore(3);
 
     private final PhotoRepository photoRepository;
     private final S3StorageService s3StorageService;
