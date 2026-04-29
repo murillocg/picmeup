@@ -61,7 +61,7 @@ variable "ecs_desired_count" {
 variable "s3_bucket_name" {
   description = "S3 bucket name for photos"
   type        = string
-  default     = "picmeup-photos-prod"
+  default     = "elitesportphotos-prod"
 }
 
 variable "container_port" {
