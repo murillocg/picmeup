@@ -8,8 +8,8 @@ export default function Layout() {
     <div className="min-h-screen flex flex-col bg-gray-50">
       <header className="bg-white shadow-sm">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-          <Link to="/" className="text-2xl font-bold text-indigo-600">
-            Elite Sport Photos
+          <Link to="/">
+            <img src="/logo.png" alt="Elite Sport Photography" className="h-10 w-auto" />
           </Link>
           <nav className="flex items-center gap-4">
             <Link to="/" className="text-gray-600 hover:text-gray-900">
