@@ -9,7 +9,7 @@ export default function Layout() {
       <header className="bg-white shadow-sm">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
           <Link to="/">
-            <img src="/logo.png" alt="Elite Sport Photography" className="h-10 w-auto" />
+            <img src="/logo.png" alt="Elite Sport Photography" className="h-8 sm:h-10 w-auto" />
           </Link>
           <nav className="flex items-center gap-4">
             <Link to="/" className="text-gray-600 hover:text-gray-900">
