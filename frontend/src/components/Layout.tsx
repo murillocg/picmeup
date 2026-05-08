@@ -15,6 +15,9 @@ export default function Layout() {
             <Link to="/" className="text-gray-600 hover:text-gray-900">
               Events
             </Link>
+            <Link to="/faq" className="text-gray-600 hover:text-gray-900">
+              FAQ
+            </Link>
             {authenticated && (
               <>
                 <Link to="/admin/orders" className="text-gray-600 hover:text-gray-900">
@@ -50,6 +53,15 @@ export default function Layout() {
       <footer className="bg-white border-t">
         <div className="max-w-6xl mx-auto px-4 py-4 text-center text-gray-500 text-sm">
           <p>Elite Sport Photos — Find yourself in event photos</p>
+          <p className="mt-1 flex items-center justify-center gap-4">
+            <Link to="/faq" className="text-indigo-600 hover:text-indigo-800">
+              FAQ
+            </Link>
+            <span className="text-gray-300">|</span>
+            <Link to="/privacy-policy" className="text-indigo-600 hover:text-indigo-800">
+              Privacy Policy
+            </Link>
+          </p>
           <p className="text-xs text-gray-400 mt-1">v{__APP_VERSION__}</p>
         </div>
       </footer>
