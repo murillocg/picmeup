@@ -19,12 +19,24 @@ export default function PrivacyPolicyPage() {
       </div>
 
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-        <iframe
-          src="/privacy-policy.pdf"
+        <object
+          data="/privacy-policy.pdf"
+          type="application/pdf"
           className="w-full"
           style={{ height: '80vh' }}
-          title="Elite Sport Photos Privacy Policy"
-        />
+        >
+          <div className="flex flex-col items-center justify-center py-16 text-gray-500 gap-4">
+            <p>Your browser cannot display the PDF inline.</p>
+            <a
+              href="/privacy-policy.pdf"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 text-sm font-medium"
+            >
+              Open PDF
+            </a>
+          </div>
+        </object>
       </div>
     </div>
   );
