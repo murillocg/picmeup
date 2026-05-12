@@ -26,16 +26,20 @@ public class ImageProcessingService {
     private static final double WATERMARK_ROTATION = -25.0;
 
     public byte[] generateThumbnail(byte[] originalBytes) throws IOException {
-        var original = ImageIO.read(new ByteArrayInputStream(originalBytes));
-        if (original == null) {
+        // Read once just to validate and guard against upscaling small images
+        var sizeCheck = ImageIO.read(new ByteArrayInputStream(originalBytes));
+        if (sizeCheck == null) {
             throw new IOException("Unable to read image");
         }
+        int targetWidth = Math.min(sizeCheck.getWidth(), THUMBNAIL_MAX_WIDTH);
+        sizeCheck.flush();
 
+        // Pass raw bytes to Thumbnailator so it can read and apply the EXIF orientation tag —
+        // ImageIO strips EXIF metadata, so passing a BufferedImage skips orientation correction.
         var output = new ByteArrayOutputStream();
-        int targetWidth = Math.min(original.getWidth(), THUMBNAIL_MAX_WIDTH);
-
-        Thumbnails.of(original)
+        Thumbnails.of(new ByteArrayInputStream(originalBytes))
                 .width(targetWidth)
+                .useExifOrientation(true)
                 .keepAspectRatio(true)
                 .outputFormat("jpg")
                 .outputQuality(0.85)
@@ -98,23 +102,19 @@ public class ImageProcessingService {
     }
 
     public byte[] processPhoto(InputStream inputStream) throws IOException {
-        var original = ImageIO.read(inputStream);
-        if (original == null) {
-            throw new IOException("Unable to read image");
-        }
-
-        // Resize to thumbnail directly from the parsed image (no intermediate byte[])
+        // Pass stream directly to Thumbnailator so EXIF orientation is applied before resizing
         var thumbnailOutput = new ByteArrayOutputStream();
-        int targetWidth = Math.min(original.getWidth(), THUMBNAIL_MAX_WIDTH);
-        Thumbnails.of(original)
-                .width(targetWidth)
+        Thumbnails.of(inputStream)
+                .width(THUMBNAIL_MAX_WIDTH)
+                .useExifOrientation(true)
                 .keepAspectRatio(true)
                 .outputFormat("jpg")
                 .outputQuality(0.85)
                 .toOutputStream(thumbnailOutput);
 
-        // Release original image immediately
-        original.flush();
+        if (thumbnailOutput.size() == 0) {
+            throw new IOException("Unable to read image");
+        }
 
         return applyWatermark(thumbnailOutput.toByteArray());
     }
