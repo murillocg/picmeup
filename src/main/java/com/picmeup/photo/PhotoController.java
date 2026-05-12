@@ -82,6 +82,12 @@ public class PhotoController {
         return ResponseEntity.ok(response);
     }
 
+    @PostMapping("/reprocess-thumbnails")
+    public ResponseEntity<Map<String, Integer>> reprocessThumbnails(@PathVariable String slug) {
+        int queued = photoService.reprocessEventThumbnails(slug);
+        return ResponseEntity.accepted().body(Map.of("queued", queued));
+    }
+
     @DeleteMapping("/{photoId}")
     public ResponseEntity<Void> deletePhoto(@PathVariable String slug, @PathVariable UUID photoId) {
         photoService.deletePhoto(photoId);

@@ -86,6 +86,20 @@ public class PhotoProcessingService {
         }
     }
 
+    @Async
+    public void reprocessThumbnailAsync(Photo photo) {
+        PROCESSING_SEMAPHORE.acquireUninterruptibly();
+        try (var inputStream = s3StorageService.getObject(photo.getOriginalS3Key())) {
+            byte[] watermarkedThumbnail = imageProcessingService.processPhoto(inputStream);
+            s3StorageService.uploadFile(photo.getThumbnailS3Key(), watermarkedThumbnail, "image/jpeg");
+            log.info("Thumbnail reprocessed for photo {}", photo.getId());
+        } catch (Exception e) {
+            log.error("Failed to reprocess thumbnail for photo {}", photo.getId(), e);
+        } finally {
+            PROCESSING_SEMAPHORE.release();
+        }
+    }
+
     private void markFailed(UUID photoId) {
         var photo = photoRepository.findById(photoId).orElse(null);
         if (photo != null) {

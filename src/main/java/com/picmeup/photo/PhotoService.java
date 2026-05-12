@@ -117,6 +117,17 @@ public class PhotoService {
     }
 
     @Transactional(readOnly = true)
+    public int reprocessEventThumbnails(String eventSlug) {
+        var event = eventRepository.findBySlug(eventSlug)
+                .orElseThrow(() -> new ResourceNotFoundException("Event", eventSlug));
+
+        var photos = photoRepository.findByEventIdAndStatus(event.getId(), Photo.Status.ACTIVE);
+        photos.forEach(photoProcessingService::reprocessThumbnailAsync);
+        log.info("Queued {} thumbnails for reprocessing in event {}", photos.size(), eventSlug);
+        return photos.size();
+    }
+
+    @Transactional(readOnly = true)
     public List<Photo> searchByFace(String eventSlug, byte[] selfieBytes) {
         var event = eventRepository.findBySlug(eventSlug)
                 .orElseThrow(() -> new ResourceNotFoundException("Event", eventSlug));
