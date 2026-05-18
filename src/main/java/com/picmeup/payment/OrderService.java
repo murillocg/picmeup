@@ -25,8 +25,8 @@ import java.util.zip.ZipOutputStream;
 public class OrderService {
 
     private static final Logger log = LoggerFactory.getLogger(OrderService.class);
-    private static final BigDecimal PHOTO_PRICE = new BigDecimal("25.00");
-    private static final BigDecimal BULK_PRICE = new BigDecimal("100.00");
+    private static final BigDecimal PHOTO_PRICE = new BigDecimal("20.00");
+    private static final BigDecimal BULK_PRICE = new BigDecimal("65.00");
 
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;

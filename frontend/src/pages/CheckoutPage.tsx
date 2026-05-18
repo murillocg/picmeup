@@ -37,9 +37,9 @@ export default function CheckoutPage() {
     );
   }
 
-  const perPhotoTotal = cart.length * 25;
-  const totalPrice = Math.min(perPhotoTotal, 100);
-  const hasBulkDiscount = perPhotoTotal > 100;
+  const perPhotoTotal = cart.length * 20;
+  const totalPrice = Math.min(perPhotoTotal, 65);
+  const hasBulkDiscount = perPhotoTotal > 65;
 
   async function handleEmailSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -81,13 +81,13 @@ export default function CheckoutPage() {
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Order Summary</h2>
         <div className="flex justify-between text-gray-600 mb-2">
-          <span>{cart.length} photo{cart.length !== 1 ? 's' : ''} x $25.00</span>
+          <span>{cart.length} photo{cart.length !== 1 ? 's' : ''} x $20.00</span>
           <span>${perPhotoTotal}.00 AUD</span>
         </div>
         {hasBulkDiscount && (
           <div className="flex justify-between text-green-600 mb-2">
             <span>Bulk discount</span>
-            <span>-${perPhotoTotal - 100}.00 AUD</span>
+            <span>-${perPhotoTotal - 65}.00 AUD</span>
           </div>
         )}
         <div className="border-t pt-2 mt-2 flex justify-between font-semibold text-gray-900">

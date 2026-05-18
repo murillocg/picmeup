@@ -85,11 +85,11 @@ export default function EventDetailPage() {
   if (!event) return <ErrorMessage message="Event not found" />;
 
   const displayPhotos = authenticated ? photos : (matchedPhotos ?? []);
-  const perPhotoTotal = selectedIds.size * 25;
-  const totalPrice = Math.min(perPhotoTotal, 100);
-  const hasBulkDiscount = perPhotoTotal > 100;
+  const perPhotoTotal = selectedIds.size * 20;
+  const totalPrice = Math.min(perPhotoTotal, 65);
+  const hasBulkDiscount = perPhotoTotal > 65;
   const allSelected = matchedPhotos !== null && matchedPhotos.length > 0 && matchedPhotos.every((p) => selectedIds.has(p.id));
-  const savings = perPhotoTotal - 100;
+  const savings = perPhotoTotal - 65;
 
   return (
     <div>
@@ -230,7 +230,7 @@ export default function EventDetailPage() {
       {!authenticated && matchedPhotos && matchedPhotos.length >= 5 && !allSelected && selectedIds.size === 0 && (
         <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4 text-center">
           <p className="text-green-800 text-sm">
-            Select all {matchedPhotos.length} photos for just <span className="font-semibold">$100 AUD</span> instead of ${matchedPhotos.length * 25} AUD!
+            Select all {matchedPhotos.length} photos for just <span className="font-semibold">$65 AUD</span> instead of ${matchedPhotos.length * 20} AUD!
           </p>
         </div>
       )}

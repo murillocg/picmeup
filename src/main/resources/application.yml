@@ -37,7 +37,7 @@ app:
     username: admin
     password: "{noop}admin123"
   pass:
-    price: 100.00
+    price: 65.00
   email:
     sender: ${EMAIL_SENDER:noreply@elitesportphotos.com}
     admin-recipients: ${EMAIL_ADMIN_RECIPIENTS:trent@elitesportphotos.com,murillo.cg@gmail.com}
