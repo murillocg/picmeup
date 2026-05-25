@@ -37,6 +37,9 @@ public class Event {
     @Column
     private String coverImageKey;
 
+    @Column(nullable = false)
+    private boolean hidden = false;
+
     protected Event() {
     }
 
@@ -93,6 +96,14 @@ public class Event {
 
     public void setCoverImageKey(String coverImageKey) {
         this.coverImageKey = coverImageKey;
+    }
+
+    public boolean isHidden() {
+        return hidden;
+    }
+
+    public void setHidden(boolean hidden) {
+        this.hidden = hidden;
     }
 
     public boolean isExpired() {

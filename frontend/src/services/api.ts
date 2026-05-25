@@ -15,8 +15,15 @@ const api = axios.create({
   withCredentials: true,
 });
 
-export async function listEvents(): Promise<EventResponse[]> {
-  const response = await api.get<EventResponse[]>('/events');
+export async function listEvents(includeHidden = false): Promise<EventResponse[]> {
+  const response = await api.get<EventResponse[]>('/events', {
+    params: includeHidden ? { includeHidden: true } : undefined,
+  });
+  return response.data;
+}
+
+export async function toggleEventHidden(slug: string): Promise<EventResponse> {
+  const response = await api.post<EventResponse>(`/events/${slug}/toggle-hidden`);
   return response.data;
 }
 

@@ -7,6 +7,7 @@ export interface EventResponse {
   createdAt: string;
   expiresAt: string;
   coverImageUrl: string | null;
+  hidden: boolean;
 }
 
 export interface CreateEventRequest {

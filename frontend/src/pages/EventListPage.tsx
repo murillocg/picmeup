@@ -1,22 +1,34 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { listEvents } from '../services/api';
+import { listEvents, toggleEventHidden } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import type { EventResponse } from '../types/api';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorMessage from '../components/ErrorMessage';
 
 export default function EventListPage() {
+  const { authenticated } = useAuth();
   const [events, setEvents] = useState<EventResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
 
   useEffect(() => {
-    listEvents()
+    listEvents(authenticated)
       .then(setEvents)
       .catch(() => setError('Failed to load events'))
       .finally(() => setLoading(false));
-  }, []);
+  }, [authenticated]);
+
+  async function handleToggleHidden(e: React.MouseEvent, slug: string) {
+    e.preventDefault();
+    try {
+      const updated = await toggleEventHidden(slug);
+      setEvents((prev) => prev.map((ev) => (ev.slug === slug ? updated : ev)));
+    } catch {
+      setError('Failed to update event visibility');
+    }
+  }
 
   const filtered = events.filter((e) =>
     e.name.toLowerCase().includes(search.toLowerCase()),
@@ -48,9 +60,18 @@ export default function EventListPage() {
             <Link
               key={event.id}
               to={`/events/${event.slug}`}
-              className="group bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-200"
+              className={`group bg-white rounded-xl shadow-sm border overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-200 ${event.hidden ? 'border-orange-300 opacity-60' : 'border-gray-200'}`}
             >
               <div className="relative h-48 bg-gradient-to-br from-indigo-100 to-gray-100">
+                {authenticated && (
+                  <button
+                    onClick={(e) => handleToggleHidden(e, event.slug)}
+                    className="absolute top-2 right-2 z-10 bg-white/90 text-xs font-medium px-2 py-1 rounded-full shadow hover:bg-white transition-colors"
+                    title={event.hidden ? 'Show event' : 'Hide event'}
+                  >
+                    {event.hidden ? 'Show' : 'Hide'}
+                  </button>
+                )}
                 {event.coverImageUrl ? (
                   <img
                     src={event.coverImageUrl}

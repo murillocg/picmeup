@@ -41,11 +41,19 @@ public class EventController {
     }
 
     @GetMapping
-    public ResponseEntity<List<EventResponse>> listActiveEvents() {
-        var events = eventService.listActiveEvents().stream()
+    public ResponseEntity<List<EventResponse>> listEvents(
+            @RequestParam(required = false, defaultValue = "false") boolean includeHidden) {
+        var events = (includeHidden ? eventService.listAllActiveEvents() : eventService.listActiveEvents())
+                .stream()
                 .map(this::toResponse)
                 .toList();
         return ResponseEntity.ok(events);
+    }
+
+    @PostMapping("/{slug}/toggle-hidden")
+    public ResponseEntity<EventResponse> toggleHidden(@PathVariable String slug) {
+        var event = eventService.toggleHidden(slug);
+        return ResponseEntity.ok(toResponse(event));
     }
 
     @PostMapping(value = "/{slug}/cover", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

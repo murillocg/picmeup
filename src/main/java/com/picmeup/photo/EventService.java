@@ -59,7 +59,18 @@ public class EventService {
     }
 
     public List<Event> listActiveEvents() {
+        return eventRepository.findByExpiresAtAfterAndHiddenFalseOrderByDateDesc(LocalDateTime.now());
+    }
+
+    public List<Event> listAllActiveEvents() {
         return eventRepository.findByExpiresAtAfterOrderByDateDesc(LocalDateTime.now());
+    }
+
+    @Transactional
+    public Event toggleHidden(String slug) {
+        var event = getBySlug(slug);
+        event.setHidden(!event.isHidden());
+        return eventRepository.save(event);
     }
 
     @Transactional

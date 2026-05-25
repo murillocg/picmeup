@@ -14,4 +14,6 @@ public interface EventRepository extends JpaRepository<Event, UUID> {
     boolean existsBySlug(String slug);
 
     List<Event> findByExpiresAtAfterOrderByDateDesc(LocalDateTime now);
+
+    List<Event> findByExpiresAtAfterAndHiddenFalseOrderByDateDesc(LocalDateTime now);
 }
