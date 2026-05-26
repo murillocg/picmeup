@@ -38,7 +38,7 @@ public class Event {
     private String coverImageKey;
 
     @Column(nullable = false)
-    private boolean hidden = false;
+    private boolean hidden = true;
 
     protected Event() {
     }
