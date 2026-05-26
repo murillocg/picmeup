@@ -8,6 +8,7 @@ import type {
   OrderItemResponse,
   OrderSummaryResponse,
   EventPassResponse,
+  SearchStatsResponse,
 } from '../types/api';
 
 const api = axios.create({
@@ -158,6 +159,11 @@ export async function redeemPass(slug: string, email: string, selfie: File): Pro
 
 export async function listPasses(): Promise<EventPassResponse[]> {
   const response = await api.get<EventPassResponse[]>('/passes');
+  return response.data;
+}
+
+export async function getSearchStats(): Promise<SearchStatsResponse[]> {
+  const response = await api.get<SearchStatsResponse[]>('/admin/stats/searches');
   return response.data;
 }
 

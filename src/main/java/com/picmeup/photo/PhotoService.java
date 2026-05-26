@@ -28,6 +28,7 @@ public class PhotoService {
     private final PhotoProcessingService photoProcessingService;
     private final FaceRecognitionService faceRecognitionService;
     private final OrderItemRepository orderItemRepository;
+    private final FaceSearchRepository faceSearchRepository;
 
     public PhotoService(PhotoRepository photoRepository,
                         PhotographerRepository photographerRepository,
@@ -35,7 +36,8 @@ public class PhotoService {
                         S3StorageService s3StorageService,
                         PhotoProcessingService photoProcessingService,
                         FaceRecognitionService faceRecognitionService,
-                        OrderItemRepository orderItemRepository) {
+                        OrderItemRepository orderItemRepository,
+                        FaceSearchRepository faceSearchRepository) {
         this.photoRepository = photoRepository;
         this.photographerRepository = photographerRepository;
         this.eventRepository = eventRepository;
@@ -43,6 +45,7 @@ public class PhotoService {
         this.photoProcessingService = photoProcessingService;
         this.faceRecognitionService = faceRecognitionService;
         this.orderItemRepository = orderItemRepository;
+        this.faceSearchRepository = faceSearchRepository;
     }
 
     @Transactional
@@ -127,18 +130,20 @@ public class PhotoService {
         return photos.size();
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public List<Photo> searchByFace(String eventSlug, byte[] selfieBytes) {
         var event = eventRepository.findBySlug(eventSlug)
                 .orElseThrow(() -> new ResourceNotFoundException("Event", eventSlug));
 
         List<UUID> matchedPhotoIds = faceRecognitionService.searchByFace(event.getId(), selfieBytes);
 
-        if (matchedPhotoIds.isEmpty()) {
-            return List.of();
-        }
+        List<Photo> results = matchedPhotoIds.isEmpty()
+                ? List.of()
+                : photoRepository.findByIdInAndStatus(matchedPhotoIds, Photo.Status.ACTIVE);
 
-        return photoRepository.findByIdInAndStatus(matchedPhotoIds, Photo.Status.ACTIVE);
+        faceSearchRepository.save(new FaceSearch(event.getId(), results.size()));
+
+        return results;
     }
 
     @Transactional

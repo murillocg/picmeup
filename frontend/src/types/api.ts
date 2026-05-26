@@ -68,6 +68,14 @@ export interface EventPassResponse {
   paypalOrderId: string | null;
 }
 
+export interface SearchStatsResponse {
+  eventId: string;
+  eventName: string;
+  eventSlug: string | null;
+  totalSearches: number;
+  searchesWithResults: number;
+}
+
 export interface ErrorResponse {
   status: number;
   message: string;

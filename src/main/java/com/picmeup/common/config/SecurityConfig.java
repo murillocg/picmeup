@@ -41,6 +41,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/api/events/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/orders").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/passes").authenticated()
+                        .requestMatchers("/api/admin/**").authenticated()
                         .anyRequest().permitAll()
                 )
                 .httpBasic(Customizer.withDefaults())

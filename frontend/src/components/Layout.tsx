@@ -23,6 +23,9 @@ export default function Layout() {
                 <Link to="/admin/orders" className="text-gray-600 hover:text-gray-900">
                   Orders
                 </Link>
+                <Link to="/admin/stats" className="text-gray-600 hover:text-gray-900">
+                  Stats
+                </Link>
                 {/* <Link to="/admin/passes" className="text-gray-600 hover:text-gray-900">
                   Passes
                 </Link> */}

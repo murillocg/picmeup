@@ -9,6 +9,7 @@ import CheckoutPage from './pages/CheckoutPage';
 import OrderPage from './pages/OrderPage';
 import AdminLoginPage from './pages/AdminLoginPage';
 import AdminOrdersPage from './pages/AdminOrdersPage';
+import AdminSearchStatsPage from './pages/AdminSearchStatsPage';
 import FaqPage from './pages/FaqPage';
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
 // import PassCheckoutPage from './pages/PassCheckoutPage';
@@ -28,6 +29,7 @@ export default function App() {
             {/* <Route path="/events/:slug/pass" element={<PassCheckoutPage />} /> */}
             <Route path="/admin" element={<AdminLoginPage />} />
             <Route path="/admin/orders" element={<AdminOrdersPage />} />
+            <Route path="/admin/stats" element={<AdminSearchStatsPage />} />
             {/* <Route path="/admin/passes" element={<AdminPassesPage />} /> */}
             <Route path="/orders/:id" element={<OrderPage />} />
             <Route path="/faq" element={<FaqPage />} />
