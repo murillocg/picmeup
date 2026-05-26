@@ -105,7 +105,8 @@ class EventControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request2)));
 
-        mockMvc.perform(get("/api/events"))
+        mockMvc.perform(get("/api/events").param("includeHidden", "true")
+                        .with(httpBasic("admin", "admin123")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(2)));
     }
