@@ -5,6 +5,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -40,10 +41,23 @@ public class Event {
     @Column(nullable = false)
     private boolean hidden = true;
 
+    @Column(nullable = false)
+    private BigDecimal photoPrice = new BigDecimal("20.00");
+
+    @Column(nullable = false)
+    private BigDecimal packPrice = new BigDecimal("65.00");
+
+    @Column(nullable = false)
+    private boolean free = false;
+
     protected Event() {
     }
 
     public Event(String name, LocalDate date, String location) {
+        this(name, date, location, new BigDecimal("20.00"), new BigDecimal("65.00"), false);
+    }
+
+    public Event(String name, LocalDate date, String location, BigDecimal photoPrice, BigDecimal packPrice, boolean free) {
         this.id = UUID.randomUUID();
         this.name = name;
         this.date = date;
@@ -51,6 +65,9 @@ public class Event {
         this.slug = generateSlug(name, date);
         this.createdAt = LocalDateTime.now();
         this.expiresAt = this.createdAt.plusMonths(2);
+        this.photoPrice = photoPrice;
+        this.packPrice = packPrice;
+        this.free = free;
     }
 
     private static String generateSlug(String name, LocalDate date) {
@@ -105,6 +122,15 @@ public class Event {
     public void setHidden(boolean hidden) {
         this.hidden = hidden;
     }
+
+    public BigDecimal getPhotoPrice() { return photoPrice; }
+    public void setPhotoPrice(BigDecimal photoPrice) { this.photoPrice = photoPrice; }
+
+    public BigDecimal getPackPrice() { return packPrice; }
+    public void setPackPrice(BigDecimal packPrice) { this.packPrice = packPrice; }
+
+    public boolean isFree() { return free; }
+    public void setFree(boolean free) { this.free = free; }
 
     public boolean isExpired() {
         return LocalDateTime.now().isAfter(expiresAt);

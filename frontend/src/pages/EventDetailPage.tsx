@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { getEvent, listPhotos, searchByFace, deleteEvent, deletePhoto, uploadCoverImage } from '../services/api';
+import { getEvent, listPhotos, searchByFace, deleteEvent, deletePhoto, uploadCoverImage, getFreeDownloads } from '../services/api';
 import type { EventResponse, PhotoResponse } from '../types/api';
 import { useAuth } from '../context/AuthContext';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -25,6 +25,8 @@ export default function EventDetailPage() {
   const [searching, setSearching] = useState(false);
   const [error, setError] = useState('');
   const [consentGiven, setConsentGiven] = useState(false);
+  const [downloadUrls, setDownloadUrls] = useState<string[] | null>(null);
+  const [downloadLoading, setDownloadLoading] = useState(false);
 
   useEffect(() => {
     if (!slug) return;
@@ -85,11 +87,29 @@ export default function EventDetailPage() {
   if (!event) return <ErrorMessage message="Event not found" />;
 
   const displayPhotos = authenticated ? photos : (matchedPhotos ?? []);
-  const perPhotoTotal = selectedIds.size * 20;
-  const totalPrice = Math.min(perPhotoTotal, 65);
-  const hasBulkDiscount = perPhotoTotal > 65;
+  const isFree = event?.free ?? false;
+  const photoPrice = event?.photoPrice ?? 20;
+  const packPrice = event?.packPrice ?? 65;
+  const perPhotoTotal = selectedIds.size * photoPrice;
+  const totalPrice = Math.min(perPhotoTotal, packPrice);
+  const hasBulkDiscount = perPhotoTotal > packPrice;
   const allSelected = matchedPhotos !== null && matchedPhotos.length > 0 && matchedPhotos.every((p) => selectedIds.has(p.id));
-  const savings = perPhotoTotal - 65;
+  const savings = perPhotoTotal - packPrice;
+
+  async function handleFreeDownload() {
+    if (!slug || !matchedPhotos) return;
+    setDownloadLoading(true);
+    setError('');
+    try {
+      const ids = matchedPhotos.map((p) => p.id);
+      const urls = await getFreeDownloads(slug, ids);
+      setDownloadUrls(urls);
+    } catch {
+      setError('Failed to get download links.');
+    } finally {
+      setDownloadLoading(false);
+    }
+  }
 
   return (
     <div>
@@ -175,7 +195,7 @@ export default function EventDetailPage() {
         </div>
       )}
 
-      {!authenticated && matchedPhotos && (
+      {!authenticated && matchedPhotos && !isFree && (
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-4">
             <span className="text-sm text-gray-600">
@@ -208,12 +228,12 @@ export default function EventDetailPage() {
                 {selectedIds.size} selected —{' '}
                 {hasBulkDiscount ? (
                   <>
-                    <span className="line-through text-gray-400">${perPhotoTotal}</span>{' '}
-                    <span className="text-green-600 font-semibold">${totalPrice} AUD</span>
-                    <span className="text-green-600 text-sm ml-1">(save ${savings}!)</span>
+                    <span className="line-through text-gray-400">${perPhotoTotal.toFixed(2)}</span>{' '}
+                    <span className="text-green-600 font-semibold">${totalPrice.toFixed(2)} AUD</span>
+                    <span className="text-green-600 text-sm ml-1">(save ${savings.toFixed(2)}!)</span>
                   </>
                 ) : (
-                  <>${totalPrice} AUD</>
+                  <>${totalPrice.toFixed(2)} AUD</>
                 )}
               </span>
               <button
@@ -227,12 +247,52 @@ export default function EventDetailPage() {
         </div>
       )}
 
-      {!authenticated && matchedPhotos && matchedPhotos.length >= 5 && !allSelected && selectedIds.size === 0 && (
+      {!authenticated && matchedPhotos && !isFree && matchedPhotos.length >= 5 && !allSelected && selectedIds.size === 0 && (
         <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4 text-center">
           <p className="text-green-800 text-sm">
-            Select all {matchedPhotos.length} photos for just <span className="font-semibold">$65 AUD</span> instead of ${matchedPhotos.length * 20} AUD!
+            Select all {matchedPhotos.length} photos for just <span className="font-semibold">${packPrice.toFixed(2)} AUD</span> instead of ${(matchedPhotos.length * photoPrice).toFixed(2)} AUD!
           </p>
         </div>
+      )}
+
+      {!authenticated && matchedPhotos && isFree && matchedPhotos.length > 0 && (
+        <div className="mb-4">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-gray-600">
+              {matchedPhotos.length} photo{matchedPhotos.length !== 1 ? 's' : ''} found
+            </span>
+            {!downloadUrls && (
+              <button
+                onClick={handleFreeDownload}
+                disabled={downloadLoading}
+                className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 disabled:opacity-50"
+              >
+                {downloadLoading ? 'Preparing...' : 'Download all photos for free'}
+              </button>
+            )}
+          </div>
+          {downloadUrls && (
+            <div className="mt-4 bg-green-50 border border-green-200 rounded-lg p-4">
+              <p className="text-green-800 font-medium mb-3">Your download links are ready!</p>
+              <div className="space-y-2">
+                {downloadUrls.map((url, i) => (
+                  <a
+                    key={i}
+                    href={url}
+                    download
+                    className="block text-indigo-600 hover:text-indigo-800 text-sm truncate"
+                  >
+                    Download photo {i + 1}
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {!authenticated && matchedPhotos && isFree && matchedPhotos.length === 0 && (
+        <p className="text-sm text-gray-600 mb-4">No photos found</p>
       )}
 
       {authenticated ? (

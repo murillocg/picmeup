@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { PayPalScriptProvider, PayPalButtons } from '@paypal/react-paypal-js';
-import { createOrder, capturePayment, getPayPalClientId } from '../services/api';
+import { createOrder, capturePayment, getPayPalClientId, getEvent } from '../services/api';
+import type { EventResponse } from '../types/api';
 import ErrorMessage from '../components/ErrorMessage';
 import LoadingSpinner from '../components/LoadingSpinner';
 
 export default function CheckoutPage() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
+  const [event, setEvent] = useState<EventResponse | null>(null);
   const [email, setEmail] = useState('');
   const [emailConfirmed, setEmailConfirmed] = useState(false);
   const [orderId, setOrderId] = useState<string | null>(null);
@@ -22,11 +24,17 @@ export default function CheckoutPage() {
     : [];
 
   useEffect(() => {
-    getPayPalClientId()
-      .then(setPaypalClientId)
-      .catch(() => setError('Failed to load payment provider'))
+    if (!slug) return;
+    Promise.all([getPayPalClientId(), getEvent(slug)])
+      .then(([clientId, eventData]) => {
+        setPaypalClientId(clientId);
+        setEvent(eventData);
+      })
+      .catch(() => setError('Failed to load checkout'))
       .finally(() => setLoading(false));
-  }, []);
+  }, [slug]);
+
+  if (loading) return <LoadingSpinner />;
 
   if (cart.length === 0) {
     return (
@@ -37,9 +45,11 @@ export default function CheckoutPage() {
     );
   }
 
-  const perPhotoTotal = cart.length * 20;
-  const totalPrice = Math.min(perPhotoTotal, 65);
-  const hasBulkDiscount = perPhotoTotal > 65;
+  const photoPrice = event?.photoPrice ?? 20;
+  const packPrice = event?.packPrice ?? 65;
+  const perPhotoTotal = cart.length * photoPrice;
+  const totalPrice = Math.min(perPhotoTotal, packPrice);
+  const hasBulkDiscount = perPhotoTotal > packPrice;
 
   async function handleEmailSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -70,8 +80,6 @@ export default function CheckoutPage() {
     navigate(`/orders/${orderId}`);
   }
 
-  if (loading) return <LoadingSpinner />;
-
   return (
     <div className="max-w-lg mx-auto">
       <h1 className="text-2xl font-bold text-gray-900 mb-6">Checkout</h1>
@@ -81,18 +89,18 @@ export default function CheckoutPage() {
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Order Summary</h2>
         <div className="flex justify-between text-gray-600 mb-2">
-          <span>{cart.length} photo{cart.length !== 1 ? 's' : ''} x $20.00</span>
-          <span>${perPhotoTotal}.00 AUD</span>
+          <span>{cart.length} photo{cart.length !== 1 ? 's' : ''} x ${photoPrice.toFixed(2)}</span>
+          <span>${perPhotoTotal.toFixed(2)} AUD</span>
         </div>
         {hasBulkDiscount && (
           <div className="flex justify-between text-green-600 mb-2">
             <span>Bulk discount</span>
-            <span>-${perPhotoTotal - 65}.00 AUD</span>
+            <span>-${(perPhotoTotal - packPrice).toFixed(2)} AUD</span>
           </div>
         )}
         <div className="border-t pt-2 mt-2 flex justify-between font-semibold text-gray-900">
           <span>Total</span>
-          <span>${totalPrice}.00 AUD</span>
+          <span>${totalPrice.toFixed(2)} AUD</span>
         </div>
       </div>
 

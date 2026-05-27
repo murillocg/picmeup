@@ -31,7 +31,8 @@ public class EventController {
 
     @PostMapping
     public ResponseEntity<EventResponse> createEvent(@Valid @RequestBody CreateEventRequest request) {
-        var event = eventService.createEvent(request.name(), request.date(), request.location());
+        var event = eventService.createEvent(request.name(), request.date(), request.location(),
+                request.photoPrice(), request.packPrice(), request.free());
         return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(event));
     }
 

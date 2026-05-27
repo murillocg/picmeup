@@ -104,6 +104,11 @@ export async function searchByFace(
   return response.data;
 }
 
+export async function getFreeDownloads(slug: string, photoIds: string[]): Promise<string[]> {
+  const response = await api.post<string[]>(`/events/${slug}/free-downloads`, { photoIds });
+  return response.data;
+}
+
 export async function listOrders(): Promise<OrderSummaryResponse[]> {
   const response = await api.get<OrderSummaryResponse[]>('/orders');
   return response.data;

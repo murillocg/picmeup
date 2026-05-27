@@ -8,12 +8,18 @@ export interface EventResponse {
   expiresAt: string;
   coverImageUrl: string | null;
   hidden: boolean;
+  photoPrice: number;
+  packPrice: number;
+  free: boolean;
 }
 
 export interface CreateEventRequest {
   name: string;
   date: string;
   location: string;
+  photoPrice: number;
+  packPrice: number;
+  free: boolean;
 }
 
 export interface PhotoResponse {

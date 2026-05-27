@@ -11,6 +11,7 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 import static org.hamcrest.Matchers.hasSize;
@@ -35,7 +36,7 @@ class EventControllerTest {
 
     @Test
     void createEvent_shouldReturn201() throws Exception {
-        var request = new CreateEventRequest("City Marathon", LocalDate.of(2026, 5, 10), "Sydney");
+        var request = new CreateEventRequest("City Marathon", LocalDate.of(2026, 5, 10), "Sydney", new BigDecimal("20.00"), new BigDecimal("65.00"), false);
 
         mockMvc.perform(post("/api/events")
                         .with(httpBasic("admin", "admin123"))
@@ -50,7 +51,7 @@ class EventControllerTest {
 
     @Test
     void createEvent_shouldReturn401WhenUnauthenticated() throws Exception {
-        var request = new CreateEventRequest("City Marathon", LocalDate.of(2026, 5, 10), "Sydney");
+        var request = new CreateEventRequest("City Marathon", LocalDate.of(2026, 5, 10), "Sydney", new BigDecimal("20.00"), new BigDecimal("65.00"), false);
 
         mockMvc.perform(post("/api/events")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -60,7 +61,7 @@ class EventControllerTest {
 
     @Test
     void createEvent_shouldReturn400WhenNameMissing() throws Exception {
-        var request = new CreateEventRequest("", LocalDate.of(2026, 5, 10), "Sydney");
+        var request = new CreateEventRequest("", LocalDate.of(2026, 5, 10), "Sydney", new BigDecimal("20.00"), new BigDecimal("65.00"), false);
 
         mockMvc.perform(post("/api/events")
                         .with(httpBasic("admin", "admin123"))
@@ -72,7 +73,7 @@ class EventControllerTest {
 
     @Test
     void getEvent_shouldReturnEventBySlug() throws Exception {
-        var request = new CreateEventRequest("Beach Party", LocalDate.of(2026, 6, 15), "Bondi");
+        var request = new CreateEventRequest("Beach Party", LocalDate.of(2026, 6, 15), "Bondi", new BigDecimal("20.00"), new BigDecimal("65.00"), false);
 
         mockMvc.perform(post("/api/events")
                 .with(httpBasic("admin", "admin123"))
@@ -93,8 +94,8 @@ class EventControllerTest {
 
     @Test
     void listActiveEvents_shouldReturnNonExpiredEvents() throws Exception {
-        var request1 = new CreateEventRequest("Event One", LocalDate.of(2026, 5, 10), "Sydney");
-        var request2 = new CreateEventRequest("Event Two", LocalDate.of(2026, 6, 20), "Melbourne");
+        var request1 = new CreateEventRequest("Event One", LocalDate.of(2026, 5, 10), "Sydney", new BigDecimal("20.00"), new BigDecimal("65.00"), false);
+        var request2 = new CreateEventRequest("Event Two", LocalDate.of(2026, 6, 20), "Melbourne", new BigDecimal("20.00"), new BigDecimal("65.00"), false);
 
         mockMvc.perform(post("/api/events")
                 .with(httpBasic("admin", "admin123"))
@@ -113,7 +114,7 @@ class EventControllerTest {
 
     @Test
     void createEvent_shouldReturn400WhenDuplicateSlug() throws Exception {
-        var request = new CreateEventRequest("Marathon", LocalDate.of(2026, 5, 10), "Sydney");
+        var request = new CreateEventRequest("Marathon", LocalDate.of(2026, 5, 10), "Sydney", new BigDecimal("20.00"), new BigDecimal("65.00"), false);
 
         mockMvc.perform(post("/api/events")
                 .with(httpBasic("admin", "admin123"))

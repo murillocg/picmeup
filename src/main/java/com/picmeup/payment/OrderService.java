@@ -3,6 +3,8 @@ package com.picmeup.payment;
 import com.picmeup.common.EmailService;
 import com.picmeup.common.exception.ResourceNotFoundException;
 import com.picmeup.payment.dto.OrderItemResponse;
+import com.picmeup.photo.Event;
+import com.picmeup.photo.EventRepository;
 import com.picmeup.photo.Photo;
 import com.picmeup.photo.PhotoRepository;
 import com.picmeup.photo.S3StorageService;
@@ -25,12 +27,11 @@ import java.util.zip.ZipOutputStream;
 public class OrderService {
 
     private static final Logger log = LoggerFactory.getLogger(OrderService.class);
-    private static final BigDecimal PHOTO_PRICE = new BigDecimal("20.00");
-    private static final BigDecimal BULK_PRICE = new BigDecimal("65.00");
 
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
     private final PhotoRepository photoRepository;
+    private final EventRepository eventRepository;
     private final S3StorageService s3StorageService;
     private final EmailService emailService;
     private final PayPalService payPalService;
@@ -38,12 +39,14 @@ public class OrderService {
     public OrderService(OrderRepository orderRepository,
                         OrderItemRepository orderItemRepository,
                         PhotoRepository photoRepository,
+                        EventRepository eventRepository,
                         S3StorageService s3StorageService,
                         EmailService emailService,
                         PayPalService payPalService) {
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
         this.photoRepository = photoRepository;
+        this.eventRepository = eventRepository;
         this.s3StorageService = s3StorageService;
         this.emailService = emailService;
         this.payPalService = payPalService;
@@ -63,8 +66,15 @@ public class OrderService {
             }
         }
 
-        BigDecimal perPhotoTotal = PHOTO_PRICE.multiply(new BigDecimal(photos.size()));
-        BigDecimal totalAmount = perPhotoTotal.compareTo(BULK_PRICE) > 0 ? BULK_PRICE : perPhotoTotal;
+        Event event = photos.get(0).getEvent();
+        if (event.isFree()) {
+            throw new IllegalArgumentException("This event is free — photos can be downloaded directly");
+        }
+
+        BigDecimal photoPrice = event.getPhotoPrice();
+        BigDecimal packPrice = event.getPackPrice();
+        BigDecimal perPhotoTotal = photoPrice.multiply(new BigDecimal(photos.size()));
+        BigDecimal totalAmount = perPhotoTotal.compareTo(packPrice) > 0 ? packPrice : perPhotoTotal;
         BigDecimal itemPrice = totalAmount.divide(new BigDecimal(photos.size()), 2, java.math.RoundingMode.HALF_UP);
         var order = new Order(buyerEmail, totalAmount);
         orderRepository.save(order);

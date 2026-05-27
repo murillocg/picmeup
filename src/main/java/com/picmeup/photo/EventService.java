@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -43,8 +44,9 @@ public class EventService {
     }
 
     @Transactional
-    public Event createEvent(String name, LocalDate date, String location) {
-        var event = new Event(name, date, location);
+    public Event createEvent(String name, LocalDate date, String location,
+                             BigDecimal photoPrice, BigDecimal packPrice, boolean free) {
+        var event = new Event(name, date, location, photoPrice, packPrice, free);
 
         if (eventRepository.existsBySlug(event.getSlug())) {
             throw new IllegalArgumentException("An event with this name and date already exists");

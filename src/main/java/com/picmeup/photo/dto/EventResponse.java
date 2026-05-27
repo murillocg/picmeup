@@ -2,6 +2,7 @@ package com.picmeup.photo.dto;
 
 import com.picmeup.photo.Event;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -15,7 +16,10 @@ public record EventResponse(
         LocalDateTime createdAt,
         LocalDateTime expiresAt,
         String coverImageUrl,
-        boolean hidden
+        boolean hidden,
+        BigDecimal photoPrice,
+        BigDecimal packPrice,
+        boolean free
 ) {
     public static EventResponse from(Event event, String coverImageUrl) {
         return new EventResponse(
@@ -27,7 +31,10 @@ public record EventResponse(
                 event.getCreatedAt(),
                 event.getExpiresAt(),
                 coverImageUrl,
-                event.isHidden()
+                event.isHidden(),
+                event.getPhotoPrice(),
+                event.getPackPrice(),
+                event.isFree()
         );
     }
 }

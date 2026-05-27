@@ -7,6 +7,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Optional;
 
@@ -49,7 +50,8 @@ class EventServiceTest {
         when(eventRepository.existsBySlug(anyString())).thenReturn(false);
         when(eventRepository.save(any(Event.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        var event = eventService.createEvent("City Marathon 2026", LocalDate.of(2026, 5, 10), "Sydney");
+        var event = eventService.createEvent("City Marathon 2026", LocalDate.of(2026, 5, 10), "Sydney",
+                new BigDecimal("20.00"), new BigDecimal("65.00"), false);
 
         assertThat(event.getName()).isEqualTo("City Marathon 2026");
         assertThat(event.getSlug()).isEqualTo("city-marathon-2026-2026-05-10");
@@ -61,7 +63,8 @@ class EventServiceTest {
     void createEvent_shouldRejectDuplicateSlug() {
         when(eventRepository.existsBySlug(anyString())).thenReturn(true);
 
-        assertThatThrownBy(() -> eventService.createEvent("Marathon", LocalDate.of(2026, 5, 10), "Sydney"))
+        assertThatThrownBy(() -> eventService.createEvent("Marathon", LocalDate.of(2026, 5, 10), "Sydney",
+                new BigDecimal("20.00"), new BigDecimal("65.00"), false))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("already exists");
     }
