@@ -8,6 +8,7 @@ import jakarta.persistence.Table;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.UUID;
 
 @Entity
@@ -63,7 +64,7 @@ public class Event {
         this.date = date;
         this.location = location;
         this.slug = generateSlug(name, date);
-        this.createdAt = LocalDateTime.now();
+        this.createdAt = LocalDateTime.now(ZoneOffset.UTC);
         this.expiresAt = this.createdAt.plusMonths(2);
         this.photoPrice = photoPrice;
         this.packPrice = packPrice;
@@ -133,6 +134,6 @@ public class Event {
     public void setFree(boolean free) { this.free = free; }
 
     public boolean isExpired() {
-        return LocalDateTime.now().isAfter(expiresAt);
+        return LocalDateTime.now(ZoneOffset.UTC).isAfter(expiresAt);
     }
 }

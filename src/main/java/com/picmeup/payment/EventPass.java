@@ -9,6 +9,7 @@ import jakarta.persistence.Table;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.UUID;
 
 @Entity
@@ -57,7 +58,7 @@ public class EventPass {
         this.price = price;
         this.currency = "AUD";
         this.status = Status.PENDING;
-        this.createdAt = LocalDateTime.now();
+        this.createdAt = LocalDateTime.now(ZoneOffset.UTC);
     }
 
     public UUID getId() {
@@ -106,6 +107,6 @@ public class EventPass {
 
     public void markRedeemed() {
         this.status = Status.REDEEMED;
-        this.redeemedAt = LocalDateTime.now();
+        this.redeemedAt = LocalDateTime.now(ZoneOffset.UTC);
     }
 }

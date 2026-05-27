@@ -6,6 +6,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.UUID;
 
 @Entity
@@ -31,7 +32,7 @@ public class FaceSearch {
         this.id = UUID.randomUUID();
         this.eventId = eventId;
         this.resultsCount = resultsCount;
-        this.searchedAt = LocalDateTime.now();
+        this.searchedAt = LocalDateTime.now(ZoneOffset.UTC);
     }
 
     public UUID getId() { return id; }

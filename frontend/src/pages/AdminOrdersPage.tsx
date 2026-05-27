@@ -41,7 +41,7 @@ export default function AdminOrdersPage() {
               {orders.map((order) => (
                 <tr key={order.id} className="hover:bg-gray-50">
                   <td className="px-4 py-3 text-gray-600">
-                    {new Date(order.createdAt).toLocaleDateString('en-AU', {
+                    {new Date(order.createdAt + 'Z').toLocaleDateString('en-AU', {
                       year: 'numeric',
                       month: 'short',
                       day: 'numeric',

@@ -14,6 +14,7 @@ import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 
 @Service
@@ -61,11 +62,11 @@ public class EventService {
     }
 
     public List<Event> listActiveEvents() {
-        return eventRepository.findByExpiresAtAfterAndHiddenFalseOrderByDateDesc(LocalDateTime.now());
+        return eventRepository.findByExpiresAtAfterAndHiddenFalseOrderByDateDesc(LocalDateTime.now(ZoneOffset.UTC));
     }
 
     public List<Event> listAllActiveEvents() {
-        return eventRepository.findByExpiresAtAfterOrderByDateDesc(LocalDateTime.now());
+        return eventRepository.findByExpiresAtAfterOrderByDateDesc(LocalDateTime.now(ZoneOffset.UTC));
     }
 
     @Transactional

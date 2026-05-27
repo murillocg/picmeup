@@ -41,7 +41,7 @@ export default function AdminPassesPage() {
               {passes.map((pass) => (
                 <tr key={pass.id} className="hover:bg-gray-50">
                   <td className="px-4 py-3 text-gray-600">
-                    {new Date(pass.createdAt).toLocaleDateString('en-AU', {
+                    {new Date(pass.createdAt + 'Z').toLocaleDateString('en-AU', {
                       year: 'numeric',
                       month: 'short',
                       day: 'numeric',
@@ -68,7 +68,7 @@ export default function AdminPassesPage() {
                   </td>
                   <td className="px-4 py-3 text-gray-600">
                     {pass.redeemedAt
-                      ? new Date(pass.redeemedAt).toLocaleDateString('en-AU', {
+                      ? new Date(pass.redeemedAt + 'Z').toLocaleDateString('en-AU', {
                           year: 'numeric',
                           month: 'short',
                           day: 'numeric',

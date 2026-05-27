@@ -11,6 +11,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.UUID;
 
@@ -60,7 +61,7 @@ public class Photo {
         this.id = id;
         this.event = event;
         this.photographer = photographer;
-        this.uploadedAt = LocalDateTime.now();
+        this.uploadedAt = LocalDateTime.now(ZoneOffset.UTC);
         this.status = Status.PROCESSING;
     }
 
