@@ -68,8 +68,8 @@ aws:
     confidence-threshold: 80.0
 
 paypal:
-  client-id: ${PAYPAL_CLIENT_ID}
-  client-secret: ${PAYPAL_CLIENT_SECRET}
+  client-id: ${PAYPAL_CLIENT_ID:unused}
+  client-secret: ${PAYPAL_CLIENT_SECRET:unused}
   base-url: https://api-m.sandbox.paypal.com
 
 ---

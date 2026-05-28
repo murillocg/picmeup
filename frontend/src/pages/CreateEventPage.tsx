@@ -26,6 +26,13 @@ export default function CreateEventPage() {
     }
   }
 
+  function formatPrice(value: string, setter: (v: string) => void) {
+    const num = parseFloat(value);
+    if (!isNaN(num) && num >= 0) {
+      setter(num.toFixed(2));
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSubmitting(true);
@@ -113,6 +120,7 @@ export default function CreateEventPage() {
                   step="0.01"
                   value={photoPrice}
                   onChange={(e) => handlePhotoPriceChange(e.target.value)}
+                  onBlur={() => formatPrice(photoPrice, setPhotoPrice)}
                   className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-brand-orange"
                 />
               </div>
@@ -128,6 +136,7 @@ export default function CreateEventPage() {
                   step="0.01"
                   value={packPrice}
                   onChange={(e) => setPackPrice(e.target.value)}
+                  onBlur={() => formatPrice(packPrice, setPackPrice)}
                   className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-brand-orange"
                 />
                 <p className="text-xs text-gray-500 mt-1">
