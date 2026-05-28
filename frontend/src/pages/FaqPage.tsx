@@ -60,7 +60,7 @@ export default function FaqPage() {
       <p className="text-gray-500 mb-8">
         Everything you need to know about finding and purchasing your event photos. For full
         details on how we handle your data, see our{' '}
-        <Link to="/privacy-policy" className="text-indigo-600 hover:text-indigo-800 underline">
+        <Link to="/privacy-policy" className="text-brand-orange hover:text-brand-orange-dark underline">
           Privacy Policy
         </Link>
         .

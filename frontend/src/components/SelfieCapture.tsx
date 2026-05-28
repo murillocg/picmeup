@@ -89,13 +89,13 @@ export default function SelfieCapture({ onCapture, loading }: SelfieCaptureProps
             autoPlay
             playsInline
             muted
-            className="w-64 h-48 rounded-lg object-cover border-2 border-indigo-200"
+            className="w-64 h-48 rounded-lg object-cover border-2 border-brand-orange/30"
             style={{ transform: 'scaleX(-1)' }}
           />
           <div className="flex gap-2 mt-3 justify-center">
             <button
               onClick={captureFromWebcam}
-              className="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 text-sm font-medium"
+              className="bg-brand-orange text-white px-6 py-2 rounded-lg hover:bg-brand-orange-dark text-sm font-medium"
             >
               Capture
             </button>
@@ -111,7 +111,7 @@ export default function SelfieCapture({ onCapture, loading }: SelfieCaptureProps
         <img
           src={preview}
           alt="Selfie preview"
-          className="w-32 h-32 rounded-full object-cover border-4 border-indigo-200"
+          className="w-32 h-32 rounded-full object-cover border-4 border-brand-orange/30"
         />
       ) : (
         <div className="w-32 h-32 rounded-full bg-gray-200 flex items-center justify-center">
@@ -141,7 +141,7 @@ export default function SelfieCapture({ onCapture, loading }: SelfieCaptureProps
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={loading}
-              className="bg-white text-indigo-600 border border-indigo-600 px-6 py-3 rounded-lg hover:bg-indigo-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="bg-white text-brand-orange border border-brand-orange px-6 py-3 rounded-lg hover:bg-orange-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Searching...' : 'Upload a photo'}
             </button>
@@ -149,7 +149,7 @@ export default function SelfieCapture({ onCapture, loading }: SelfieCaptureProps
           <button
             onClick={startWebcam}
             disabled={loading}
-            className="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="bg-brand-orange text-white px-6 py-3 rounded-lg hover:bg-brand-orange-dark disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? 'Searching...' : preview ? 'Take another selfie' : 'Take a selfie'}
           </button>

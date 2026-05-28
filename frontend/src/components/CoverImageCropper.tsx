@@ -85,7 +85,7 @@ export default function CoverImageCropper({ imageUrl, onConfirm, onCancel }: Cov
           </button>
           <button
             onClick={handleConfirm}
-            className="px-4 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+            className="px-4 py-2 text-sm bg-brand-orange text-white rounded-lg hover:bg-brand-orange-dark"
           >
             Upload
           </button>

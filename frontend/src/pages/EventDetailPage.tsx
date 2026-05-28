@@ -129,7 +129,7 @@ export default function EventDetailPage() {
           <div className="flex items-center gap-2">
             <Link
               to={`/events/${slug}/upload`}
-              className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 text-sm"
+              className="bg-brand-orange text-white px-4 py-2 rounded-lg hover:bg-brand-orange-dark text-sm"
             >
               Upload photos
             </Link>
@@ -184,7 +184,7 @@ export default function EventDetailPage() {
               </p>
               <button
                 onClick={() => setConsentGiven(true)}
-                className="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700"
+                className="bg-brand-orange text-white px-6 py-3 rounded-lg hover:bg-brand-orange-dark"
               >
                 I agree, let me search
               </button>
@@ -215,7 +215,7 @@ export default function EventDetailPage() {
                     return next;
                   });
                 }}
-                className="text-sm text-indigo-600 hover:text-indigo-700 font-medium"
+                className="text-sm text-brand-orange hover:text-brand-orange-dark font-medium"
               >
                 {allSelected ? 'Deselect all' : 'Select all'}
               </button>
@@ -280,7 +280,7 @@ export default function EventDetailPage() {
                     key={i}
                     href={url}
                     download
-                    className="block text-indigo-600 hover:text-indigo-800 text-sm truncate"
+                    className="block text-brand-orange hover:text-brand-orange-dark text-sm truncate"
                   >
                     Download photo {i + 1}
                   </a>

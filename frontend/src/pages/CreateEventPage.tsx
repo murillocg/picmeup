@@ -62,7 +62,7 @@ export default function CreateEventPage() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="City Marathon 2026"
-            className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-brand-orange"
           />
         </div>
 
@@ -73,7 +73,7 @@ export default function CreateEventPage() {
             required
             value={date}
             onChange={(e) => setDate(e.target.value)}
-            className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-brand-orange"
           />
         </div>
 
@@ -85,7 +85,7 @@ export default function CreateEventPage() {
             value={location}
             onChange={(e) => setLocation(e.target.value)}
             placeholder="Sydney, Australia"
-            className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-brand-orange"
           />
         </div>
 
@@ -97,7 +97,7 @@ export default function CreateEventPage() {
               type="checkbox"
               checked={free}
               onChange={(e) => setFree(e.target.checked)}
-              className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+              className="h-4 w-4 rounded border-gray-300 text-brand-orange focus:ring-brand-orange"
             />
             <span className="text-sm font-medium text-gray-700">Free event — users can download photos for free</span>
           </label>
@@ -113,7 +113,7 @@ export default function CreateEventPage() {
                   step="0.01"
                   value={photoPrice}
                   onChange={(e) => handlePhotoPriceChange(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-brand-orange"
                 />
               </div>
 
@@ -128,7 +128,7 @@ export default function CreateEventPage() {
                   step="0.01"
                   value={packPrice}
                   onChange={(e) => setPackPrice(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-brand-orange"
                 />
                 <p className="text-xs text-gray-500 mt-1">
                   Users pay at most this amount, regardless of how many photos they select.
@@ -141,7 +141,7 @@ export default function CreateEventPage() {
         <button
           type="submit"
           disabled={submitting}
-          className="w-full bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full bg-brand-orange text-white py-3 rounded-lg hover:bg-brand-orange-dark disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {submitting ? 'Creating...' : 'Create event'}
         </button>

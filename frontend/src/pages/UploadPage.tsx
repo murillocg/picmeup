@@ -95,7 +95,7 @@ export default function UploadPage() {
           </p>
           <Link
             to={`/events/${slug}`}
-            className="inline-block bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700"
+            className="inline-block bg-brand-orange text-white px-6 py-3 rounded-lg hover:bg-brand-orange-dark"
           >
             View event
           </Link>
@@ -179,7 +179,7 @@ export default function UploadPage() {
             </div>
             <div className="w-full bg-gray-200 rounded-full h-3">
               <div
-                className="bg-indigo-600 h-3 rounded-full transition-all duration-300"
+                className="bg-brand-orange h-3 rounded-full transition-all duration-300"
                 style={{ width: `${progress}%` }}
               />
             </div>
@@ -192,7 +192,7 @@ export default function UploadPage() {
         <button
           type="submit"
           disabled={uploading || files.length === 0}
-          className="w-full bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full bg-brand-orange text-white py-3 rounded-lg hover:bg-brand-orange-dark disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {uploading
             ? `Uploading ${uploaded + failed + 1}/${files.length}...`

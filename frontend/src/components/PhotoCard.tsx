@@ -31,7 +31,7 @@ export default function PhotoCard({
     <div className="relative group">
       <div
         className={`aspect-square rounded-lg overflow-hidden cursor-pointer border-2 transition-all ${
-          selected ? 'border-indigo-600 ring-2 ring-indigo-300' : 'border-transparent'
+          selected ? 'border-brand-orange ring-2 ring-brand-orange/40' : 'border-transparent'
         }`}
         onClick={onView}
       >
@@ -45,7 +45,7 @@ export default function PhotoCard({
           <div
             className={`absolute top-2 right-2 w-6 h-6 rounded-full border-2 flex items-center justify-center ${
               selected
-                ? 'bg-indigo-600 border-indigo-600 text-white'
+                ? 'bg-brand-orange border-brand-orange text-white'
                 : 'bg-white/80 border-gray-300'
             }`}
             onClick={(e) => {

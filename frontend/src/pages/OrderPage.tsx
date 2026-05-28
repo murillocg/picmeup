@@ -62,7 +62,7 @@ export default function OrderPage() {
                 <a
                   href={item.downloadUrl}
                   download
-                  className="bg-indigo-600 text-white px-4 py-1.5 rounded-lg hover:bg-indigo-700 text-sm"
+                  className="bg-brand-orange text-white px-4 py-1.5 rounded-lg hover:bg-brand-orange-dark text-sm"
                 >
                   Download
                 </a>

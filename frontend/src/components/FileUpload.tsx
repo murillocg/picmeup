@@ -33,7 +33,7 @@ export default function FileUpload({
   return (
     <div
       className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-        dragActive ? 'border-indigo-500 bg-indigo-50' : 'border-gray-300'
+        dragActive ? 'border-brand-orange bg-orange-50' : 'border-gray-300'
       }`}
       onDragOver={(e) => {
         e.preventDefault();
@@ -73,7 +73,7 @@ export default function FileUpload({
       <button
         type="button"
         onClick={() => fileInputRef.current?.click()}
-        className="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700"
+        className="bg-brand-orange text-white px-6 py-2 rounded-lg hover:bg-brand-orange-dark"
       >
         Browse files
       </button>

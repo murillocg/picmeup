@@ -68,7 +68,7 @@ export default function AdminSearchStatsPage() {
                     <tr key={stat.eventId} className="hover:bg-gray-50">
                       <td className="px-4 py-3 text-gray-900">
                         {stat.eventSlug ? (
-                          <Link to={`/events/${stat.eventSlug}`} className="text-indigo-600 hover:text-indigo-800 font-medium">
+                          <Link to={`/events/${stat.eventSlug}`} className="text-brand-orange hover:text-brand-orange-dark font-medium">
                             {stat.eventName}
                           </Link>
                         ) : (

@@ -118,7 +118,7 @@ export default function CheckoutPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="you@example.com"
-            className="w-full border border-gray-300 rounded-lg px-4 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full border border-gray-300 rounded-lg px-4 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-brand-orange"
           />
 
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
@@ -135,7 +135,7 @@ export default function CheckoutPage() {
                 type="checkbox"
                 checked={termsAccepted}
                 onChange={(e) => setTermsAccepted(e.target.checked)}
-                className="mt-0.5 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                className="mt-0.5 h-4 w-4 rounded border-gray-300 text-brand-orange focus:ring-brand-orange"
               />
               <span className="text-sm text-gray-700">
                 I agree to the terms of use for these images
@@ -146,7 +146,7 @@ export default function CheckoutPage() {
           <button
             type="submit"
             disabled={!termsAccepted}
-            className="w-full bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
+            className="w-full bg-brand-orange text-white py-3 rounded-lg hover:bg-brand-orange-dark disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
           >
             Continue to payment
           </button>

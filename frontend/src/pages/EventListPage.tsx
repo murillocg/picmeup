@@ -46,7 +46,7 @@ export default function EventListPage() {
           placeholder="Search events..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-brand-orange"
         />
       </div>
 
@@ -62,7 +62,7 @@ export default function EventListPage() {
               to={`/events/${event.slug}`}
               className={`group bg-white rounded-xl shadow-sm border overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-200 ${event.hidden ? 'border-orange-300 opacity-60' : 'border-gray-200'}`}
             >
-              <div className="relative h-48 bg-gradient-to-br from-indigo-100 to-gray-100">
+              <div className="relative h-48 bg-gradient-to-br from-orange-100 to-gray-100">
                 {authenticated && (
                   <button
                     onClick={(e) => handleToggleHidden(e, event.slug)}
@@ -86,7 +86,7 @@ export default function EventListPage() {
                     </svg>
                   </div>
                 )}
-                <span className="absolute bottom-3 left-3 bg-indigo-600 text-white text-xs font-semibold px-2.5 py-1 rounded-full shadow-sm">
+                <span className="absolute bottom-3 left-3 bg-brand-orange text-white text-xs font-semibold px-2.5 py-1 rounded-full shadow-sm">
                   {new Date(event.date).toLocaleDateString('en-AU', {
                     year: 'numeric',
                     month: 'short',
@@ -95,7 +95,7 @@ export default function EventListPage() {
                 </span>
               </div>
               <div className="p-4">
-                <h2 className="text-lg font-semibold text-gray-900 mb-1 truncate group-hover:text-indigo-600 transition-colors">{event.name}</h2>
+                <h2 className="text-lg font-semibold text-gray-900 mb-1 truncate group-hover:text-brand-orange transition-colors">{event.name}</h2>
                 <p className="text-sm text-gray-500 truncate flex items-center gap-1.5">
                   <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
