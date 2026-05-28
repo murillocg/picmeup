@@ -47,6 +47,10 @@ public class EventService {
     @Transactional
     public Event createEvent(String name, LocalDate date, String location,
                              BigDecimal photoPrice, BigDecimal packPrice, boolean free) {
+        if (!free && packPrice.compareTo(photoPrice) < 0) {
+            throw new IllegalArgumentException("Pack price must be greater than or equal to the price per photo");
+        }
+
         var event = new Event(name, date, location, photoPrice, packPrice, free);
 
         if (eventRepository.existsBySlug(event.getSlug())) {

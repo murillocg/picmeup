@@ -37,6 +37,11 @@ export default function CreateEventPage() {
     e.preventDefault();
     setSubmitting(true);
     setError('');
+    if (!free && parseFloat(packPrice) < parseFloat(photoPrice)) {
+      setError('Pack price must be greater than or equal to the price per photo.');
+      setSubmitting(false);
+      return;
+    }
     try {
       const event = await createEvent({
         name,
