@@ -14,4 +14,6 @@ public interface PhotoRepository extends JpaRepository<Photo, UUID> {
     List<Photo> findByIdInAndStatus(List<UUID> ids, Photo.Status status);
 
     void deleteByEventId(UUID eventId);
+
+    boolean existsByEventIdAndOriginalFilename(UUID eventId, String originalFilename);
 }

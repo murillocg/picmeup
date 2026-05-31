@@ -10,7 +10,8 @@ public record PhotoResponse(
         String status,
         String thumbnailUrl,
         String originalUrl,
-        LocalDateTime uploadedAt
+        LocalDateTime uploadedAt,
+        String filename
 ) {
     public static PhotoResponse from(Photo photo, String thumbnailUrl) {
         return new PhotoResponse(
@@ -18,7 +19,8 @@ public record PhotoResponse(
                 photo.getStatus().name(),
                 thumbnailUrl,
                 null,
-                photo.getUploadedAt()
+                photo.getUploadedAt(),
+                photo.getOriginalFilename()
         );
     }
 
@@ -28,7 +30,8 @@ public record PhotoResponse(
                 photo.getStatus().name(),
                 thumbnailUrl,
                 originalUrl,
-                photo.getUploadedAt()
+                photo.getUploadedAt(),
+                photo.getOriginalFilename()
         );
     }
 }

@@ -57,7 +57,7 @@ export default function OrderPage() {
               key={item.id}
               className="flex items-center justify-between border border-gray-100 rounded-lg p-3"
             >
-              <span className="text-sm text-gray-600">Photo — ${item.price.toFixed(2)}</span>
+              <span className="text-sm text-gray-600">{item.filename || 'Photo'} — ${item.price.toFixed(2)}</span>
               {isPaid && item.downloadUrl ? (
                 <a
                   href={item.downloadUrl}

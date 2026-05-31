@@ -52,8 +52,10 @@ public class PhotoController {
     }
 
     @PostMapping("/presign")
-    public ResponseEntity<Map<String, String>> presignUpload(@PathVariable String slug) {
-        var result = photoService.presignUpload(slug);
+    public ResponseEntity<Map<String, String>> presignUpload(
+            @PathVariable String slug,
+            @RequestParam(required = false) String filename) {
+        var result = photoService.presignUpload(slug, filename);
         return ResponseEntity.ok(result);
     }
 
@@ -61,8 +63,9 @@ public class PhotoController {
     public ResponseEntity<PhotoUploadResponse> confirmUpload(
             @PathVariable String slug,
             @RequestParam String photoId,
-            @RequestParam String s3Key) {
-        var photo = photoService.confirmUpload(slug, photoId, s3Key);
+            @RequestParam String s3Key,
+            @RequestParam(required = false) String filename) {
+        var photo = photoService.confirmUpload(slug, photoId, s3Key, filename);
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(PhotoUploadResponse.from(photo));
     }
 

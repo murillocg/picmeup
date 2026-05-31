@@ -28,6 +28,7 @@ export interface PhotoResponse {
   thumbnailUrl: string | null;
   originalUrl: string | null;
   uploadedAt: string;
+  filename: string | null;
 }
 
 export interface PhotoUploadResponse {
@@ -40,6 +41,7 @@ export interface OrderItemResponse {
   photoId: string;
   price: number;
   downloadUrl: string | null;
+  filename: string | null;
 }
 
 export interface OrderResponse {

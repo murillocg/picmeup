@@ -47,7 +47,9 @@ export async function uploadPhoto(
     uploadUrl: string;
     s3Key: string;
     photoId: string;
-  }>(`/events/${slug}/photos/presign`);
+  }>(`/events/${slug}/photos/presign`, null, {
+    params: { filename: file.name },
+  });
 
   const { uploadUrl, s3Key, photoId } = presignResponse.data;
 
@@ -62,7 +64,7 @@ export async function uploadPhoto(
   const confirmResponse = await api.post<PhotoUploadResponse>(
     `/events/${slug}/photos/confirm`,
     null,
-    { params: { photoId, s3Key } },
+    { params: { photoId, s3Key, filename: file.name } },
   );
 
   return confirmResponse.data;

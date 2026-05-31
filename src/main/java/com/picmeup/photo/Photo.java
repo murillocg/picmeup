@@ -50,19 +50,27 @@ public class Photo {
     @Column(nullable = false)
     private Status status;
 
+    @Column(name = "original_filename")
+    private String originalFilename;
+
     protected Photo() {
     }
 
     public Photo(Event event, Photographer photographer) {
-        this(UUID.randomUUID(), event, photographer);
+        this(UUID.randomUUID(), event, photographer, null);
     }
 
     public Photo(UUID id, Event event, Photographer photographer) {
+        this(id, event, photographer, null);
+    }
+
+    public Photo(UUID id, Event event, Photographer photographer, String originalFilename) {
         this.id = id;
         this.event = event;
         this.photographer = photographer;
         this.uploadedAt = LocalDateTime.now(ZoneOffset.UTC);
         this.status = Status.PROCESSING;
+        this.originalFilename = originalFilename;
     }
 
     public UUID getId() {
@@ -97,6 +105,10 @@ public class Photo {
         return status;
     }
 
+    public String getOriginalFilename() {
+        return originalFilename;
+    }
+
     public void markActive(String originalS3Key, String thumbnailS3Key, String[] faceIds) {
         this.originalS3Key = originalS3Key;
         this.thumbnailS3Key = thumbnailS3Key;
@@ -110,5 +122,11 @@ public class Photo {
 
     public void markExpired() {
         this.status = Status.EXPIRED;
+    }
+
+    public void markArchived() {
+        this.originalS3Key = null;
+        this.thumbnailS3Key = null;
+        this.status = Status.ARCHIVED;
     }
 }

@@ -143,15 +143,17 @@ public class OrderService {
         return items.stream()
                 .map(item -> {
                     String downloadUrl = null;
-                    if (order.getStatus() == Order.Status.PAID) {
-                        var photo = photoRepository.findById(item.getPhotoId()).orElse(null);
-                        if (photo != null && photo.getOriginalS3Key() != null) {
-                            String filename = "photo-" + photo.getId() + ".jpg";
+                    String filename = null;
+                    var photo = photoRepository.findById(item.getPhotoId()).orElse(null);
+                    if (photo != null) {
+                        filename = photo.getOriginalFilename();
+                        if (order.getStatus() == Order.Status.PAID && photo.getOriginalS3Key() != null) {
+                            String downloadFilename = filename != null ? filename : "photo-" + photo.getId() + ".jpg";
                             downloadUrl = s3StorageService.generatePresignedUrl(
-                                    photo.getOriginalS3Key(), Duration.ofHours(24), filename);
+                                    photo.getOriginalS3Key(), Duration.ofHours(24), downloadFilename);
                         }
                     }
-                    return OrderItemResponse.from(item, downloadUrl);
+                    return OrderItemResponse.from(item, downloadUrl, filename);
                 })
                 .toList();
     }
@@ -172,8 +174,10 @@ public class OrderService {
                     continue;
                 }
 
-                String filename = "photo-" + index + ".jpg";
-                zipOut.putNextEntry(new ZipEntry(filename));
+                String zipFilename = photo.getOriginalFilename() != null
+                        ? photo.getOriginalFilename()
+                        : "photo-" + index + ".jpg";
+                zipOut.putNextEntry(new ZipEntry(zipFilename));
 
                 try (var s3Stream = s3StorageService.getObject(photo.getOriginalS3Key())) {
                     s3Stream.transferTo(zipOut);

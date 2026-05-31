@@ -63,7 +63,7 @@ public class PhotoService {
 
         var photos = new ArrayList<Photo>();
         for (MultipartFile file : files) {
-            var photo = new Photo(event, photographer);
+            var photo = new Photo(UUID.randomUUID(), event, photographer, file.getOriginalFilename());
             photoRepository.save(photo);
             photos.add(photo);
 
@@ -74,12 +74,17 @@ public class PhotoService {
     }
 
     @Transactional
-    public Map<String, String> presignUpload(String eventSlug) {
+    public Map<String, String> presignUpload(String eventSlug, String filename) {
         var event = eventRepository.findBySlug(eventSlug)
                 .orElseThrow(() -> new ResourceNotFoundException("Event", eventSlug));
 
         if (event.isExpired()) {
             throw new IllegalArgumentException("Cannot upload photos to an expired event");
+        }
+
+        if (filename != null && !filename.isBlank()
+                && photoRepository.existsByEventIdAndOriginalFilename(event.getId(), filename)) {
+            throw new IllegalArgumentException("A photo with this filename already exists in this event");
         }
 
         var photoId = UUID.randomUUID();
@@ -96,14 +101,14 @@ public class PhotoService {
     }
 
     @Transactional
-    public Photo confirmUpload(String eventSlug, String photoId, String s3Key) {
+    public Photo confirmUpload(String eventSlug, String photoId, String s3Key, String filename) {
         var event = eventRepository.findBySlug(eventSlug)
                 .orElseThrow(() -> new ResourceNotFoundException("Event", eventSlug));
 
         var photographer = photographerRepository.findAll().stream().findFirst()
                 .orElseGet(() -> photographerRepository.save(new Photographer("Admin", "admin@elitesportphotos.com")));
 
-        var photo = new Photo(UUID.fromString(photoId), event, photographer);
+        var photo = new Photo(UUID.fromString(photoId), event, photographer, filename);
 
         photoRepository.save(photo);
         photoProcessingService.processUploadedPhotoAsync(photo.getId(), event.getId(), s3Key);
