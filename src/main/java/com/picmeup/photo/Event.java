@@ -51,6 +51,9 @@ public class Event {
     @Column(nullable = false)
     private boolean free = false;
 
+    @Column
+    private LocalDateTime deletedAt;
+
     protected Event() {
     }
 
@@ -135,5 +138,17 @@ public class Event {
 
     public boolean isExpired() {
         return LocalDateTime.now(ZoneOffset.UTC).isAfter(expiresAt);
+    }
+
+    public LocalDateTime getDeletedAt() {
+        return deletedAt;
+    }
+
+    public void markDeleted() {
+        this.deletedAt = LocalDateTime.now(ZoneOffset.UTC);
+    }
+
+    public boolean isDeleted() {
+        return deletedAt != null;
     }
 }

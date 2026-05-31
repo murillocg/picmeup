@@ -71,7 +71,7 @@ class EventServiceTest {
 
     @Test
     void getBySlug_shouldThrowWhenNotFound() {
-        when(eventRepository.findBySlug("unknown")).thenReturn(Optional.empty());
+        when(eventRepository.findBySlugAndDeletedAtIsNull("unknown")).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> eventService.getBySlug("unknown"))
                 .isInstanceOf(ResourceNotFoundException.class)
@@ -81,7 +81,7 @@ class EventServiceTest {
     @Test
     void getBySlug_shouldReturnEvent() {
         var event = new Event("Test", LocalDate.of(2026, 3, 1), "Melbourne");
-        when(eventRepository.findBySlug(event.getSlug())).thenReturn(Optional.of(event));
+        when(eventRepository.findBySlugAndDeletedAtIsNull(event.getSlug())).thenReturn(Optional.of(event));
 
         var result = eventService.getBySlug(event.getSlug());
 

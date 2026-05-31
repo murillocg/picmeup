@@ -12,4 +12,7 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, UUID> {
 
     @Query("SELECT CASE WHEN COUNT(oi) > 0 THEN true ELSE false END FROM OrderItem oi WHERE oi.photoId IN :photoIds")
     boolean existsByPhotoIdIn(List<UUID> photoIds);
+
+    @Query("SELECT DISTINCT oi.photoId FROM OrderItem oi WHERE oi.photoId IN :photoIds")
+    List<UUID> findPhotoIdsByPhotoIdIn(List<UUID> photoIds);
 }

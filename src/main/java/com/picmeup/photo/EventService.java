@@ -16,6 +16,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @Transactional(readOnly = true)
@@ -61,16 +62,16 @@ public class EventService {
     }
 
     public Event getBySlug(String slug) {
-        return eventRepository.findBySlug(slug)
+        return eventRepository.findBySlugAndDeletedAtIsNull(slug)
                 .orElseThrow(() -> new ResourceNotFoundException("Event", slug));
     }
 
     public List<Event> listActiveEvents() {
-        return eventRepository.findByExpiresAtAfterAndHiddenFalseOrderByDateDesc(LocalDateTime.now(ZoneOffset.UTC));
+        return eventRepository.findByExpiresAtAfterAndHiddenFalseAndDeletedAtIsNullOrderByDateDesc(LocalDateTime.now(ZoneOffset.UTC));
     }
 
     public List<Event> listAllActiveEvents() {
-        return eventRepository.findByExpiresAtAfterOrderByDateDesc(LocalDateTime.now(ZoneOffset.UTC));
+        return eventRepository.findByExpiresAtAfterAndDeletedAtIsNullOrderByDateDesc(LocalDateTime.now(ZoneOffset.UTC));
     }
 
     @Transactional
@@ -111,13 +112,7 @@ public class EventService {
         var event = getBySlug(slug);
         var eventId = event.getId();
 
-        var photoIds = photoRepository.findByEventIdAndStatus(eventId, Photo.Status.ACTIVE)
-                .stream().map(Photo::getId).toList();
-        if (!photoIds.isEmpty() && orderItemRepository.existsByPhotoIdIn(photoIds)) {
-            throw new IllegalArgumentException("Cannot delete event with purchased photos");
-        }
-
-        log.info("Deleting event {} ({})", slug, eventId);
+        log.info("Soft-deleting event {} ({})", slug, eventId);
 
         faceRecognitionService.deleteCollection(eventId);
 
@@ -126,11 +121,26 @@ public class EventService {
 
         if (event.getCoverImageKey() != null) {
             s3StorageService.deleteFile(event.getCoverImageKey());
+            event.setCoverImageKey(null);
         }
 
-        photoRepository.deleteByEventId(eventId);
-        eventRepository.delete(event);
+        var photos = photoRepository.findByEventId(eventId);
+        var photoIds = photos.stream().map(Photo::getId).toList();
+        var purchasedPhotoIds = photoIds.isEmpty()
+                ? List.<UUID>of()
+                : orderItemRepository.findPhotoIdsByPhotoIdIn(photoIds);
 
-        log.info("Event {} deleted successfully", slug);
+        for (Photo photo : photos) {
+            if (purchasedPhotoIds.contains(photo.getId())) {
+                photo.markArchived();
+            } else {
+                photoRepository.delete(photo);
+            }
+        }
+
+        event.markDeleted();
+        eventRepository.save(event);
+
+        log.info("Event {} soft-deleted successfully", slug);
     }
 }
