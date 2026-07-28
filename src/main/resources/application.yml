@@ -110,6 +110,10 @@ aws:
     bucket: ${S3_BUCKET}
   rekognition:
     confidence-threshold: 85.0
+    collection-prefix: ${REKOGNITION_COLLECTION_PREFIX:elitesportphotos}
+
+lambda:
+  callback-secret: ${LAMBDA_CALLBACK_SECRET:}
 
 app:
   cors:

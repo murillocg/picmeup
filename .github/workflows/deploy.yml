@@ -5,9 +5,6 @@ on:
 
 env:
   AWS_REGION: ap-southeast-2
-  ECS_CLUSTER: picmeup
-  ECS_SERVICE: picmeup
-  CONTAINER_NAME: picmeup
 
 permissions:
   id-token: write
@@ -16,7 +13,6 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
 
@@ -59,12 +55,7 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Build and push Docker image
-        id: build-image
         uses: docker/build-push-action@v6
-        env:
-          ECR_REGISTRY: ${{ steps.ecr-login.outputs.registry }}
-          ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY }}
-          IMAGE_TAG: ${{ github.sha }}
         with:
           context: .
           push: true
@@ -76,32 +67,30 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Set image output
-        id: image-output
+      - name: Deploy app to EC2
         env:
-          ECR_REGISTRY: ${{ steps.ecr-login.outputs.registry }}
-          ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY }}
-          IMAGE_TAG: ${{ github.sha }}
-        run: echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
-
-      - name: Download task definition
+          EC2_HOST: ${{ vars.EC2_HOST }}
+          SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
         run: |
-          aws ecs describe-task-definition --task-definition ${{ env.CONTAINER_NAME }} \
-            --query taskDefinition > task-definition.json
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "$EC2_HOST" >> ~/.ssh/known_hosts 2>/dev/null
 
-      - name: Update task definition with new image
-        id: task-def
-        uses: aws-actions/amazon-ecs-render-task-definition@v1
-        with:
-          task-definition: task-definition.json
-          container-name: ${{ env.CONTAINER_NAME }}
-          image: ${{ steps.image-output.outputs.image }}
+          ssh -i ~/.ssh/deploy_key ec2-user@"$EC2_HOST" \
+            "sudo /opt/elitesportphotos/deploy.sh ${{ github.sha }}"
 
-      - name: Deploy to ECS
-        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+      - uses: actions/setup-go@v5
         with:
-          task-definition: ${{ steps.task-def.outputs.task-definition }}
-          service: ${{ env.ECS_SERVICE }}
-          cluster: ${{ env.ECS_CLUSTER }}
-          wait-for-service-stability: true
-          wait-for-minutes: 10
+          go-version: '1.22'
+          cache-dependency-path: lambda/photo-processor/go.sum
+
+      - name: Build Lambda function
+        run: cd lambda/photo-processor && make build
+
+      - name: Deploy Lambda function
+        run: |
+          aws lambda update-function-code \
+            --function-name elitesportphotos-photo-processor \
+            --zip-file fileb://lambda/photo-processor/function.zip \
+            --region ${{ env.AWS_REGION }}

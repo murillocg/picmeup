@@ -25,10 +25,15 @@ Thumbs.db
 
 ### Terraform ###
 .terraform/
+.terraform.lock.hcl
 *.tfstate
 *.tfstate.backup
 *.tfvars
 !*.tfvars.example
+
+### Lambda ###
+lambda/*/bootstrap
+lambda/*/function.zip
 
 ### Frontend ###
 frontend/node_modules/

@@ -28,17 +28,20 @@ public class FaceRecognitionService {
     private final RekognitionClient rekognitionClient;
     private final String s3Bucket;
     private final float confidenceThreshold;
+    private final String collectionPrefix;
 
     public FaceRecognitionService(RekognitionClient rekognitionClient,
                                   @Value("${aws.s3.bucket}") String s3Bucket,
-                                  @Value("${aws.rekognition.confidence-threshold}") float confidenceThreshold) {
+                                  @Value("${aws.rekognition.confidence-threshold}") float confidenceThreshold,
+                                  @Value("${aws.rekognition.collection-prefix:picmeup}") String collectionPrefix) {
         this.rekognitionClient = rekognitionClient;
         this.s3Bucket = s3Bucket;
         this.confidenceThreshold = confidenceThreshold;
+        this.collectionPrefix = collectionPrefix;
     }
 
     private String collectionId(UUID eventId) {
-        return "picmeup-event-" + eventId;
+        return collectionPrefix + "-event-" + eventId;
     }
 
     public void createCollection(UUID eventId) {

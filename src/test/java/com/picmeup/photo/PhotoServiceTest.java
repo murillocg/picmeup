@@ -46,7 +46,7 @@ class PhotoServiceTest {
     void setUp() {
         photoService = new PhotoService(photoRepository, photographerRepository,
                 eventRepository, s3StorageService, photoProcessingService, faceRecognitionService,
-                orderItemRepository, faceSearchRepository);
+                orderItemRepository, faceSearchRepository, "");
     }
 
     @Test

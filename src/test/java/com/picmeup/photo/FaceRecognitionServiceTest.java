@@ -41,7 +41,7 @@ class FaceRecognitionServiceTest {
 
     @BeforeEach
     void setUp() {
-        faceRecognitionService = new FaceRecognitionService(rekognitionClient, "picmeup-photos-test", 80.0f);
+        faceRecognitionService = new FaceRecognitionService(rekognitionClient, "picmeup-photos-test", 80.0f, "picmeup");
     }
 
     @Test

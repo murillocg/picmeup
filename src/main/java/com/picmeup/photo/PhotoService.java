@@ -4,6 +4,7 @@ import com.picmeup.common.exception.ResourceNotFoundException;
 import com.picmeup.payment.OrderItemRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -29,6 +30,7 @@ public class PhotoService {
     private final FaceRecognitionService faceRecognitionService;
     private final OrderItemRepository orderItemRepository;
     private final FaceSearchRepository faceSearchRepository;
+    private final boolean lambdaProcessingEnabled;
 
     public PhotoService(PhotoRepository photoRepository,
                         PhotographerRepository photographerRepository,
@@ -37,7 +39,8 @@ public class PhotoService {
                         PhotoProcessingService photoProcessingService,
                         FaceRecognitionService faceRecognitionService,
                         OrderItemRepository orderItemRepository,
-                        FaceSearchRepository faceSearchRepository) {
+                        FaceSearchRepository faceSearchRepository,
+                        @Value("${lambda.callback-secret:}") String lambdaCallbackSecret) {
         this.photoRepository = photoRepository;
         this.photographerRepository = photographerRepository;
         this.eventRepository = eventRepository;
@@ -46,6 +49,7 @@ public class PhotoService {
         this.faceRecognitionService = faceRecognitionService;
         this.orderItemRepository = orderItemRepository;
         this.faceSearchRepository = faceSearchRepository;
+        this.lambdaProcessingEnabled = lambdaCallbackSecret != null && !lambdaCallbackSecret.isBlank();
     }
 
     @Transactional
@@ -109,9 +113,11 @@ public class PhotoService {
                 .orElseGet(() -> photographerRepository.save(new Photographer("Admin", "admin@elitesportphotos.com")));
 
         var photo = new Photo(UUID.fromString(photoId), event, photographer, filename);
-
         photoRepository.save(photo);
-        photoProcessingService.processUploadedPhotoAsync(photo.getId(), event.getId(), s3Key);
+
+        if (!lambdaProcessingEnabled) {
+            photoProcessingService.processUploadedPhotoAsync(photo.getId(), event.getId(), s3Key);
+        }
 
         return photo;
     }
