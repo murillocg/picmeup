@@ -12,11 +12,6 @@ const faqs = [
       'No. Your selfie is processed in real-time to perform the search and is immediately and permanently deleted from our systems upon completion — whether or not a match is found. We do not retain any biometric data derived from your selfie.',
   },
   {
-    question: 'Are my photos publicly available?',
-    answer:
-      'No. Event images are not publicly accessible. Our galleries are private, and access is restricted to individuals searching for their own photos.',
-  },
-  {
     question: 'How long are event photos stored?',
     answer:
       'All event images are securely stored for a limited time and are permanently deleted from our secure private servers within 90 days after the event concludes.',
@@ -49,7 +44,7 @@ const faqs = [
   {
     question: 'How do I contact you?',
     answer:
-      'You can reach our team by email at trent@elitesportphotos.com. We aim to respond to all enquiries within 30 days.',
+      'You can reach our team by email at info@elitesportphotos.com. We aim to respond to all enquiries within 30 days.',
   },
 ];
 

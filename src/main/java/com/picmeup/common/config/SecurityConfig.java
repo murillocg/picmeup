@@ -46,6 +46,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/admin/**").authenticated()
                         .anyRequest().permitAll()
                 )
+                .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()))
                 .httpBasic(Customizer.withDefaults())
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint((request, response, authException) -> {
