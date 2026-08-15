@@ -98,7 +98,7 @@ export default function EventListPage() {
                           onClick={(e) => handleToggleComingSoon(e, event.slug)}
                           className={`text-xs font-medium px-2 py-1 rounded-full shadow transition-colors ${
                             event.comingSoon
-                              ? 'bg-blue-500 text-white hover:bg-blue-600'
+                              ? 'bg-brand-orange text-white hover:bg-brand-orange-dark'
                               : 'bg-white/90 hover:bg-white'
                           }`}
                           title={event.comingSoon ? 'Remove coming soon' : 'Mark as coming soon'}
