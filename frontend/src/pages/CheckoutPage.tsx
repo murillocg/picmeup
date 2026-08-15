@@ -5,8 +5,10 @@ import { createOrder, capturePayment, getPayPalClientId, getEvent } from '../ser
 import type { EventResponse } from '../types/api';
 import ErrorMessage from '../components/ErrorMessage';
 import LoadingSpinner from '../components/LoadingSpinner';
+import usePageTitle from '../hooks/usePageTitle';
 
 export default function CheckoutPage() {
+  usePageTitle('Checkout');
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const [event, setEvent] = useState<EventResponse | null>(null);

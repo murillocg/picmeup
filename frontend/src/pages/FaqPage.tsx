@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import usePageTitle from '../hooks/usePageTitle';
 
 const faqs = [
   {
@@ -49,6 +50,7 @@ const faqs = [
 ];
 
 export default function FaqPage() {
+  usePageTitle('FAQ');
   return (
     <div className="max-w-3xl mx-auto">
       <h1 className="text-3xl font-bold text-gray-900 mb-2">Frequently Asked Questions</h1>

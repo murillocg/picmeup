@@ -4,8 +4,10 @@ import { getOrder } from '../services/api';
 import type { OrderResponse } from '../types/api';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorMessage from '../components/ErrorMessage';
+import usePageTitle from '../hooks/usePageTitle';
 
 export default function OrderPage() {
+  usePageTitle('Order');
   const { id } = useParams<{ id: string }>();
   const [order, setOrder] = useState<OrderResponse | null>(null);
   const [loading, setLoading] = useState(true);

@@ -9,6 +9,7 @@ import SelfieCapture from '../components/SelfieCapture';
 import PhotoGrid from '../components/PhotoGrid';
 import { getErrorMessage } from '../utils/errors';
 import CoverImageCropper from '../components/CoverImageCropper';
+import usePageTitle from '../hooks/usePageTitle';
 
 export default function EventDetailPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -27,6 +28,34 @@ export default function EventDetailPage() {
   const [consentGiven, setConsentGiven] = useState(false);
   const [downloadUrls, setDownloadUrls] = useState<string[] | null>(null);
   const [downloadLoading, setDownloadLoading] = useState(false);
+
+  usePageTitle(event?.name);
+
+  useEffect(() => {
+    if (!event) return;
+    const jsonLd = {
+      '@context': 'https://schema.org',
+      '@type': 'Event',
+      name: event.name,
+      startDate: event.date,
+      location: {
+        '@type': 'Place',
+        name: event.location,
+      },
+      url: `https://elitesportphotos.com/events/${event.slug}`,
+      organizer: {
+        '@type': 'Organization',
+        name: 'Elite Sport Photos',
+        url: 'https://elitesportphotos.com',
+      },
+      ...(event.coverImageUrl ? { image: event.coverImageUrl } : {}),
+    };
+    const script = document.createElement('script');
+    script.type = 'application/ld+json';
+    script.textContent = JSON.stringify(jsonLd);
+    document.head.appendChild(script);
+    return () => { document.head.removeChild(script); };
+  }, [event]);
 
   useEffect(() => {
     if (!slug) return;

@@ -5,8 +5,10 @@ import { useAuth } from '../context/AuthContext';
 import type { EventResponse } from '../types/api';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorMessage from '../components/ErrorMessage';
+import usePageTitle from '../hooks/usePageTitle';
 
 export default function EventListPage() {
+  usePageTitle();
   const { authenticated } = useAuth();
   const [events, setEvents] = useState<EventResponse[]>([]);
   const [loading, setLoading] = useState(true);
