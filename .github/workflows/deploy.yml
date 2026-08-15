@@ -80,7 +80,7 @@ jobs:
           ssh -i ~/.ssh/deploy_key ec2-user@"$EC2_HOST" \
             "sudo /opt/elitesportphotos/deploy.sh ${{ github.sha }}"
 
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v7
         with:
           go-version: '1.22'
           cache-dependency-path: lambda/photo-processor/go.sum
