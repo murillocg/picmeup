@@ -149,7 +149,7 @@
                                 <configuration>
                                     <arguments>run build</arguments>
                                     <environmentVariables>
-                                        <APP_VERSION>${git.commit.id.abbrev}</APP_VERSION>
+                                        <APP_VERSION>${env.APP_VERSION}</APP_VERSION>
                                     </environmentVariables>
                                 </configuration>
                             </execution>

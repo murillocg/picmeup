@@ -65,7 +65,9 @@ export default function Layout() {
               Privacy Policy
             </Link>
           </p>
-          <p className="text-xs text-gray-400 mt-1">v{__APP_VERSION__}</p>
+          {authenticated && (
+            <p className="text-xs text-gray-400 mt-1">v{__APP_VERSION__}</p>
+          )}
         </div>
       </footer>
     </div>
