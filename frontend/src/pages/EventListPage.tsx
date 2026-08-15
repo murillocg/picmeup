@@ -82,73 +82,79 @@ export default function EventListPage() {
               <Wrapper
                 key={event.id}
                 {...(wrapperProps as any)}
-                className={`group bg-white rounded-xl shadow-sm border overflow-hidden transition-all duration-200 ${
+                className={`group bg-white rounded-2xl shadow-sm border transition-all duration-200 ${
                   isComingSoon
                     ? 'cursor-default'
                     : 'hover:shadow-lg hover:-translate-y-1'
                 } ${event.hidden ? 'border-orange-300 opacity-60' : 'border-gray-200'}`}
               >
-                <div className="relative h-48 bg-gradient-to-br from-orange-100 to-gray-100">
-                  {authenticated && (
-                    <div className="absolute top-2 right-2 z-10 flex gap-1">
-                      <button
-                        onClick={(e) => handleToggleComingSoon(e, event.slug)}
-                        className={`text-xs font-medium px-2 py-1 rounded-full shadow transition-colors ${
-                          event.comingSoon
-                            ? 'bg-blue-500 text-white hover:bg-blue-600'
-                            : 'bg-white/90 hover:bg-white'
-                        }`}
-                        title={event.comingSoon ? 'Remove coming soon' : 'Mark as coming soon'}
-                      >
-                        {event.comingSoon ? 'Coming Soon' : 'Soon'}
-                      </button>
-                      <button
-                        onClick={(e) => handleToggleHidden(e, event.slug)}
-                        className="bg-white/90 text-xs font-medium px-2 py-1 rounded-full shadow hover:bg-white transition-colors"
-                        title={event.hidden ? 'Show event' : 'Hide event'}
-                      >
-                        {event.hidden ? 'Show' : 'Hide'}
-                      </button>
-                    </div>
-                  )}
-                  {event.comingSoon && !authenticated && (
-                    <span className="absolute top-3 right-3 z-10 bg-blue-600 text-white text-xs font-semibold px-2.5 py-1 rounded-full shadow-sm">
-                      Coming Soon
-                    </span>
-                  )}
-                  {event.coverImageUrl ? (
-                    <img
-                      src={event.coverImageUrl}
-                      alt={event.name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="flex items-center justify-center h-full">
-                      <svg className="w-12 h-12 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Z" />
-                      </svg>
-                    </div>
-                  )}
-                  <span className="absolute bottom-3 left-3 bg-brand-orange text-white text-xs font-semibold px-2.5 py-1 rounded-full shadow-sm">
-                    {new Date(event.date).toLocaleDateString('en-AU', {
-                      year: 'numeric',
-                      month: 'short',
-                      day: 'numeric',
-                    })}
-                  </span>
+                <div className="p-3 pb-0">
+                  <div className="relative h-44 rounded-xl overflow-hidden bg-gradient-to-br from-orange-100 to-gray-100">
+                    {authenticated && (
+                      <div className="absolute top-2 right-2 z-10 flex gap-1">
+                        <button
+                          onClick={(e) => handleToggleComingSoon(e, event.slug)}
+                          className={`text-xs font-medium px-2 py-1 rounded-full shadow transition-colors ${
+                            event.comingSoon
+                              ? 'bg-blue-500 text-white hover:bg-blue-600'
+                              : 'bg-white/90 hover:bg-white'
+                          }`}
+                          title={event.comingSoon ? 'Remove coming soon' : 'Mark as coming soon'}
+                        >
+                          {event.comingSoon ? 'Coming Soon' : 'Soon'}
+                        </button>
+                        <button
+                          onClick={(e) => handleToggleHidden(e, event.slug)}
+                          className="bg-white/90 text-xs font-medium px-2 py-1 rounded-full shadow hover:bg-white transition-colors"
+                          title={event.hidden ? 'Show event' : 'Hide event'}
+                        >
+                          {event.hidden ? 'Show' : 'Hide'}
+                        </button>
+                      </div>
+                    )}
+                    {event.coverImageUrl ? (
+                      <img
+                        src={event.coverImageUrl}
+                        alt={event.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex items-center justify-center h-full">
+                        <svg className="w-12 h-12 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Z" />
+                        </svg>
+                      </div>
+                    )}
+                    {event.comingSoon && !authenticated && (
+                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                        <span className="bg-white/90 text-gray-900 text-sm font-semibold px-4 py-2 rounded-full backdrop-blur-sm">
+                          Coming Soon
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div className="p-4">
-                  <h2 className={`text-lg font-semibold mb-1 truncate transition-colors ${
+                  <h2 className={`text-lg font-semibold mb-2 truncate transition-colors ${
                     isComingSoon ? 'text-gray-900' : 'text-gray-900 group-hover:text-brand-orange'
                   }`}>{event.name}</h2>
-                  <p className="text-sm text-gray-500 truncate flex items-center gap-1.5">
-                    <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
-                    </svg>
-                    {event.location}
-                  </p>
+                  <div className="flex items-center justify-between">
+                    <span className="bg-brand-orange/15 text-brand-orange text-xs font-semibold px-2.5 py-1 rounded-full">
+                      {new Date(event.date).toLocaleDateString('en-AU', {
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric',
+                      })}
+                    </span>
+                    <span className="text-sm text-gray-500 truncate ml-2 flex items-center gap-1">
+                      <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
+                      </svg>
+                      {event.location}
+                    </span>
+                  </div>
                 </div>
               </Wrapper>
             );
