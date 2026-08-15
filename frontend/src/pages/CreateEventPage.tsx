@@ -13,6 +13,7 @@ export default function CreateEventPage() {
   const [photoPrice, setPhotoPrice] = useState('20.00');
   const [packPrice, setPackPrice] = useState('65.00');
   const [free, setFree] = useState(false);
+  const [comingSoon, setComingSoon] = useState(false);
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
@@ -37,7 +38,7 @@ export default function CreateEventPage() {
     e.preventDefault();
     setSubmitting(true);
     setError('');
-    if (!free && parseFloat(packPrice) < parseFloat(photoPrice)) {
+    if (!free && !comingSoon && parseFloat(packPrice) < parseFloat(photoPrice)) {
       setError('Pack price must be greater than or equal to the price per photo.');
       setSubmitting(false);
       return;
@@ -47,11 +48,12 @@ export default function CreateEventPage() {
         name,
         date,
         location,
-        photoPrice: free ? 0 : parseFloat(photoPrice),
-        packPrice: free ? 0 : parseFloat(packPrice),
+        photoPrice: free || comingSoon ? 0 : parseFloat(photoPrice),
+        packPrice: free || comingSoon ? 0 : parseFloat(packPrice),
         free,
+        comingSoon,
       });
-      navigate(`/events/${event.slug}/upload`);
+      navigate(comingSoon ? '/' : `/events/${event.slug}/upload`);
     } catch {
       setError('Failed to create event. It may already exist.');
     } finally {
@@ -102,19 +104,33 @@ export default function CreateEventPage() {
         </div>
 
         <div className="border-t pt-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Pricing</h2>
-
           <label className="flex items-center gap-3 mb-4 cursor-pointer">
             <input
               type="checkbox"
-              checked={free}
-              onChange={(e) => setFree(e.target.checked)}
+              checked={comingSoon}
+              onChange={(e) => setComingSoon(e.target.checked)}
               className="h-4 w-4 rounded border-gray-300 text-brand-orange focus:ring-brand-orange"
             />
-            <span className="text-sm font-medium text-gray-700">Free event — users can download photos for free</span>
+            <span className="text-sm font-medium text-gray-700">Coming soon — show as upcoming, no photo search yet</span>
           </label>
 
-          {!free && (
+          {!comingSoon && (
+            <>
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Pricing</h2>
+
+            <label className="flex items-center gap-3 mb-4 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={free}
+                onChange={(e) => setFree(e.target.checked)}
+                className="h-4 w-4 rounded border-gray-300 text-brand-orange focus:ring-brand-orange"
+              />
+              <span className="text-sm font-medium text-gray-700">Free event — users can download photos for free</span>
+            </label>
+            </>
+          )}
+
+          {!free && !comingSoon && (
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Price per photo (AUD)</label>

@@ -11,6 +11,7 @@ export interface EventResponse {
   photoPrice: number;
   packPrice: number;
   free: boolean;
+  comingSoon: boolean;
 }
 
 export interface CreateEventRequest {
@@ -20,6 +21,7 @@ export interface CreateEventRequest {
   photoPrice: number;
   packPrice: number;
   free: boolean;
+  comingSoon: boolean;
 }
 
 export interface PhotoResponse {

@@ -26,6 +26,8 @@ public record CreateEventRequest(
         BigDecimal packPrice,
 
         @NotNull(message = "Free flag is required")
-        Boolean free
+        Boolean free,
+
+        Boolean comingSoon
 ) {
 }

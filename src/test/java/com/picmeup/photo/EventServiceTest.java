@@ -1,6 +1,7 @@
 package com.picmeup.photo;
 
 import com.picmeup.common.exception.ResourceNotFoundException;
+import com.picmeup.photo.dto.CreateEventRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -50,8 +51,9 @@ class EventServiceTest {
         when(eventRepository.existsBySlug(anyString())).thenReturn(false);
         when(eventRepository.save(any(Event.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        var event = eventService.createEvent("City Marathon 2026", LocalDate.of(2026, 5, 10), "Sydney",
-                new BigDecimal("20.00"), new BigDecimal("65.00"), false);
+        var request = new CreateEventRequest("City Marathon 2026", LocalDate.of(2026, 5, 10), "Sydney",
+                new BigDecimal("20.00"), new BigDecimal("65.00"), false, false);
+        var event = eventService.createEvent(request);
 
         assertThat(event.getName()).isEqualTo("City Marathon 2026");
         assertThat(event.getSlug()).isEqualTo("city-marathon-2026-2026-05-10");
@@ -63,8 +65,9 @@ class EventServiceTest {
     void createEvent_shouldRejectDuplicateSlug() {
         when(eventRepository.existsBySlug(anyString())).thenReturn(true);
 
-        assertThatThrownBy(() -> eventService.createEvent("Marathon", LocalDate.of(2026, 5, 10), "Sydney",
-                new BigDecimal("20.00"), new BigDecimal("65.00"), false))
+        var request = new CreateEventRequest("Marathon", LocalDate.of(2026, 5, 10), "Sydney",
+                new BigDecimal("20.00"), new BigDecimal("65.00"), false, false);
+        assertThatThrownBy(() -> eventService.createEvent(request))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("already exists");
     }

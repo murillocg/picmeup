@@ -28,6 +28,11 @@ export async function toggleEventHidden(slug: string): Promise<EventResponse> {
   return response.data;
 }
 
+export async function toggleEventComingSoon(slug: string): Promise<EventResponse> {
+  const response = await api.post<EventResponse>(`/events/${slug}/toggle-coming-soon`);
+  return response.data;
+}
+
 export async function getEvent(slug: string): Promise<EventResponse> {
   const response = await api.get<EventResponse>(`/events/${slug}`);
   return response.data;

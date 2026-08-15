@@ -9,6 +9,8 @@ import org.springframework.web.multipart.MultipartFile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.picmeup.photo.dto.CreateEventRequest;
+
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.Duration;
@@ -46,19 +48,25 @@ public class EventService {
     }
 
     @Transactional
-    public Event createEvent(String name, LocalDate date, String location,
-                             BigDecimal photoPrice, BigDecimal packPrice, boolean free) {
-        if (!free && packPrice.compareTo(photoPrice) < 0) {
+    public Event createEvent(CreateEventRequest request) {
+        boolean free = request.free();
+        boolean comingSoon = Boolean.TRUE.equals(request.comingSoon());
+
+        if (!free && !comingSoon && request.packPrice().compareTo(request.photoPrice()) < 0) {
             throw new IllegalArgumentException("Pack price must be greater than or equal to the price per photo");
         }
 
-        var event = new Event(name, date, location, photoPrice, packPrice, free);
+        var event = new Event(request.name(), request.date(), request.location(),
+                request.photoPrice(), request.packPrice(), free);
+        event.setComingSoon(comingSoon);
 
         if (eventRepository.existsBySlug(event.getSlug())) {
             throw new IllegalArgumentException("An event with this name and date already exists");
         }
 
-        return eventRepository.save(event);
+        eventRepository.save(event);
+        log.info("Event created: {} ({})", event.getSlug(), event.getId());
+        return event;
     }
 
     public Event getBySlug(String slug) {
@@ -78,6 +86,13 @@ public class EventService {
     public Event toggleHidden(String slug) {
         var event = getBySlug(slug);
         event.setHidden(!event.isHidden());
+        return eventRepository.save(event);
+    }
+
+    @Transactional
+    public Event toggleComingSoon(String slug) {
+        var event = getBySlug(slug);
+        event.setComingSoon(!event.isComingSoon());
         return eventRepository.save(event);
     }
 

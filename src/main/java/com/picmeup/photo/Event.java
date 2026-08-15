@@ -51,6 +51,9 @@ public class Event {
     @Column(nullable = false)
     private boolean free = false;
 
+    @Column(nullable = false)
+    private boolean comingSoon = false;
+
     @Column
     private LocalDateTime deletedAt;
 
@@ -135,6 +138,9 @@ public class Event {
 
     public boolean isFree() { return free; }
     public void setFree(boolean free) { this.free = free; }
+
+    public boolean isComingSoon() { return comingSoon; }
+    public void setComingSoon(boolean comingSoon) { this.comingSoon = comingSoon; }
 
     public boolean isExpired() {
         return LocalDateTime.now(ZoneOffset.UTC).isAfter(expiresAt);

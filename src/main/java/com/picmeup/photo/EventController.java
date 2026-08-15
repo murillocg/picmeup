@@ -31,8 +31,7 @@ public class EventController {
 
     @PostMapping
     public ResponseEntity<EventResponse> createEvent(@Valid @RequestBody CreateEventRequest request) {
-        var event = eventService.createEvent(request.name(), request.date(), request.location(),
-                request.photoPrice(), request.packPrice(), request.free());
+        var event = eventService.createEvent(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(event));
     }
 
@@ -54,6 +53,12 @@ public class EventController {
     @PostMapping("/{slug}/toggle-hidden")
     public ResponseEntity<EventResponse> toggleHidden(@PathVariable String slug) {
         var event = eventService.toggleHidden(slug);
+        return ResponseEntity.ok(toResponse(event));
+    }
+
+    @PostMapping("/{slug}/toggle-coming-soon")
+    public ResponseEntity<EventResponse> toggleComingSoon(@PathVariable String slug) {
+        var event = eventService.toggleComingSoon(slug);
         return ResponseEntity.ok(toResponse(event));
     }
 

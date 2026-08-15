@@ -19,7 +19,8 @@ public record EventResponse(
         boolean hidden,
         BigDecimal photoPrice,
         BigDecimal packPrice,
-        boolean free
+        boolean free,
+        boolean comingSoon
 ) {
     public static EventResponse from(Event event, String coverImageUrl) {
         return new EventResponse(
@@ -34,7 +35,8 @@ public record EventResponse(
                 event.isHidden(),
                 event.getPhotoPrice(),
                 event.getPackPrice(),
-                event.isFree()
+                event.isFree(),
+                event.isComingSoon()
         );
     }
 }

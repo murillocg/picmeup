@@ -1,0 +1,1 @@
+ALTER TABLE events ADD COLUMN coming_soon BOOLEAN NOT NULL DEFAULT false;

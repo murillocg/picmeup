@@ -86,6 +86,31 @@ export default function EventDetailPage() {
   if (error && !event) return <ErrorMessage message={error} />;
   if (!event) return <ErrorMessage message="Event not found" />;
 
+  if (event.comingSoon && !authenticated) {
+    return (
+      <div className="max-w-lg mx-auto text-center py-16">
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-8">
+          <svg className="mx-auto w-16 h-16 text-blue-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+          </svg>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">{event.name}</h2>
+          <p className="text-gray-600 mb-1">{event.location}</p>
+          <p className="text-sm text-gray-400 mb-4">
+            {new Date(event.date).toLocaleDateString('en-AU', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+            })}
+          </p>
+          <span className="inline-block bg-blue-600 text-white text-sm font-semibold px-4 py-2 rounded-full">
+            Coming Soon
+          </span>
+          <p className="text-gray-500 text-sm mt-4">Photos for this event are not available yet. Check back soon!</p>
+        </div>
+      </div>
+    );
+  }
+
   const displayPhotos = authenticated ? photos : (matchedPhotos ?? []);
   const isFree = event?.free ?? false;
   const photoPrice = event?.photoPrice ?? 20;
