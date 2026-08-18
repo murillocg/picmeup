@@ -27,10 +27,12 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     if (!slug) return;
-    Promise.all([getPayPalClientId(), getEvent(slug)])
-      .then(([clientId, eventData]) => {
-        setPaypalClientId(clientId);
+    getEvent(slug)
+      .then((eventData) => {
         setEvent(eventData);
+        if (!eventData.free) {
+          return getPayPalClientId().then(setPaypalClientId);
+        }
       })
       .catch(() => setError('Failed to load checkout'))
       .finally(() => setLoading(false));
@@ -47,11 +49,12 @@ export default function CheckoutPage() {
     );
   }
 
+  const isFree = event?.free ?? false;
   const photoPrice = event?.photoPrice ?? 20;
   const packPrice = event?.packPrice ?? 65;
   const perPhotoTotal = cart.length * photoPrice;
-  const totalPrice = Math.min(perPhotoTotal, packPrice);
-  const hasBulkDiscount = perPhotoTotal > packPrice;
+  const totalPrice = isFree ? 0 : Math.min(perPhotoTotal, packPrice);
+  const hasBulkDiscount = !isFree && perPhotoTotal > packPrice;
 
   async function handleEmailSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -59,6 +62,16 @@ export default function CheckoutPage() {
     setLoading(true);
     try {
       const order = await createOrder(email, cart);
+      if (order.status === 'PAID') {
+        const orders: string[] = JSON.parse(localStorage.getItem('orders') || '[]');
+        if (!orders.includes(order.id)) {
+          orders.push(order.id);
+          localStorage.setItem('orders', JSON.stringify(orders));
+        }
+        localStorage.removeItem(`cart-${slug}`);
+        navigate(`/orders/${order.id}`);
+        return;
+      }
       setOrderId(order.id);
       setPaypalOrderId(order.paypalOrderId);
       setEmailConfirmed(true);
@@ -90,20 +103,29 @@ export default function CheckoutPage() {
 
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Order Summary</h2>
-        <div className="flex justify-between text-gray-600 mb-2">
-          <span>{cart.length} photo{cart.length !== 1 ? 's' : ''} x ${photoPrice.toFixed(2)}</span>
-          <span>${perPhotoTotal.toFixed(2)} AUD</span>
-        </div>
-        {hasBulkDiscount && (
-          <div className="flex justify-between text-green-600 mb-2">
-            <span>Bulk discount</span>
-            <span>-${(perPhotoTotal - packPrice).toFixed(2)} AUD</span>
+        {isFree ? (
+          <div className="flex justify-between text-gray-600">
+            <span>{cart.length} photo{cart.length !== 1 ? 's' : ''}</span>
+            <span className="text-green-600 font-semibold">Free</span>
           </div>
+        ) : (
+          <>
+            <div className="flex justify-between text-gray-600 mb-2">
+              <span>{cart.length} photo{cart.length !== 1 ? 's' : ''} x ${photoPrice.toFixed(2)}</span>
+              <span>${perPhotoTotal.toFixed(2)} AUD</span>
+            </div>
+            {hasBulkDiscount && (
+              <div className="flex justify-between text-green-600 mb-2">
+                <span>Bulk discount</span>
+                <span>-${(perPhotoTotal - packPrice).toFixed(2)} AUD</span>
+              </div>
+            )}
+            <div className="border-t pt-2 mt-2 flex justify-between font-semibold text-gray-900">
+              <span>Total</span>
+              <span>${totalPrice.toFixed(2)} AUD</span>
+            </div>
+          </>
         )}
-        <div className="border-t pt-2 mt-2 flex justify-between font-semibold text-gray-900">
-          <span>Total</span>
-          <span>${totalPrice.toFixed(2)} AUD</span>
-        </div>
       </div>
 
       {!emailConfirmed ? (
@@ -150,7 +172,7 @@ export default function CheckoutPage() {
             disabled={!termsAccepted}
             className="w-full bg-brand-orange text-white py-3 rounded-lg hover:bg-brand-orange-dark disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
           >
-            Continue to payment
+            {isFree ? 'Get your photos' : 'Continue to payment'}
           </button>
         </form>
       ) : paypalClientId && paypalOrderId && orderId ? (

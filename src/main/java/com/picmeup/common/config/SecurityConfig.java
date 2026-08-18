@@ -34,7 +34,6 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.GET, "/api/events/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/events/*/search").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/events/*/free-downloads").permitAll()
                         .requestMatchers("/api/internal/**").permitAll()
                         .requestMatchers("/actuator/**").permitAll()
                         .requestMatchers("/", "/index.html", "/assets/**", "/error").permitAll()

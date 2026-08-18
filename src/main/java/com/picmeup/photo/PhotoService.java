@@ -184,23 +184,6 @@ public class PhotoService {
         return s3StorageService.generatePresignedUrl(photo.getThumbnailS3Key(), Duration.ofHours(1));
     }
 
-    @Transactional(readOnly = true)
-    public List<String> getFreeDownloadUrls(String eventSlug, List<UUID> photoIds) {
-        var event = eventRepository.findBySlug(eventSlug)
-                .orElseThrow(() -> new ResourceNotFoundException("Event", eventSlug));
-
-        if (!event.isFree()) {
-            throw new IllegalArgumentException("Event is not free");
-        }
-
-        var photos = photoRepository.findByIdInAndStatus(photoIds, Photo.Status.ACTIVE);
-        return photos.stream()
-                .filter(photo -> photo.getOriginalS3Key() != null)
-                .map(photo -> s3StorageService.generatePresignedUrl(
-                        photo.getOriginalS3Key(), Duration.ofHours(24),
-                        "photo-" + photo.getId() + ".jpg"))
-                .toList();
-    }
 
     public String getOriginalUrl(Photo photo) {
         if (photo.getOriginalS3Key() == null) {

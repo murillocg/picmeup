@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { getEvent, listPhotos, searchByFace, deleteEvent, deletePhoto, uploadCoverImage, getFreeDownloads } from '../services/api';
+import { getEvent, listPhotos, searchByFace, deleteEvent, deletePhoto, uploadCoverImage } from '../services/api';
 import type { EventResponse, PhotoResponse } from '../types/api';
 import { useAuth } from '../context/AuthContext';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -26,8 +26,6 @@ export default function EventDetailPage() {
   const [searching, setSearching] = useState(false);
   const [error, setError] = useState('');
   const [consentGiven, setConsentGiven] = useState(false);
-  const [downloadUrls, setDownloadUrls] = useState<string[] | null>(null);
-  const [downloadLoading, setDownloadLoading] = useState(false);
 
   usePageTitle(event?.name);
 
@@ -150,19 +148,11 @@ export default function EventDetailPage() {
   const allSelected = matchedPhotos !== null && matchedPhotos.length > 0 && matchedPhotos.every((p) => selectedIds.has(p.id));
   const savings = perPhotoTotal - packPrice;
 
-  async function handleFreeDownload() {
+  function handleFreeDownloadAll() {
     if (!slug || !matchedPhotos) return;
-    setDownloadLoading(true);
-    setError('');
-    try {
-      const ids = matchedPhotos.map((p) => p.id);
-      const urls = await getFreeDownloads(slug, ids);
-      setDownloadUrls(urls);
-    } catch {
-      setError('Failed to get download links.');
-    } finally {
-      setDownloadLoading(false);
-    }
+    const ids = matchedPhotos.map((p) => p.id);
+    localStorage.setItem(`cart-${slug}`, JSON.stringify(ids));
+    navigate(`/events/${slug}/checkout`);
   }
 
   return (
@@ -310,38 +300,16 @@ export default function EventDetailPage() {
       )}
 
       {!authenticated && matchedPhotos && isFree && matchedPhotos.length > 0 && (
-        <div className="mb-4">
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-600">
-              {matchedPhotos.length} photo{matchedPhotos.length !== 1 ? 's' : ''} found
-            </span>
-            {!downloadUrls && (
-              <button
-                onClick={handleFreeDownload}
-                disabled={downloadLoading}
-                className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 disabled:opacity-50"
-              >
-                {downloadLoading ? 'Preparing...' : 'Download all photos for free'}
-              </button>
-            )}
-          </div>
-          {downloadUrls && (
-            <div className="mt-4 bg-green-50 border border-green-200 rounded-lg p-4">
-              <p className="text-green-800 font-medium mb-3">Your download links are ready!</p>
-              <div className="space-y-2">
-                {downloadUrls.map((url, i) => (
-                  <a
-                    key={i}
-                    href={url}
-                    download
-                    className="block text-brand-orange hover:text-brand-orange-dark text-sm truncate"
-                  >
-                    Download photo {i + 1}
-                  </a>
-                ))}
-              </div>
-            </div>
-          )}
+        <div className="flex items-center justify-between mb-4">
+          <span className="text-sm text-gray-600">
+            {matchedPhotos.length} photo{matchedPhotos.length !== 1 ? 's' : ''} found
+          </span>
+          <button
+            onClick={handleFreeDownloadAll}
+            className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700"
+          >
+            Download all photos for free
+          </button>
         </div>
       )}
 

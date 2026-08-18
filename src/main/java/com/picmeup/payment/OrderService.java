@@ -67,15 +67,21 @@ public class OrderService {
         }
 
         Event event = photos.get(0).getEvent();
+
+        BigDecimal totalAmount;
+        BigDecimal itemPrice;
+
         if (event.isFree()) {
-            throw new IllegalArgumentException("This event is free — photos can be downloaded directly");
+            totalAmount = BigDecimal.ZERO;
+            itemPrice = BigDecimal.ZERO;
+        } else {
+            BigDecimal photoPrice = event.getPhotoPrice();
+            BigDecimal packPrice = event.getPackPrice();
+            BigDecimal perPhotoTotal = photoPrice.multiply(new BigDecimal(photos.size()));
+            totalAmount = perPhotoTotal.compareTo(packPrice) > 0 ? packPrice : perPhotoTotal;
+            itemPrice = totalAmount.divide(new BigDecimal(photos.size()), 2, java.math.RoundingMode.HALF_UP);
         }
 
-        BigDecimal photoPrice = event.getPhotoPrice();
-        BigDecimal packPrice = event.getPackPrice();
-        BigDecimal perPhotoTotal = photoPrice.multiply(new BigDecimal(photos.size()));
-        BigDecimal totalAmount = perPhotoTotal.compareTo(packPrice) > 0 ? packPrice : perPhotoTotal;
-        BigDecimal itemPrice = totalAmount.divide(new BigDecimal(photos.size()), 2, java.math.RoundingMode.HALF_UP);
         var order = new Order(buyerEmail, totalAmount);
         orderRepository.save(order);
 
@@ -84,12 +90,17 @@ public class OrderService {
             orderItemRepository.save(item);
         }
 
-        String paypalOrderId = payPalService.createOrder(totalAmount, order.getCurrency());
-        order.setPaypalOrderId(paypalOrderId);
-        orderRepository.save(order);
-
-        log.info("Order {} created for {} ({} photos, ${} AUD, PayPal: {})",
-                order.getId(), buyerEmail, photos.size(), totalAmount, paypalOrderId);
+        if (totalAmount.compareTo(BigDecimal.ZERO) == 0) {
+            order.setStatus(Order.Status.PAID);
+            orderRepository.save(order);
+            log.info("Free order {} created for {} ({} photos)", order.getId(), buyerEmail, photos.size());
+        } else {
+            String paypalOrderId = payPalService.createOrder(totalAmount, order.getCurrency());
+            order.setPaypalOrderId(paypalOrderId);
+            orderRepository.save(order);
+            log.info("Order {} created for {} ({} photos, ${} AUD, PayPal: {})",
+                    order.getId(), buyerEmail, photos.size(), totalAmount, paypalOrderId);
+        }
         return order;
     }
 
