@@ -18,4 +18,6 @@ public interface EventRepository extends JpaRepository<Event, UUID> {
     List<Event> findByExpiresAtAfterAndHiddenFalseAndDeletedAtIsNullOrderByDateDesc(LocalDateTime now);
 
     Optional<Event> findBySlugAndDeletedAtIsNull(String slug);
+
+    long countByDeletedAtIsNull();
 }

@@ -61,8 +61,8 @@ public class SearchStatsController {
         long thumbnailsBytes = s3StorageService.getBytesUsedByPrefix("thumbnails/");
         long totalBytes = originalsBytes + thumbnailsBytes;
 
-        long totalEvents = eventRepository.count();
-        long totalPhotos = photoRepository.count();
+        long totalEvents = eventRepository.countByDeletedAtIsNull();
+        long totalPhotos = photoRepository.countByStatusIn(List.of(Photo.Status.ACTIVE, Photo.Status.PROCESSING));
 
         long facesIndexedThisMonth = photoRepository.countWithIndexedFacesSince(startOfMonth);
         long searchesThisMonth = faceSearchRepository.countBySearchedAtAfter(startOfMonth);

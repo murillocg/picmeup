@@ -19,6 +19,8 @@ public interface PhotoRepository extends JpaRepository<Photo, UUID> {
 
     boolean existsByEventIdAndOriginalFilename(UUID eventId, String originalFilename);
 
+    long countByStatusIn(List<Photo.Status> statuses);
+
     @Query("SELECT COUNT(p) FROM Photo p WHERE p.rekognitionFaceIds IS NOT NULL")
     long countWithIndexedFaces();
 
