@@ -29,7 +29,11 @@ export default function AdminUsagePage() {
   if (error) return <ErrorMessage message={error} />;
   if (!usage) return null;
 
-  const storageCost = (usage.storage.totalBytes / (1024 * 1024 * 1024)) * 0.025;
+  const storageGB = usage.storage.totalBytes / (1024 * 1024 * 1024);
+  const freeStorageGB = 5;
+  const paidStorageGB = Math.max(0, storageGB - freeStorageGB);
+  const storageCost = paidStorageGB * 0.025;
+
   const freeRecognitionOps = 5000;
   const totalRecognitionOpsThisMonth = usage.facialRecognition.facesIndexedThisMonth + usage.facialRecognition.searchesThisMonth;
   const paidRecognitionOps = Math.max(0, totalRecognitionOpsThisMonth - freeRecognitionOps);
@@ -76,6 +80,14 @@ export default function AdminUsagePage() {
               <tr className="border-t-2 border-gray-200">
                 <td className="py-2 text-gray-900 font-medium">Total</td>
                 <td className="py-2 text-right font-bold text-gray-900">{formatBytes(usage.storage.totalBytes)}</td>
+              </tr>
+              <tr>
+                <td className="py-2 text-gray-600">Free tier ({freeStorageGB} GB/month)</td>
+                <td className="py-2 text-right font-medium">
+                  <span className={storageGB > freeStorageGB ? 'text-red-500' : 'text-green-600'}>
+                    {storageGB.toFixed(2)} / {freeStorageGB.toFixed(0)} GB
+                  </span>
+                </td>
               </tr>
               <tr>
                 <td className="py-2 text-gray-600">Estimated cost</td>
