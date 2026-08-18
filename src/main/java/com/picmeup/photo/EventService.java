@@ -52,7 +52,7 @@ public class EventService {
         boolean free = request.free();
         boolean comingSoon = Boolean.TRUE.equals(request.comingSoon());
 
-        if (!free && !comingSoon && request.packPrice().compareTo(request.photoPrice()) < 0) {
+        if (!free && request.packPrice().compareTo(request.photoPrice()) < 0) {
             throw new IllegalArgumentException("Pack price must be greater than or equal to the price per photo");
         }
 
