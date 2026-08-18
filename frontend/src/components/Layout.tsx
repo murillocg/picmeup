@@ -26,6 +26,9 @@ export default function Layout() {
                 <Link to="/admin/stats" className="text-gray-600 hover:text-brand-charcoal">
                   Stats
                 </Link>
+                <Link to="/admin/usage" className="text-gray-600 hover:text-brand-charcoal">
+                  Usage
+                </Link>
                 {/* <Link to="/admin/passes" className="text-gray-600 hover:text-brand-charcoal">
                   Passes
                 </Link> */}

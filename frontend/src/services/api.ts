@@ -9,6 +9,7 @@ import type {
   OrderSummaryResponse,
   EventPassResponse,
   SearchStatsResponse,
+  PlatformUsageResponse,
 } from '../types/api';
 
 const api = axios.create({
@@ -172,6 +173,11 @@ export async function listPasses(): Promise<EventPassResponse[]> {
 
 export async function getSearchStats(): Promise<SearchStatsResponse[]> {
   const response = await api.get<SearchStatsResponse[]>('/admin/stats/searches');
+  return response.data;
+}
+
+export async function getPlatformUsage(): Promise<PlatformUsageResponse> {
+  const response = await api.get<PlatformUsageResponse>('/admin/stats/usage');
   return response.data;
 }
 

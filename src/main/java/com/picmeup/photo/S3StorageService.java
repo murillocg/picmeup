@@ -120,6 +120,29 @@ public class S3StorageService {
         s3Client.deleteObject(request);
     }
 
+    public long getBytesUsedByPrefix(String prefix) {
+        long totalBytes = 0;
+        var listRequest = ListObjectsV2Request.builder()
+                .bucket(bucket)
+                .prefix(prefix)
+                .build();
+
+        var response = s3Client.listObjectsV2(listRequest);
+        while (true) {
+            for (S3Object object : response.contents()) {
+                totalBytes += object.size();
+            }
+            if (!response.isTruncated()) break;
+            listRequest = ListObjectsV2Request.builder()
+                    .bucket(bucket)
+                    .prefix(prefix)
+                    .continuationToken(response.nextContinuationToken())
+                    .build();
+            response = s3Client.listObjectsV2(listRequest);
+        }
+        return totalBytes;
+    }
+
     public void deleteByPrefix(String prefix) {
         var listRequest = ListObjectsV2Request.builder()
                 .bucket(bucket)

@@ -86,6 +86,22 @@ export interface SearchStatsResponse {
   searchesWithResults: number;
 }
 
+export interface PlatformUsageResponse {
+  totalEvents: number;
+  totalPhotos: number;
+  storage: {
+    totalBytes: number;
+    originalsBytes: number;
+    thumbnailsBytes: number;
+  };
+  facialRecognition: {
+    facesIndexedThisMonth: number;
+    searchesThisMonth: number;
+    facesIndexedAllTime: number;
+    searchesAllTime: number;
+  };
+}
+
 export interface ErrorResponse {
   status: number;
   message: string;

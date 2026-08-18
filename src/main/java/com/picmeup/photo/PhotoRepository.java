@@ -1,7 +1,9 @@
 package com.picmeup.photo;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -16,4 +18,10 @@ public interface PhotoRepository extends JpaRepository<Photo, UUID> {
     void deleteByEventId(UUID eventId);
 
     boolean existsByEventIdAndOriginalFilename(UUID eventId, String originalFilename);
+
+    @Query("SELECT COUNT(p) FROM Photo p WHERE p.rekognitionFaceIds IS NOT NULL")
+    long countWithIndexedFaces();
+
+    @Query("SELECT COUNT(p) FROM Photo p WHERE p.rekognitionFaceIds IS NOT NULL AND p.uploadedAt >= :since")
+    long countWithIndexedFacesSince(LocalDateTime since);
 }
