@@ -71,12 +71,20 @@ public class S3StorageService {
     }
 
     public String generatePresignedUrl(String key, Duration expiration, String downloadFilename) {
+        return generatePresignedUrl(key, expiration, downloadFilename, "attachment");
+    }
+
+    public String generatePresignedViewUrl(String key, Duration expiration, String filename) {
+        return generatePresignedUrl(key, expiration, filename, "inline");
+    }
+
+    private String generatePresignedUrl(String key, Duration expiration, String filename, String disposition) {
         var presignRequest = GetObjectPresignRequest.builder()
                 .signatureDuration(expiration)
                 .getObjectRequest(builder -> {
                     builder.bucket(bucket).key(key);
-                    if (downloadFilename != null) {
-                        builder.responseContentDisposition("attachment; filename=\"" + downloadFilename + "\"");
+                    if (filename != null) {
+                        builder.responseContentDisposition(disposition + "; filename=\"" + filename + "\"");
                     }
                 })
                 .build();

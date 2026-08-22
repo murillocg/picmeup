@@ -338,6 +338,7 @@ export default function EventDetailPage() {
           photos={displayPhotos}
           selectedIds={selectedIds}
           onToggleSelect={toggleSelect}
+          selectable={!isFree}
         />
       )}
       {cropImageUrl && (

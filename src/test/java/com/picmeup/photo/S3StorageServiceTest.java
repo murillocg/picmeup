@@ -73,6 +73,34 @@ class S3StorageServiceTest {
     }
 
     @Test
+    void generatePresignedUrl_withFilename_shouldUseAttachmentDisposition() throws Exception {
+        var presignedRequest = mock(PresignedGetObjectRequest.class);
+        when(presignedRequest.url()).thenReturn(URI.create("https://test-bucket.s3.amazonaws.com/photos/test.jpg?signed=true").toURL());
+        when(s3Presigner.presignGetObject(any(GetObjectPresignRequest.class))).thenReturn(presignedRequest);
+
+        storageService.generatePresignedUrl("photos/test.jpg", Duration.ofHours(24), "IMG_1.jpg");
+
+        var captor = ArgumentCaptor.forClass(GetObjectPresignRequest.class);
+        verify(s3Presigner).presignGetObject(captor.capture());
+        assertThat(captor.getValue().getObjectRequest().responseContentDisposition())
+                .isEqualTo("attachment; filename=\"IMG_1.jpg\"");
+    }
+
+    @Test
+    void generatePresignedViewUrl_shouldUseInlineDisposition() throws Exception {
+        var presignedRequest = mock(PresignedGetObjectRequest.class);
+        when(presignedRequest.url()).thenReturn(URI.create("https://test-bucket.s3.amazonaws.com/photos/test.jpg?signed=true").toURL());
+        when(s3Presigner.presignGetObject(any(GetObjectPresignRequest.class))).thenReturn(presignedRequest);
+
+        storageService.generatePresignedViewUrl("photos/test.jpg", Duration.ofHours(24), "IMG_1.jpg");
+
+        var captor = ArgumentCaptor.forClass(GetObjectPresignRequest.class);
+        verify(s3Presigner).presignGetObject(captor.capture());
+        assertThat(captor.getValue().getObjectRequest().responseContentDisposition())
+                .isEqualTo("inline; filename=\"IMG_1.jpg\"");
+    }
+
+    @Test
     void deleteFile_shouldDeleteObject() {
         storageService.deleteFile("photos/test.jpg");
 

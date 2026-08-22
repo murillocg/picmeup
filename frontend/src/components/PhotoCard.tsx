@@ -27,11 +27,13 @@ export default function PhotoCard({
     );
   }
 
+  const showSelected = selectable && selected;
+
   return (
     <div className="relative group">
       <div
         className={`aspect-square rounded-lg overflow-hidden cursor-pointer border-2 transition-all ${
-          selected ? 'border-brand-orange ring-2 ring-brand-orange/40' : 'border-transparent'
+          showSelected ? 'border-brand-orange ring-2 ring-brand-orange/40' : 'border-transparent'
         }`}
         onClick={onView}
       >

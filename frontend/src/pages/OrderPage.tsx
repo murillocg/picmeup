@@ -44,6 +44,9 @@ export default function OrderPage() {
           <p className="text-green-800 text-sm">
             Your download links are available below. They expire in 24 hours — revisit this page to regenerate them.
           </p>
+          <p className="text-green-800 text-sm mt-2">
+            On a phone, tap <span className="font-semibold">View</span> to open a photo, then press and hold it to save or share it.
+          </p>
         </div>
       )}
 
@@ -57,19 +60,33 @@ export default function OrderPage() {
           {order.items.map((item) => (
             <div
               key={item.id}
-              className="flex items-center justify-between border border-gray-100 rounded-lg p-3"
+              className="flex items-center justify-between gap-3 border border-gray-100 rounded-lg p-3"
             >
-              <span className="text-sm text-gray-600">{item.filename || 'Photo'} — ${item.price.toFixed(2)}</span>
+              <span className="text-sm text-gray-600 truncate" title={item.filename || 'Photo'}>
+                {item.filename || 'Photo'}
+              </span>
               {isPaid && item.downloadUrl ? (
-                <a
-                  href={item.downloadUrl}
-                  download
-                  className="bg-brand-orange text-white px-4 py-1.5 rounded-lg hover:bg-brand-orange-dark text-sm"
-                >
-                  Download
-                </a>
+                <div className="flex items-center gap-2 shrink-0">
+                  {item.viewUrl && (
+                    <a
+                      href={item.viewUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="border border-brand-orange text-brand-orange px-3 py-1.5 rounded-lg hover:bg-orange-50 text-sm"
+                    >
+                      View
+                    </a>
+                  )}
+                  <a
+                    href={item.downloadUrl}
+                    download
+                    className="bg-brand-orange text-white px-3 py-1.5 rounded-lg hover:bg-brand-orange-dark text-sm"
+                  >
+                    Download
+                  </a>
+                </div>
               ) : (
-                <span className="text-sm text-gray-400">Unavailable</span>
+                <span className="text-sm text-gray-400 shrink-0">Unavailable</span>
               )}
             </div>
           ))}
