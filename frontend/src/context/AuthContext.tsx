@@ -1,21 +1,21 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import type { ReactNode } from 'react';
-import { checkAuth as apiCheckAuth, loginWithBasicAuth } from '../services/api';
+import { checkAuth as apiCheckAuth, login as apiLogin, logout as apiLogout } from '../services/api';
 
 interface AuthState {
   authenticated: boolean;
   username: string | null;
   loading: boolean;
-  login: () => void;
-  logout: () => void;
+  login: (username: string, password: string) => Promise<void>;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthState>({
   authenticated: false,
   username: null,
   loading: true,
-  login: () => {},
-  logout: () => {},
+  login: async () => {},
+  logout: async () => {},
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -40,24 +40,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     refresh();
   }, [refresh]);
 
-  const login = useCallback(async () => {
-    try {
-      const data = await loginWithBasicAuth();
-      setAuthenticated(data.authenticated);
-      setUsername(data.username ?? null);
-    } catch {
-      // User cancelled the dialog or credentials were wrong
-    }
+  const login = useCallback(async (user: string, password: string) => {
+    const data = await apiLogin(user, password);
+    setAuthenticated(data.authenticated);
+    setUsername(data.username ?? null);
   }, []);
 
-  const logout = useCallback(() => {
-    // Clear browser-cached credentials by sending a request with wrong credentials
-    // This forces the browser to forget the Basic Auth session
-    fetch('/api/auth/login', {
-      headers: { Authorization: 'Basic ' + btoa('logout:logout') },
-    }).catch(() => {});
-    setAuthenticated(false);
-    setUsername(null);
+  const logout = useCallback(async () => {
+    try {
+      await apiLogout();
+    } finally {
+      setAuthenticated(false);
+      setUsername(null);
+    }
   }, []);
 
   return (

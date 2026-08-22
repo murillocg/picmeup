@@ -1,8 +1,14 @@
-import { Link, Outlet } from 'react-router-dom';
+import { Link, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 export default function Layout() {
   const { authenticated, username, logout } = useAuth();
+  const navigate = useNavigate();
+
+  async function handleLogout() {
+    await logout();
+    navigate('/', { replace: true });
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
@@ -42,7 +48,7 @@ export default function Layout() {
             )}
             {authenticated && (
               <button
-                onClick={logout}
+                onClick={handleLogout}
                 className="text-sm text-gray-500 hover:text-gray-700"
               >
                 Logout ({username})

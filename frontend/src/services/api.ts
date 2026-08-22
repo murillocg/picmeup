@@ -186,20 +186,17 @@ export async function checkAuth(): Promise<{ authenticated: boolean; username?: 
   return response.data;
 }
 
-export function loginWithBasicAuth(): Promise<{ authenticated: boolean; username?: string }> {
-  // XMLHttpRequest triggers the native browser credential dialog on 401
-  return new Promise((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
-    xhr.open('GET', '/api/auth/login', true);
-    xhr.withCredentials = true;
-    xhr.onload = () => {
-      if (xhr.status === 200) {
-        resolve(JSON.parse(xhr.responseText));
-      } else {
-        reject(new Error('Login failed'));
-      }
-    };
-    xhr.onerror = () => reject(new Error('Login failed'));
-    xhr.send();
+export async function login(
+  username: string,
+  password: string,
+): Promise<{ authenticated: boolean; username?: string }> {
+  const response = await api.post<{ authenticated: boolean; username?: string }>('/auth/login', {
+    username,
+    password,
   });
+  return response.data;
+}
+
+export async function logout(): Promise<void> {
+  await api.post('/auth/logout');
 }

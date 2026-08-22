@@ -16,7 +16,8 @@ import java.time.LocalDate;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -39,7 +40,7 @@ class EventControllerTest {
         var request = new CreateEventRequest("City Marathon", LocalDate.of(2026, 5, 10), "Sydney", new BigDecimal("20.00"), new BigDecimal("65.00"), false, false);
 
         mockMvc.perform(post("/api/events")
-                        .with(httpBasic("admin", "admin123"))
+                        .with(user("admin").roles("ADMIN")).with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -54,6 +55,7 @@ class EventControllerTest {
         var request = new CreateEventRequest("City Marathon", LocalDate.of(2026, 5, 10), "Sydney", new BigDecimal("20.00"), new BigDecimal("65.00"), false, false);
 
         mockMvc.perform(post("/api/events")
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isUnauthorized());
@@ -64,7 +66,7 @@ class EventControllerTest {
         var request = new CreateEventRequest("", LocalDate.of(2026, 5, 10), "Sydney", new BigDecimal("20.00"), new BigDecimal("65.00"), false, false);
 
         mockMvc.perform(post("/api/events")
-                        .with(httpBasic("admin", "admin123"))
+                        .with(user("admin").roles("ADMIN")).with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
@@ -76,7 +78,7 @@ class EventControllerTest {
         var request = new CreateEventRequest("Beach Party", LocalDate.of(2026, 6, 15), "Bondi", new BigDecimal("20.00"), new BigDecimal("65.00"), false, false);
 
         mockMvc.perform(post("/api/events")
-                .with(httpBasic("admin", "admin123"))
+                .with(user("admin").roles("ADMIN")).with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)));
 
@@ -98,16 +100,16 @@ class EventControllerTest {
         var request2 = new CreateEventRequest("Event Two", LocalDate.of(2026, 6, 20), "Melbourne", new BigDecimal("20.00"), new BigDecimal("65.00"), false, false);
 
         mockMvc.perform(post("/api/events")
-                .with(httpBasic("admin", "admin123"))
+                .with(user("admin").roles("ADMIN")).with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request1)));
         mockMvc.perform(post("/api/events")
-                .with(httpBasic("admin", "admin123"))
+                .with(user("admin").roles("ADMIN")).with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request2)));
 
         mockMvc.perform(get("/api/events").param("includeHidden", "true")
-                        .with(httpBasic("admin", "admin123")))
+                        .with(user("admin").roles("ADMIN")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(2)));
     }
@@ -117,12 +119,12 @@ class EventControllerTest {
         var request = new CreateEventRequest("Marathon", LocalDate.of(2026, 5, 10), "Sydney", new BigDecimal("20.00"), new BigDecimal("65.00"), false, false);
 
         mockMvc.perform(post("/api/events")
-                .with(httpBasic("admin", "admin123"))
+                .with(user("admin").roles("ADMIN")).with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)));
 
         mockMvc.perform(post("/api/events")
-                .with(httpBasic("admin", "admin123"))
+                .with(user("admin").roles("ADMIN")).with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
