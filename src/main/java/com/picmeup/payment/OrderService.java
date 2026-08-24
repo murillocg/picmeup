@@ -154,7 +154,6 @@ public class OrderService {
         return items.stream()
                 .map(item -> {
                     String downloadUrl = null;
-                    String viewUrl = null;
                     String filename = null;
                     var photo = photoRepository.findById(item.getPhotoId()).orElse(null);
                     if (photo != null) {
@@ -163,11 +162,9 @@ public class OrderService {
                             String downloadFilename = filename != null ? filename : "photo-" + photo.getId() + ".jpg";
                             downloadUrl = s3StorageService.generatePresignedUrl(
                                     photo.getOriginalS3Key(), Duration.ofHours(24), downloadFilename);
-                            viewUrl = s3StorageService.generatePresignedViewUrl(
-                                    photo.getOriginalS3Key(), Duration.ofHours(24), downloadFilename);
                         }
                     }
-                    return OrderItemResponse.from(item, downloadUrl, viewUrl, filename);
+                    return OrderItemResponse.from(item, downloadUrl, filename);
                 })
                 .toList();
     }

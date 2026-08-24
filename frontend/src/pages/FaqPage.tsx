@@ -1,4 +1,5 @@
-import { Link } from 'react-router-dom';
+import { useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import usePageTitle from '../hooks/usePageTitle';
 
 const faqs = [
@@ -33,9 +34,10 @@ const faqs = [
       "Once you've found your images, you can easily purchase and download them directly through our platform via a PayPal checkout using either your PayPal account or credit card.",
   },
   {
+    id: 'where-are-my-images-downloaded',
     question: 'Where are my images downloaded?',
     answer:
-      'On a laptop or desktop: after checkout you will be prompted to select a folder to save the zip file (for multiple images) or individual photos.\n\nOn iPhone/iPad: your images will be saved in the Files app. If you purchased all images, open the zip file first — all images will then save to Files.\n\nOn Android: your images will be saved to your Downloads folder. If you purchased all images, open the zip file to extract them.',
+      'On a laptop or desktop: after checkout you will be prompted to select a folder to save the zip file (for multiple images) or individual photos.\n\nOn iPhone/iPad: your browser asks you to confirm the download first (Chrome also asks where to save it). Your images are saved in the Files app, in the Downloads folder. If you purchased all images, tap the zip file there and the photos unpack into a folder with the same name.\n\nOn iPhone/iPad, downloaded images are not added to your Photos app, so they will not show up in the WhatsApp photo picker. To share one, open it in Files, tap the Share button and choose Save Image to add it to Photos first — or attach it in WhatsApp as a document.\n\nOn Android: your images will be saved to your Downloads folder. If you purchased all images, open the zip file to extract them.',
   },
   {
     question: 'Can I print or share my purchased photos?',
@@ -51,6 +53,13 @@ const faqs = [
 
 export default function FaqPage() {
   usePageTitle('FAQ');
+  const { hash } = useLocation();
+
+  useEffect(() => {
+    if (!hash) return;
+    document.getElementById(hash.slice(1))?.scrollIntoView({ behavior: 'smooth' });
+  }, [hash]);
+
   return (
     <div className="max-w-3xl mx-auto">
       <h1 className="text-3xl font-bold text-gray-900 mb-2">Frequently Asked Questions</h1>
@@ -65,7 +74,11 @@ export default function FaqPage() {
 
       <div className="space-y-4">
         {faqs.map((faq) => (
-          <div key={faq.question} className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+          <div
+            key={faq.question}
+            id={faq.id}
+            className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 scroll-mt-4"
+          >
             <h2 className="text-base font-semibold text-gray-900 mb-2">{faq.question}</h2>
             <p className="text-gray-600 leading-relaxed whitespace-pre-line">{faq.answer}</p>
           </div>

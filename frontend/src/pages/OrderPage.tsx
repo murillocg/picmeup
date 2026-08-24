@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { getOrder } from '../services/api';
 import type { OrderResponse } from '../types/api';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorMessage from '../components/ErrorMessage';
 import usePageTitle from '../hooks/usePageTitle';
+import { getMobilePlatform } from '../utils/device';
 
 export default function OrderPage() {
   usePageTitle('Order');
@@ -27,6 +28,7 @@ export default function OrderPage() {
   if (!order) return <ErrorMessage message="Order not found" />;
 
   const isPaid = order.status === 'PAID';
+  const mobilePlatform = getMobilePlatform();
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -44,9 +46,28 @@ export default function OrderPage() {
           <p className="text-green-800 text-sm">
             Your download links are available below. They expire in 24 hours — revisit this page to regenerate them.
           </p>
-          <p className="text-green-800 text-sm mt-2">
-            On a phone, tap <span className="font-semibold">View</span> to open a photo, then press and hold it to save or share it.
-          </p>
+        </div>
+      )}
+
+      {isPaid && mobilePlatform && (
+        <div className="bg-orange-50 border border-brand-orange/30 rounded-lg p-4 mb-6">
+          <h2 className="text-sm font-semibold text-gray-900 mb-1">Where your photos are saved</h2>
+          {mobilePlatform === 'ios' ? (
+            <p className="text-sm text-gray-700">
+              Your photos are saved in <span className="font-semibold">Files → Downloads</span>, not in your
+              Photos app.
+            </p>
+          ) : (
+            <p className="text-sm text-gray-700">
+              Your photos are saved in your <span className="font-semibold">Downloads</span> folder.
+            </p>
+          )}
+          <Link
+            to="/faq#where-are-my-images-downloaded"
+            className="text-sm text-brand-orange hover:text-brand-orange-dark underline mt-2 inline-block"
+          >
+            How to find and share them
+          </Link>
         </div>
       )}
 
@@ -66,25 +87,13 @@ export default function OrderPage() {
                 {item.filename || 'Photo'}
               </span>
               {isPaid && item.downloadUrl ? (
-                <div className="flex items-center gap-2 shrink-0">
-                  {item.viewUrl && (
-                    <a
-                      href={item.viewUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="border border-brand-orange text-brand-orange px-3 py-1.5 rounded-lg hover:bg-orange-50 text-sm"
-                    >
-                      View
-                    </a>
-                  )}
-                  <a
-                    href={item.downloadUrl}
-                    download
-                    className="bg-brand-orange text-white px-3 py-1.5 rounded-lg hover:bg-brand-orange-dark text-sm"
-                  >
-                    Download
-                  </a>
-                </div>
+                <a
+                  href={item.downloadUrl}
+                  download
+                  className="bg-brand-orange text-white px-4 py-1.5 rounded-lg hover:bg-brand-orange-dark text-sm shrink-0"
+                >
+                  Download
+                </a>
               ) : (
                 <span className="text-sm text-gray-400 shrink-0">Unavailable</span>
               )}

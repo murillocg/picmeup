@@ -10,16 +10,14 @@ public record OrderItemResponse(
         UUID photoId,
         BigDecimal price,
         String downloadUrl,
-        String viewUrl,
         String filename
 ) {
-    public static OrderItemResponse from(OrderItem item, String downloadUrl, String viewUrl, String filename) {
+    public static OrderItemResponse from(OrderItem item, String downloadUrl, String filename) {
         return new OrderItemResponse(
                 item.getId(),
                 item.getPhotoId(),
                 item.getPrice(),
                 downloadUrl,
-                viewUrl,
                 filename
         );
     }

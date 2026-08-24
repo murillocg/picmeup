@@ -43,7 +43,6 @@ export interface OrderItemResponse {
   photoId: string;
   price: number;
   downloadUrl: string | null;
-  viewUrl: string | null;
   filename: string | null;
 }
 
