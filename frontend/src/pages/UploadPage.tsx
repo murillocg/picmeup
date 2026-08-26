@@ -12,6 +12,11 @@ type Failure = {
   reason: string;
 };
 
+// S3 speaks HTTP/1.1 and browsers cap connections at 6 per host, so more workers
+// than this just queue. Extra connections only help when the uplink isn't already
+// saturated — when it is, nothing here beats the photographer's upstream bandwidth.
+const CONCURRENCY = 6;
+
 export default function UploadPage() {
   const { slug } = useParams<{ slug: string }>();
   const { authenticated, loading: authLoading } = useAuth();
@@ -23,6 +28,7 @@ export default function UploadPage() {
   const [batchTotal, setBatchTotal] = useState(0);
   const [error, setError] = useState('');
   const [timeRemaining, setTimeRemaining] = useState<string | null>(null);
+  const [throughput, setThroughput] = useState<number | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
   if (!authLoading && !authenticated) return <Navigate to="/" />;
@@ -39,23 +45,27 @@ export default function UploadPage() {
     setFailures([]);
     setError('');
     setTimeRemaining(null);
+    setThroughput(null);
     setBatchTotal(batch.length);
 
     const total = batch.length;
+    const totalBytes = batch.reduce((sum, file) => sum + file.size, 0);
     const startTime = Date.now();
     let completedCount = 0;
+    let uploadedBytes = 0;
+    let processedBytes = 0;
     const failed: Failure[] = [];
-    const concurrency = 3;
 
     async function uploadNext(index: number) {
       while (index < total && !controller.signal.aborted) {
         const currentIndex = index;
-        index += concurrency;
+        index += CONCURRENCY;
         const file = batch[currentIndex];
 
         try {
           await uploadPhoto(slug!, file, controller.signal);
           completedCount++;
+          uploadedBytes += file.size;
         } catch (caught) {
           const failure =
             caught instanceof UploadError
@@ -77,20 +87,29 @@ export default function UploadPage() {
         setUploaded(completedCount);
         setFailures([...failed]);
 
+        processedBytes += file.size;
         const processed = completedCount + failed.length;
         const elapsed = Date.now() - startTime;
-        const avgPerFile = elapsed / processed;
-        setTimeRemaining(formatTime(avgPerFile * (total - processed)));
+
+        // The first few completions land together because the workers start together,
+        // which makes an early estimate wildly pessimistic. Wait for a steady state,
+        // then rate by bytes rather than by file — file sizes vary too much.
+        if (processed >= CONCURRENCY * 2 && uploadedBytes > 0) {
+          const bytesPerMs = uploadedBytes / elapsed;
+          setThroughput((bytesPerMs * 1000) / (1024 * 1024));
+          setTimeRemaining(formatTime((totalBytes - processedBytes) / bytesPerMs));
+        }
       }
     }
 
-    const workers = Array.from({ length: Math.min(concurrency, total) }, (_, i) => uploadNext(i));
+    const workers = Array.from({ length: Math.min(CONCURRENCY, total) }, (_, i) => uploadNext(i));
     await Promise.all(workers);
 
     abortRef.current = null;
     setUploading(false);
     setDone(true);
     setTimeRemaining(null);
+    setThroughput(null);
   }
 
   function handleSubmit(e: React.FormEvent) {
@@ -266,9 +285,11 @@ export default function UploadPage() {
               <span className="font-medium text-gray-700">
                 {uploaded} of {files.length} uploaded
               </span>
-              {timeRemaining && (
-                <span className="text-gray-500">~{timeRemaining} remaining</span>
-              )}
+              <span className="text-gray-500">
+                {throughput !== null && `${throughput.toFixed(1)} MB/s`}
+                {throughput !== null && timeRemaining && ' · '}
+                {timeRemaining ? `~${timeRemaining} remaining` : !throughput && 'estimating…'}
+              </span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-3">
               <div
