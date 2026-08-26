@@ -17,6 +17,36 @@ type Failure = {
 // saturated — when it is, nothing here beats the photographer's upstream bandwidth.
 const CONCURRENCY = 6;
 
+const MAX_FILES = 1000;
+
+// Identity is name + size + lastModified: the same file picked twice. Two *different*
+// photos that merely share a filename are left alone, so the server still reports them
+// as duplicates rather than one being silently dropped here.
+function fileKey(file: File): string {
+  return `${file.name}:${file.size}:${file.lastModified}`;
+}
+
+// The picker appends, so selecting the same folder twice queues every file twice — and
+// two workers presigning one filename at the same moment both pass the server's
+// duplicate check, landing two copies in the event.
+function mergeFiles(existing: File[], incoming: File[]): { files: File[]; duplicates: number } {
+  const seen = new Set(existing.map(fileKey));
+  const merged = [...existing];
+  let duplicates = 0;
+
+  for (const file of incoming) {
+    const key = fileKey(file);
+    if (seen.has(key)) {
+      duplicates++;
+      continue;
+    }
+    seen.add(key);
+    merged.push(file);
+  }
+
+  return { files: merged.slice(0, MAX_FILES), duplicates };
+}
+
 export default function UploadPage() {
   const { slug } = useParams<{ slug: string }>();
   const { authenticated, loading: authLoading } = useAuth();
@@ -29,6 +59,7 @@ export default function UploadPage() {
   const [error, setError] = useState('');
   const [timeRemaining, setTimeRemaining] = useState<string | null>(null);
   const [throughput, setThroughput] = useState<number | null>(null);
+  const [duplicatesIgnored, setDuplicatesIgnored] = useState(0);
   const abortRef = useRef<AbortController | null>(null);
 
   if (!authLoading && !authenticated) return <Navigate to="/" />;
@@ -228,7 +259,13 @@ export default function UploadPage() {
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Photos</label>
           {!uploading && (
-            <FileUpload onFilesSelected={(newFiles) => setFiles((prev) => [...prev, ...newFiles].slice(0, 1000))} />
+            <FileUpload
+              onFilesSelected={(newFiles) => {
+                const merged = mergeFiles(files, newFiles);
+                setFiles(merged.files);
+                setDuplicatesIgnored(merged.duplicates);
+              }}
+            />
           )}
 
           {files.length > 0 && (
@@ -236,11 +273,20 @@ export default function UploadPage() {
               <div className="flex items-center justify-between mb-2">
                 <p className="text-sm text-gray-500">
                   {files.length} file{files.length !== 1 ? 's' : ''} selected
+                  {duplicatesIgnored > 0 && (
+                    <span className="text-gray-400">
+                      {' '}
+                      ({duplicatesIgnored} already in the list, skipped)
+                    </span>
+                  )}
                 </p>
                 {!uploading && (
                   <button
                     type="button"
-                    onClick={() => setFiles([])}
+                    onClick={() => {
+                      setFiles([]);
+                      setDuplicatesIgnored(0);
+                    }}
                     className="text-sm text-red-600 hover:text-red-700"
                   >
                     Remove all
