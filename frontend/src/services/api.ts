@@ -44,9 +44,62 @@ export async function createEvent(data: CreateEventRequest): Promise<EventRespon
   return response.data;
 }
 
-export async function uploadPhoto(
+export type UploadErrorKind =
+  | 'duplicate'
+  | 'auth'
+  | 'network'
+  | 'server'
+  | 'rejected'
+  | 'aborted'
+  | 'unknown';
+
+export class UploadError extends Error {
+  readonly kind: UploadErrorKind;
+  readonly retryable: boolean;
+
+  constructor(kind: UploadErrorKind, message: string, retryable: boolean) {
+    super(message);
+    this.name = 'UploadError';
+    this.kind = kind;
+    this.retryable = retryable;
+  }
+}
+
+function asUploadError(error: unknown): UploadError {
+  if (error instanceof UploadError) return error;
+
+  if (axios.isCancel(error) || (error instanceof Error && error.name === 'AbortError')) {
+    return new UploadError('aborted', 'Cancelled', false);
+  }
+
+  if (!axios.isAxiosError(error)) {
+    const message = error instanceof Error ? error.message : 'Unexpected error';
+    return new UploadError('unknown', message, false);
+  }
+
+  if (!error.response) {
+    return new UploadError('network', 'Network error — the connection dropped', true);
+  }
+
+  const { status } = error.response;
+  const message = (error.response.data as { message?: string } | undefined)?.message;
+
+  if (status === 401 || status === 403) {
+    return new UploadError('auth', 'Your admin session expired', false);
+  }
+  if (status === 400 && message?.includes('already exists')) {
+    return new UploadError('duplicate', 'Already uploaded to this event', false);
+  }
+  if (status === 429 || status >= 500) {
+    return new UploadError('server', message ?? `Server error (${status})`, true);
+  }
+  return new UploadError('rejected', message ?? `Rejected by the server (${status})`, false);
+}
+
+async function uploadPhotoOnce(
   slug: string,
   file: File,
+  signal?: AbortSignal,
 ): Promise<PhotoUploadResponse> {
   // Step 1: Get presigned URL from backend
   const presignResponse = await api.post<{
@@ -55,25 +108,57 @@ export async function uploadPhoto(
     photoId: string;
   }>(`/events/${slug}/photos/presign`, null, {
     params: { filename: file.name },
+    signal,
   });
 
   const { uploadUrl, s3Key, photoId } = presignResponse.data;
 
   // Step 2: Upload directly to S3
-  await fetch(uploadUrl, {
-    method: 'PUT',
-    body: file,
-    headers: { 'Content-Type': 'image/jpeg' },
-  });
+  let s3Response: Response;
+  try {
+    s3Response = await fetch(uploadUrl, {
+      method: 'PUT',
+      body: file,
+      headers: { 'Content-Type': 'image/jpeg' },
+      signal,
+    });
+  } catch (error) {
+    throw asUploadError(error);
+  }
+
+  if (!s3Response.ok) {
+    // A 403 here is almost always an expired signature, which a fresh presign fixes.
+    const retryable = s3Response.status === 403 || s3Response.status === 429 || s3Response.status >= 500;
+    throw new UploadError('server', `Storage rejected the file (${s3Response.status})`, retryable);
+  }
 
   // Step 3: Confirm upload with backend
   const confirmResponse = await api.post<PhotoUploadResponse>(
     `/events/${slug}/photos/confirm`,
     null,
-    { params: { photoId, s3Key, filename: file.name } },
+    { params: { photoId, s3Key, filename: file.name }, signal },
   );
 
   return confirmResponse.data;
+}
+
+const UPLOAD_ATTEMPTS = 3;
+
+export async function uploadPhoto(
+  slug: string,
+  file: File,
+  signal?: AbortSignal,
+): Promise<PhotoUploadResponse> {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await uploadPhotoOnce(slug, file, signal);
+    } catch (error) {
+      const failure = asUploadError(error);
+      if (!failure.retryable || attempt >= UPLOAD_ATTEMPTS || signal?.aborted) throw failure;
+      const backoff = 400 * 2 ** (attempt - 1) + Math.random() * 200;
+      await new Promise((resolve) => setTimeout(resolve, backoff));
+    }
+  }
 }
 
 export async function uploadCoverImage(slug: string, file: File): Promise<EventResponse> {

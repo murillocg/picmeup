@@ -1,9 +1,16 @@
 import { useState, useRef } from 'react';
 import { Link, useParams, Navigate } from 'react-router-dom';
-import { uploadPhoto } from '../services/api';
+import { uploadPhoto, UploadError } from '../services/api';
+import type { UploadErrorKind } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import FileUpload from '../components/FileUpload';
 import ErrorMessage from '../components/ErrorMessage';
+
+type Failure = {
+  file: File;
+  kind: UploadErrorKind;
+  reason: string;
+};
 
 export default function UploadPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -11,59 +18,84 @@ export default function UploadPage() {
   const [files, setFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
   const [uploaded, setUploaded] = useState(0);
-  const [failed, setFailed] = useState(0);
+  const [failures, setFailures] = useState<Failure[]>([]);
   const [done, setDone] = useState(false);
+  const [batchTotal, setBatchTotal] = useState(0);
   const [error, setError] = useState('');
   const [timeRemaining, setTimeRemaining] = useState<string | null>(null);
-  const abortRef = useRef(false);
+  const abortRef = useRef<AbortController | null>(null);
 
   if (!authLoading && !authenticated) return <Navigate to="/" />;
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!slug || files.length === 0) return;
+  async function runUpload(batch: File[]) {
+    if (!slug || batch.length === 0) return;
+
+    const controller = new AbortController();
+    abortRef.current = controller;
 
     setUploading(true);
+    setDone(false);
     setUploaded(0);
-    setFailed(0);
+    setFailures([]);
     setError('');
     setTimeRemaining(null);
-    abortRef.current = false;
+    setBatchTotal(batch.length);
 
-    const total = files.length;
+    const total = batch.length;
     const startTime = Date.now();
     let completedCount = 0;
-    let failedCount = 0;
+    const failed: Failure[] = [];
     const concurrency = 3;
 
     async function uploadNext(index: number) {
-      while (index < total && !abortRef.current) {
+      while (index < total && !controller.signal.aborted) {
         const currentIndex = index;
         index += concurrency;
+        const file = batch[currentIndex];
+
         try {
-          await uploadPhoto(slug!, files[currentIndex]);
+          await uploadPhoto(slug!, file, controller.signal);
           completedCount++;
-        } catch {
-          failedCount++;
+        } catch (caught) {
+          const failure =
+            caught instanceof UploadError
+              ? caught
+              : new UploadError('unknown', 'Unexpected error', false);
+
+          if (failure.kind === 'aborted') continue;
+
+          failed.push({ file, kind: failure.kind, reason: failure.message });
+
+          // Every remaining file would fail the same way, so stop instead of
+          // grinding through hundreds of doomed uploads.
+          if (failure.kind === 'auth') {
+            setError('Your admin session expired. Log in again, then retry the remaining files.');
+            controller.abort();
+          }
         }
 
         setUploaded(completedCount);
-        setFailed(failedCount);
+        setFailures([...failed]);
 
-        const done = completedCount + failedCount;
+        const processed = completedCount + failed.length;
         const elapsed = Date.now() - startTime;
-        const avgPerFile = elapsed / done;
-        const remaining = avgPerFile * (total - done);
-        setTimeRemaining(formatTime(remaining));
+        const avgPerFile = elapsed / processed;
+        setTimeRemaining(formatTime(avgPerFile * (total - processed)));
       }
     }
 
     const workers = Array.from({ length: Math.min(concurrency, total) }, (_, i) => uploadNext(i));
     await Promise.all(workers);
 
+    abortRef.current = null;
     setUploading(false);
     setDone(true);
     setTimeRemaining(null);
+  }
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    void runUpload(files);
   }
 
   function formatTime(ms: number): string {
@@ -74,37 +106,98 @@ export default function UploadPage() {
     return `${minutes}m ${secs}s`;
   }
 
+  const duplicates = failures.filter((f) => f.kind === 'duplicate');
+  const errors = failures.filter((f) => f.kind !== 'duplicate');
+
   if (done) {
-    const total = uploaded + failed;
+    const stopped = uploaded + failures.length < batchTotal;
+
     return (
-      <div className="max-w-lg mx-auto text-center">
-        <div className="bg-green-50 border border-green-200 rounded-lg p-8">
-          <svg
-            className="mx-auto w-16 h-16 text-green-500 mb-4"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-          </svg>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Upload complete!</h2>
-          <p className="text-gray-600 mb-4">
-            {uploaded} of {total} photo{total !== 1 ? 's' : ''} uploaded successfully.
-            {failed > 0 && ` ${failed} failed.`}
-            {' '}They are being processed and will be available shortly.
-          </p>
-          <Link
-            to={`/events/${slug}`}
-            className="inline-block bg-brand-orange text-white px-6 py-3 rounded-lg hover:bg-brand-orange-dark"
-          >
-            View event
-          </Link>
+      <div className="max-w-lg mx-auto">
+        <div
+          className={`border rounded-lg p-8 ${
+            errors.length > 0 || stopped ? 'bg-amber-50 border-amber-200' : 'bg-green-50 border-green-200'
+          }`}
+        >
+          <div className="text-center">
+            {errors.length > 0 || stopped ? (
+              <svg
+                className="mx-auto w-16 h-16 text-amber-500 mb-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
+                />
+              </svg>
+            ) : (
+              <svg
+                className="mx-auto w-16 h-16 text-green-500 mb-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            )}
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              {stopped
+                ? 'Upload stopped'
+                : errors.length > 0
+                  ? 'Upload finished with problems'
+                  : 'Upload complete!'}
+            </h2>
+            <p className="text-gray-600">
+              {uploaded} of {batchTotal} photo{batchTotal !== 1 ? 's' : ''} uploaded successfully.
+              {stopped && ` ${batchTotal - uploaded - failures.length} were not attempted.`}
+              {uploaded > 0 && ' They are being processed and will be available shortly.'}
+            </p>
+          </div>
+
+          {duplicates.length > 0 && (
+            <FailureGroup
+              tone="neutral"
+              title={`${duplicates.length} photo${duplicates.length !== 1 ? 's were' : ' was'} already in this event and ${
+                duplicates.length !== 1 ? 'were' : 'was'
+              } skipped`}
+              files={duplicates.map((f) => f.file.name)}
+            />
+          )}
+
+          {errors.length > 0 && <ErrorBreakdown failures={errors} />}
+
+          <div className="mt-6 flex flex-col sm:flex-row gap-3">
+            {errors.length > 0 && (
+              <button
+                type="button"
+                onClick={() => void runUpload(errors.map((f) => f.file))}
+                className="flex-1 bg-brand-orange text-white px-6 py-3 rounded-lg hover:bg-brand-orange-dark"
+              >
+                Retry {errors.length} failed photo{errors.length !== 1 ? 's' : ''}
+              </button>
+            )}
+            <Link
+              to={`/events/${slug}`}
+              className={`flex-1 text-center px-6 py-3 rounded-lg ${
+                errors.length > 0
+                  ? 'border border-gray-300 text-gray-700 hover:bg-gray-50'
+                  : 'bg-brand-orange text-white hover:bg-brand-orange-dark'
+              }`}
+            >
+              View event
+            </Link>
+          </div>
         </div>
       </div>
     );
   }
 
-  const progress = files.length > 0 ? ((uploaded + failed) / files.length) * 100 : 0;
+  const processed = uploaded + failures.length;
+  const progress = files.length > 0 ? (processed / files.length) * 100 : 0;
 
   return (
     <div className="max-w-lg mx-auto">
@@ -171,7 +264,7 @@ export default function UploadPage() {
           <div className="space-y-3">
             <div className="flex items-center justify-between text-sm">
               <span className="font-medium text-gray-700">
-                {uploaded + failed}/{files.length} uploaded
+                {uploaded} of {files.length} uploaded
               </span>
               {timeRemaining && (
                 <span className="text-gray-500">~{timeRemaining} remaining</span>
@@ -183,9 +276,23 @@ export default function UploadPage() {
                 style={{ width: `${progress}%` }}
               />
             </div>
-            {failed > 0 && (
-              <p className="text-sm text-red-500">{failed} file{failed !== 1 ? 's' : ''} failed</p>
-            )}
+            <div className="flex flex-wrap gap-x-4 text-sm">
+              {duplicates.length > 0 && (
+                <span className="text-gray-500">{duplicates.length} already uploaded, skipped</span>
+              )}
+              {errors.length > 0 && (
+                <span className="text-red-500">
+                  {errors.length} failed &mdash; {errors[errors.length - 1].reason}
+                </span>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => abortRef.current?.abort()}
+              className="text-sm text-gray-500 hover:text-gray-700 underline"
+            >
+              Stop uploading
+            </button>
           </div>
         )}
 
@@ -195,10 +302,81 @@ export default function UploadPage() {
           className="w-full bg-brand-orange text-white py-3 rounded-lg hover:bg-brand-orange-dark disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {uploading
-            ? `Uploading ${uploaded + failed + 1}/${files.length}...`
+            ? `Uploading ${Math.min(processed + 1, files.length)}/${files.length}...`
             : `Upload ${files.length} photo${files.length !== 1 ? 's' : ''}`}
         </button>
       </form>
+    </div>
+  );
+}
+
+function ErrorBreakdown({ failures }: { failures: Failure[] }) {
+  const byReason = new Map<string, string[]>();
+  for (const failure of failures) {
+    const names = byReason.get(failure.reason) ?? [];
+    names.push(failure.file.name);
+    byReason.set(failure.reason, names);
+  }
+
+  return (
+    <div className="mt-6 space-y-3">
+      {[...byReason.entries()].map(([reason, names]) => (
+        <FailureGroup
+          key={reason}
+          tone="error"
+          title={`${names.length} photo${names.length !== 1 ? 's' : ''} — ${reason}`}
+          files={names}
+        />
+      ))}
+    </div>
+  );
+}
+
+function FailureGroup({
+  tone,
+  title,
+  files,
+}: {
+  tone: 'error' | 'neutral';
+  title: string;
+  files: string[];
+}) {
+  const [expanded, setExpanded] = useState(false);
+
+  return (
+    <div
+      className={`mt-4 rounded-lg border p-3 text-sm ${
+        tone === 'error' ? 'bg-red-50 border-red-200 text-red-700' : 'bg-white border-gray-200 text-gray-600'
+      }`}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <p className="font-medium">{title}</p>
+        <button
+          type="button"
+          onClick={() => setExpanded((prev) => !prev)}
+          className="shrink-0 underline hover:no-underline"
+        >
+          {expanded ? 'Hide' : 'Show files'}
+        </button>
+      </div>
+      {expanded && (
+        <>
+          <ul className="mt-2 max-h-40 overflow-y-auto space-y-0.5 font-mono text-xs">
+            {files.map((name) => (
+              <li key={name} className="truncate" title={name}>
+                {name}
+              </li>
+            ))}
+          </ul>
+          <button
+            type="button"
+            onClick={() => void navigator.clipboard?.writeText(files.join('\n'))}
+            className="mt-2 underline hover:no-underline"
+          >
+            Copy filenames
+          </button>
+        </>
+      )}
     </div>
   );
 }

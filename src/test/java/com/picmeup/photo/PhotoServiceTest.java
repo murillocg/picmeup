@@ -11,6 +11,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -89,6 +90,49 @@ class PhotoServiceTest {
 
         assertThatThrownBy(() -> photoService.uploadPhotos("unknown", "a@b.com", "A", List.of(file)))
                 .isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    @Test
+    void presignUpload_shouldRejectFilenameAlreadyUploaded() {
+        var event = new Event("Marathon", LocalDate.of(2026, 5, 10), "Sydney");
+        var existing = new Photo(UUID.randomUUID(), event, new Photographer("John", "john@example.com"), "IMG_1.jpg");
+
+        when(eventRepository.findBySlug(event.getSlug())).thenReturn(Optional.of(event));
+        when(photoRepository.findByEventIdAndOriginalFilename(event.getId(), "IMG_1.jpg"))
+                .thenReturn(List.of(existing));
+
+        assertThatThrownBy(() -> photoService.presignUpload(event.getSlug(), "IMG_1.jpg"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("already exists");
+    }
+
+    @Test
+    void presignUpload_shouldReplaceFailedPhotoWithSameFilename() {
+        var event = new Event("Marathon", LocalDate.of(2026, 5, 10), "Sydney");
+        var failed = new Photo(UUID.randomUUID(), event, new Photographer("John", "john@example.com"), "IMG_1.jpg");
+        failed.markFailed();
+
+        when(eventRepository.findBySlug(event.getSlug())).thenReturn(Optional.of(event));
+        when(photoRepository.findByEventIdAndOriginalFilename(event.getId(), "IMG_1.jpg"))
+                .thenReturn(List.of(failed));
+        when(s3StorageService.generatePresignedUploadUrl(anyString(), any(), anyString(), any()))
+                .thenReturn("https://s3.example.com/upload");
+
+        var result = photoService.presignUpload(event.getSlug(), "IMG_1.jpg");
+
+        assertThat(result).containsKey("uploadUrl");
+        verify(photoRepository).delete(failed);
+    }
+
+    @Test
+    void presignUpload_shouldThrowWhenEventExpired() {
+        var event = mock(Event.class);
+        when(eventRepository.findBySlug("marathon")).thenReturn(Optional.of(event));
+        when(event.isExpired()).thenReturn(true);
+
+        assertThatThrownBy(() -> photoService.presignUpload("marathon", "IMG_1.jpg"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("expired");
     }
 
     @Test

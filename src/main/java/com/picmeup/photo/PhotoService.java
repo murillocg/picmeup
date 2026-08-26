@@ -86,9 +86,20 @@ public class PhotoService {
             throw new IllegalArgumentException("Cannot upload photos to an expired event");
         }
 
-        if (filename != null && !filename.isBlank()
-                && photoRepository.existsByEventIdAndOriginalFilename(event.getId(), filename)) {
-            throw new IllegalArgumentException("A photo with this filename already exists in this event");
+        if (filename != null && !filename.isBlank()) {
+            var existing = photoRepository.findByEventIdAndOriginalFilename(event.getId(), filename);
+
+            // A FAILED photo has no usable image, so re-uploading the same file replaces it
+            // instead of being rejected as a duplicate.
+            if (existing.stream().anyMatch(photo -> photo.getStatus() != Photo.Status.FAILED)) {
+                throw new IllegalArgumentException("A photo with this filename already exists in this event");
+            }
+
+            existing.forEach(photo -> {
+                deletePhotoFiles(photo);
+                photoRepository.delete(photo);
+                log.info("Replacing failed photo {} ({}) in event {}", photo.getId(), filename, event.getId());
+            });
         }
 
         var photoId = UUID.randomUUID();
@@ -155,15 +166,19 @@ public class PhotoService {
             throw new IllegalArgumentException("This photo has been purchased and cannot be deleted");
         }
 
+        deletePhotoFiles(photo);
+
+        photoRepository.delete(photo);
+        log.info("Photo {} deleted", photoId);
+    }
+
+    private void deletePhotoFiles(Photo photo) {
         if (photo.getOriginalS3Key() != null) {
             s3StorageService.deleteFile(photo.getOriginalS3Key());
         }
         if (photo.getThumbnailS3Key() != null) {
             s3StorageService.deleteFile(photo.getThumbnailS3Key());
         }
-
-        photoRepository.delete(photo);
-        log.info("Photo {} deleted", photoId);
     }
 
     public String getThumbnailUrl(Photo photo) {
