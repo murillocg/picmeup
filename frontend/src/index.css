@@ -1,3 +1,141 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ---------------------------------------------------------------------------
+   QR posters
+
+   Every length inside a poster is expressed in cqw (percent of the poster's own
+   width) so one set of rules serves the small on-screen preview, an A4 sheet and
+   an A3 sheet without a second layout. Grounds are light on purpose: a full-bleed
+   dark poster costs a fortune in toner, streaks on office lasers, and would hide
+   the charcoal half of the logo.
+   --------------------------------------------------------------------------- */
+
+.qr-poster {
+  container-type: inline-size;
+  background: #ffffff;
+  color: #2f383b;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.qr-poster--sheet {
+  aspect-ratio: 1 / 1.4142;          /* A-series portrait */
+  padding: 7cqw 6cqw;
+  align-items: center;
+  text-align: center;
+  justify-content: space-between;
+}
+
+.qr-poster--strip {
+  aspect-ratio: 3 / 1;
+  flex-direction: row;
+  align-items: center;
+  gap: 3cqw;
+  padding: 3.5cqw 4cqw;
+  text-align: left;
+}
+
+.qr-poster__logo { width: 34cqw; height: auto; }
+.qr-poster--strip .qr-poster__logo { width: 26cqw; }
+
+.qr-poster__kicker {
+  margin-top: 3.5cqw;
+  font-size: 3.1cqw;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #ee9b00;
+}
+
+.qr-poster__headline {
+  margin-top: 2.5cqw;
+  font-size: 13cqw;
+  font-weight: 900;
+  line-height: 0.9;
+  letter-spacing: -0.035em;
+}
+
+.qr-poster__headline span { color: #ee9b00; }
+
+/* 56% of a 210 mm A4 is a 118 mm code, which scans from roughly 1.2 m — a code
+   reads at about ten times its own width, and that is what decides whether a
+   poster works pinned to a fence. Scales with the sheet, so A3 gets 1.7 m. */
+.qr-poster__qr { width: 56cqw; }
+.qr-poster__qr svg { display: block; width: 100%; height: auto; }
+
+.qr-poster__name {
+  font-size: 4.4cqw;
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+.qr-poster__meta {
+  margin-top: 1.2cqw;
+  font-size: 3.1cqw;
+  font-weight: 600;
+  color: #5b686c;
+}
+
+.qr-poster__url {
+  margin-top: 2.2cqw;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 2.5cqw;
+  font-weight: 700;
+  color: #ee9b00;
+  word-break: break-all;
+}
+
+/* Strip variant: the same content, re-proportioned for a landscape banner. */
+.qr-poster--strip .qr-poster__qr { width: 24cqw; flex: none; }
+.qr-poster--strip .qr-poster__kicker { margin-top: 1.6cqw; font-size: 2cqw; }
+.qr-poster--strip .qr-poster__headline { margin-top: 1cqw; font-size: 6.6cqw; }
+.qr-poster--strip .qr-poster__name { font-size: 2.6cqw; }
+.qr-poster--strip .qr-poster__meta { font-size: 2.1cqw; }
+
+/* ---------------------------------------------------------------------------
+   Printing
+
+   Hide the app rather than unmount it, so the dialog survives the print and the
+   admin lands back exactly where they were.
+   --------------------------------------------------------------------------- */
+
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+
+  .qr-print-sheet,
+  .qr-print-sheet * {
+    visibility: visible !important;
+  }
+
+  .qr-print-sheet {
+    position: fixed !important;
+    inset: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    max-width: none !important;
+    background: #ffffff !important;
+  }
+
+  .qr-print-sheet .qr-poster {
+    width: 100% !important;
+    height: 100% !important;
+    aspect-ratio: auto !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+
+  /* Colour is the point of the poster - never let the browser drop it. */
+  .qr-print-sheet * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}

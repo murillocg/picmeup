@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, lazy, Suspense } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { getEvent, listPhotos, searchByFace, deleteEvent, deletePhoto, uploadCoverImage } from '../services/api';
 import type { EventResponse, PhotoResponse } from '../types/api';
@@ -10,6 +10,11 @@ import PhotoGrid from '../components/PhotoGrid';
 import { getErrorMessage } from '../utils/errors';
 import CoverImageCropper from '../components/CoverImageCropper';
 import usePageTitle from '../hooks/usePageTitle';
+import { SITE_URL, eventUrl } from '../config';
+
+// Admin-only, and it pulls in the QR library — keep it out of the bundle every
+// visitor downloads.
+const QrPosterModal = lazy(() => import('../components/QrPosterModal'));
 
 export default function EventDetailPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -26,6 +31,7 @@ export default function EventDetailPage() {
   const [searching, setSearching] = useState(false);
   const [error, setError] = useState('');
   const [consentGiven, setConsentGiven] = useState(false);
+  const [qrPosterOpen, setQrPosterOpen] = useState(false);
 
   usePageTitle(event?.name);
 
@@ -40,11 +46,11 @@ export default function EventDetailPage() {
         '@type': 'Place',
         name: event.location,
       },
-      url: `https://elitesportphotos.com/events/${event.slug}`,
+      url: eventUrl(event.slug),
       organizer: {
         '@type': 'Organization',
         name: 'Elite Sport Photos',
-        url: 'https://elitesportphotos.com',
+        url: SITE_URL,
       },
       ...(event.coverImageUrl ? { image: event.coverImageUrl } : {}),
     };
@@ -177,6 +183,12 @@ export default function EventDetailPage() {
             >
               Upload photos
             </Link>
+            <button
+              onClick={() => setQrPosterOpen(true)}
+              className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 text-sm"
+            >
+              QR poster
+            </button>
             <label className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 text-sm cursor-pointer">
               {coverUploading ? 'Uploading...' : 'Set cover photo'}
               <input
@@ -340,6 +352,11 @@ export default function EventDetailPage() {
           onToggleSelect={toggleSelect}
           selectable={!isFree}
         />
+      )}
+      {qrPosterOpen && (
+        <Suspense fallback={null}>
+          <QrPosterModal event={event} onClose={() => setQrPosterOpen(false)} />
+        </Suspense>
       )}
       {cropImageUrl && (
         <CoverImageCropper
