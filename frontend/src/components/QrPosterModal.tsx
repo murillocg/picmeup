@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { QRCodeSVG } from 'qrcode.react';
 import type { EventResponse } from '../types/api';
 import { eventUrl } from '../config';
@@ -14,7 +15,7 @@ interface QrPosterModalProps {
 export default function QrPosterModal({ event, onClose }: QrPosterModalProps) {
   const [layout, setLayout] = useState<Layout>('type');
   const [sheet, setSheet] = useState<Sheet>('A4');
-  const qrRef = useRef<HTMLDivElement>(null);
+  const previewRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -35,7 +36,7 @@ export default function QrPosterModal({ event, onClose }: QrPosterModalProps) {
   // The QR must stay vector for print, so hand the print shop the SVG itself
   // rather than a screenshot of it.
   function downloadSvg() {
-    const svg = qrRef.current?.querySelector('svg');
+    const svg = previewRef.current?.querySelector('svg');
     if (!svg) return;
 
     const source = new XMLSerializer().serializeToString(svg);
@@ -53,7 +54,7 @@ export default function QrPosterModal({ event, onClose }: QrPosterModalProps) {
     <div className={`qr-poster ${layout === 'strip' ? 'qr-poster--strip' : 'qr-poster--sheet'}`}>
       {layout === 'strip' ? (
         <>
-          <div className="qr-poster__qr" ref={qrRef}>
+          <div className="qr-poster__qr">
             <QRCodeSVG value={url} level="H" marginSize={2} size={512} />
           </div>
           <div>
@@ -79,7 +80,7 @@ export default function QrPosterModal({ event, onClose }: QrPosterModalProps) {
             </div>
           </div>
 
-          <div className="qr-poster__qr" ref={qrRef}>
+          <div className="qr-poster__qr">
             <QRCodeSVG value={url} level="H" marginSize={2} size={512} />
           </div>
 
@@ -118,7 +119,7 @@ export default function QrPosterModal({ event, onClose }: QrPosterModalProps) {
           </ChoiceButton>
         </div>
 
-        <div className="qr-print-sheet border border-gray-200 rounded overflow-hidden mb-3">
+        <div ref={previewRef} className="border border-gray-200 rounded overflow-hidden mb-3">
           {poster}
         </div>
 
@@ -156,6 +157,10 @@ export default function QrPosterModal({ event, onClose }: QrPosterModalProps) {
           </button>
         </div>
       </div>
+
+      {/* A second copy outside #root: printing hides the app entirely, so the
+          poster has to live somewhere the hiding does not reach. */}
+      {createPortal(<div className="qr-print-portal">{poster}</div>, document.body)}
     </div>
   );
 }
