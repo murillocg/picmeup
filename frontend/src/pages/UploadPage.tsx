@@ -1,8 +1,7 @@
 import { useState, useRef } from 'react';
-import { Link, useParams, Navigate } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { uploadPhoto, UploadError } from '../services/api';
 import type { UploadErrorKind } from '../services/api';
-import { useAuth } from '../context/AuthContext';
 import FileUpload from '../components/FileUpload';
 import ErrorMessage from '../components/ErrorMessage';
 
@@ -49,7 +48,6 @@ function mergeFiles(existing: File[], incoming: File[]): { files: File[]; duplic
 
 export default function UploadPage() {
   const { slug } = useParams<{ slug: string }>();
-  const { authenticated, loading: authLoading } = useAuth();
   const [files, setFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
   const [uploaded, setUploaded] = useState(0);
@@ -61,8 +59,6 @@ export default function UploadPage() {
   const [throughput, setThroughput] = useState<number | null>(null);
   const [duplicatesIgnored, setDuplicatesIgnored] = useState(0);
   const abortRef = useRef<AbortController | null>(null);
-
-  if (!authLoading && !authenticated) return <Navigate to="/" />;
 
   async function runUpload(batch: File[]) {
     if (!slug || batch.length === 0) return;

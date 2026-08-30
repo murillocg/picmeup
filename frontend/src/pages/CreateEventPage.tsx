@@ -1,12 +1,10 @@
 import { useState } from 'react';
-import { useNavigate, Navigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { createEvent } from '../services/api';
-import { useAuth } from '../context/AuthContext';
 import ErrorMessage from '../components/ErrorMessage';
 
 export default function CreateEventPage() {
   const navigate = useNavigate();
-  const { authenticated, loading } = useAuth();
   const [name, setName] = useState('');
   const [date, setDate] = useState('');
   const [location, setLocation] = useState('');
@@ -16,8 +14,6 @@ export default function CreateEventPage() {
   const [comingSoon, setComingSoon] = useState(false);
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
-
-  if (!loading && !authenticated) return <Navigate to="/" />;
 
   function handlePhotoPriceChange(value: string) {
     setPhotoPrice(value);

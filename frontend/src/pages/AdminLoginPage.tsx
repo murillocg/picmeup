@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import ErrorMessage from '../components/ErrorMessage';
 import usePageTitle from '../hooks/usePageTitle';
@@ -8,16 +8,18 @@ export default function AdminLoginPage() {
   usePageTitle('Admin login');
   const { authenticated, login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (authenticated) {
-      navigate('/', { replace: true });
-    }
-  }, [authenticated, navigate]);
+    if (!authenticated) return;
+    // Land back on the page that bounced them here, or home if they came directly.
+    const from = (location.state as { from?: { pathname: string } } | null)?.from;
+    navigate(from?.pathname ?? '/', { replace: true });
+  }, [authenticated, navigate, location.state]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import Layout from './components/Layout';
+import ProtectedRoute from './components/ProtectedRoute';
 import EventListPage from './pages/EventListPage';
 import EventDetailPage from './pages/EventDetailPage';
 import CreateEventPage from './pages/CreateEventPage';
@@ -22,20 +23,25 @@ export default function App() {
       <AuthProvider>
         <Routes>
           <Route element={<Layout />}>
+            {/* Public */}
             <Route path="/" element={<EventListPage />} />
-            <Route path="/events/new" element={<CreateEventPage />} />
             <Route path="/events/:slug" element={<EventDetailPage />} />
-            <Route path="/events/:slug/upload" element={<UploadPage />} />
             <Route path="/events/:slug/checkout" element={<CheckoutPage />} />
             {/* <Route path="/events/:slug/pass" element={<PassCheckoutPage />} /> */}
             <Route path="/admin" element={<AdminLoginPage />} />
-            <Route path="/admin/orders" element={<AdminOrdersPage />} />
-            <Route path="/admin/stats" element={<AdminSearchStatsPage />} />
-            <Route path="/admin/usage" element={<AdminUsagePage />} />
-            {/* <Route path="/admin/passes" element={<AdminPassesPage />} /> */}
             <Route path="/orders/:id" element={<OrderPage />} />
             <Route path="/faq" element={<FaqPage />} />
             <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+
+            {/* Admin only — signed-out visitors are sent to the login page */}
+            <Route element={<ProtectedRoute />}>
+              <Route path="/events/new" element={<CreateEventPage />} />
+              <Route path="/events/:slug/upload" element={<UploadPage />} />
+              <Route path="/admin/orders" element={<AdminOrdersPage />} />
+              <Route path="/admin/stats" element={<AdminSearchStatsPage />} />
+              <Route path="/admin/usage" element={<AdminUsagePage />} />
+              {/* <Route path="/admin/passes" element={<AdminPassesPage />} /> */}
+            </Route>
           </Route>
         </Routes>
       </AuthProvider>
