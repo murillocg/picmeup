@@ -56,3 +56,15 @@ variable "lambda_callback_secret" {
   type      = string
   sensitive = true
 }
+
+# Google OAuth client backing Cognito's "Sign in with Google". Created in the
+# Google Cloud console; its authorised redirect URI must be the Cognito Hosted
+# UI endpoint, https://<prefix>.auth.<region>.amazoncognito.com/oauth2/idpresponse.
+variable "google_oauth_client_id" {
+  type = string
+}
+
+variable "google_oauth_client_secret" {
+  type      = string
+  sensitive = true
+}
