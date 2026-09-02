@@ -1,9 +1,9 @@
 ########################################################################
 # Cognito — Google sign-in for admins and contract photographers.
 #
-# Purely additive: nothing here is wired into the application until the
-# backend adds the JWT resource server. A Google sign-in that succeeds
-# here still gets zero authority from the app until an invite exists.
+# The backend drives the OAuth flow and holds the tokens; the browser only
+# ever receives a session cookie. A sign-in that succeeds here still gets
+# zero authority from the app until an invite exists.
 ########################################################################
 
 resource "aws_cognito_user_pool" "main" {
@@ -21,8 +21,8 @@ resource "aws_cognito_user_pool" "main" {
   # AdminCreateUser — a new AWS dependency and IAM permission for no gain.
   #
   # Invite-only is enforced entirely in the application: no `users` row means no
-  # authorities, and DatabaseRoleJwtAuthenticationConverter refuses the request.
-  # Anyone can obtain a token here; nobody can do anything with one.
+  # authorities, and sign-in is refused. Anyone can authenticate against this
+  # pool; nobody can do anything in the app without an invite.
   admin_create_user_config {
     allow_admin_create_user_only = false
   }
@@ -106,9 +106,10 @@ resource "aws_cognito_user_pool_client" "web" {
   name         = "${var.app_name}-web"
   user_pool_id = aws_cognito_user_pool.main.id
 
-  # Public client: a browser cannot keep a secret, so PKCE protects the code
-  # exchange instead.
-  generate_secret = false
+  # Confidential client. The backend performs the code exchange, so the secret never
+  # reaches a browser — and neither do the tokens. The session cookie is all the
+  # frontend ever holds, which puts tokens out of reach of any script on the page.
+  generate_secret = true
 
   allowed_oauth_flows_user_pool_client = true
   allowed_oauth_flows                  = ["code"]
@@ -117,16 +118,23 @@ resource "aws_cognito_user_pool_client" "web" {
   # the Google button and no way to sign in with an emailed code.
   supported_identity_providers = ["COGNITO", "Google"]
 
-  # Must be the www host. The apex serves a bare 404 on every path but "/",
-  # and Cognito matches these as exact strings.
+  # Cognito redirects to the backend, which completes the exchange. Kept under /api
+  # so the Vite dev proxy — which forwards only that prefix — reaches it unchanged.
+  # Both localhost ports are registered so it works whether a developer browses the
+  # dev server or the backend directly.
+  #
+  # Must be the www host: the apex serves a bare 404 on every path but "/", and
+  # Cognito matches these as exact strings.
   callback_urls = [
-    "https://www.${var.domain_name}/auth/callback",
-    "http://localhost:5173/auth/callback",
+    "https://www.${var.domain_name}/api/auth/callback/cognito",
+    "http://localhost:5173/api/auth/callback/cognito",
+    "http://localhost:8080/api/auth/callback/cognito",
   ]
 
   logout_urls = [
     "https://www.${var.domain_name}/",
     "http://localhost:5173/",
+    "http://localhost:8080/",
   ]
 
   # ALLOW_USER_AUTH is what enables choice-based sign-in, the flow email-OTP runs
@@ -134,9 +142,13 @@ resource "aws_cognito_user_pool_client" "web" {
   # directly to this client.
   explicit_auth_flows = ["ALLOW_USER_AUTH", "ALLOW_REFRESH_TOKEN_AUTH"]
 
-  access_token_validity  = 1
-  id_token_validity      = 1
-  refresh_token_validity = 30
+  # The backend discards the tokens once it has the verified email — authority comes
+  # from the users table on every request, not from a token — so there is nothing to
+  # keep alive for 30 days.
+  refresh_token_validity = 1
+
+  access_token_validity = 1
+  id_token_validity     = 1
 
   token_validity_units {
     access_token  = "hours"

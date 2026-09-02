@@ -73,3 +73,9 @@ output "cognito_issuer_uri" {
   description = "JWT issuer URI for the backend resource server"
   value       = "https://cognito-idp.${var.aws_region}.amazonaws.com/${aws_cognito_user_pool.main.id}"
 }
+
+output "cognito_web_client_secret" {
+  description = "Client secret for the backend's OAuth code exchange — set as COGNITO_CLIENT_SECRET"
+  value       = aws_cognito_user_pool_client.web.client_secret
+  sensitive   = true
+}
