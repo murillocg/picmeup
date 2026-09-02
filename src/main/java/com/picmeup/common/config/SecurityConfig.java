@@ -1,6 +1,8 @@
 package com.picmeup.common.config;
 
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.security.web.context.SecurityContextHolderFilter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,7 +17,6 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.session.ChangeSessionIdAuthenticationStrategy;
@@ -39,8 +40,9 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http,
                                                    SecurityContextRepository securityContextRepository,
-                                                   DatabaseRoleJwtAuthenticationConverter jwtAuthenticationConverter,
-                                                   ObjectProvider<JwtDecoder> jwtDecoder,
+                                                   ObjectProvider<ClientRegistrationRepository> clientRegistrations,
+                                                   DatabaseRoleOidcUserService oidcUserService,
+                                                   RevalidateUserFilter revalidateUserFilter,
                                                    JsonAuthenticationEntryPoint authenticationEntryPoint,
                                                    JsonAccessDeniedHandler accessDeniedHandler) throws Exception {
         // The SPA reads the XSRF-TOKEN cookie and echoes it back in the X-XSRF-TOKEN header,
@@ -99,14 +101,25 @@ public class SecurityConfig {
                         .accessDeniedHandler(accessDeniedHandler)
                 );
 
-        // Bearer tokens run alongside the session login so the current admin login keeps
-        // working while Cognito is proven — this is the rollback point. Only wired when an
-        // issuer is configured, which leaves the test profile free of resource-server setup.
-        if (jwtDecoder.getIfAvailable() != null) {
-            http.oauth2ResourceServer(oauth2 -> oauth2
-                    .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter))
-                    .authenticationEntryPoint(authenticationEntryPoint)
-                    .accessDeniedHandler(accessDeniedHandler));
+        // Cognito sign-in runs alongside the existing username/password login, which stays
+        // until Phase 6 — that is the rollback path. Only wired when a client registration
+        // exists, so dev and test need no Cognito at all.
+        if (clientRegistrations.getIfAvailable() != null) {
+            http
+                    .oauth2Login(oauth2 -> oauth2
+                            // Kept under /api because the Vite dev proxy forwards only that
+                            // prefix; the defaults (/oauth2/authorization, /login/oauth2/code)
+                            // would not reach the backend in local development.
+                            .authorizationEndpoint(endpoint -> endpoint.baseUri("/api/auth/authorize"))
+                            .redirectionEndpoint(endpoint -> endpoint.baseUri("/api/auth/callback/*"))
+                            .userInfoEndpoint(endpoint -> endpoint.oidcUserService(oidcUserService))
+                            .defaultSuccessUrl("/", true)
+                            // Renders AccessNotGrantedException as a 403 naming the address
+                            // used — the "you signed in with the wrong account" case.
+                            .failureHandler(authenticationEntryPoint::commence))
+                    // Authority lives in the database, so it is re-read per request rather
+                    // than trusted from the session for its whole lifetime.
+                    .addFilterAfter(revalidateUserFilter, SecurityContextHolderFilter.class);
         }
 
         return http.build();

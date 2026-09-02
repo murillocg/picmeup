@@ -111,11 +111,26 @@ spring:
     password: ${DB_PASSWORD}
   security:
     oauth2:
-      resourceserver:
-        jwt:
-          # Presence of this is what switches Bearer-token auth on. Left unset elsewhere,
-          # so dev and test keep using the session login and need no Cognito.
-          issuer-uri: ${COGNITO_ISSUER_URI:}
+      client:
+        provider:
+          cognito:
+            issuer-uri: ${COGNITO_ISSUER_URI}
+        registration:
+          cognito:
+            client-id: ${COGNITO_CLIENT_ID}
+            client-secret: ${COGNITO_CLIENT_SECRET}
+            authorization-grant-type: authorization_code
+            scope: openid,email,profile
+            # Cognito matches this as an exact string against the registered callback
+            # list, so it must resolve to the www host over https — see
+            # forward-headers-strategy below.
+            redirect-uri: "{baseUrl}/api/auth/callback/{registrationId}"
+
+# CloudFront reaches the EC2 origin over plain HTTP, so without this Spring builds
+# redirect_uri as http:// and Cognito rejects the mismatch. Sign-in would work locally
+# and fail only in production.
+server:
+  forward-headers-strategy: framework
 
 aws:
   region: ${AWS_REGION:ap-southeast-2}
