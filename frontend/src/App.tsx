@@ -12,6 +12,8 @@ import AdminLoginPage from './pages/AdminLoginPage';
 import AdminOrdersPage from './pages/AdminOrdersPage';
 import AdminSearchStatsPage from './pages/AdminSearchStatsPage';
 import AdminUsagePage from './pages/AdminUsagePage';
+import AdminUsersPage from './pages/AdminUsersPage';
+import PhotographerEventsPage from './pages/PhotographerEventsPage';
 import FaqPage from './pages/FaqPage';
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
 // import PassCheckoutPage from './pages/PassCheckoutPage';
@@ -33,13 +35,20 @@ export default function App() {
             <Route path="/faq" element={<FaqPage />} />
             <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
 
-            {/* Admin only — signed-out visitors are sent to the login page */}
+            {/* Any signed-in user. Photographers upload to events they are assigned to;
+                the assignment itself is enforced by the backend, not by the route. */}
             <Route element={<ProtectedRoute />}>
-              <Route path="/events/new" element={<CreateEventPage />} />
               <Route path="/events/:slug/upload" element={<UploadPage />} />
+              <Route path="/my-events" element={<PhotographerEventsPage />} />
+            </Route>
+
+            {/* Admin only */}
+            <Route element={<ProtectedRoute requireAdmin />}>
+              <Route path="/events/new" element={<CreateEventPage />} />
               <Route path="/admin/orders" element={<AdminOrdersPage />} />
               <Route path="/admin/stats" element={<AdminSearchStatsPage />} />
               <Route path="/admin/usage" element={<AdminUsagePage />} />
+              <Route path="/admin/users" element={<AdminUsersPage />} />
               {/* <Route path="/admin/passes" element={<AdminPassesPage />} /> */}
             </Route>
           </Route>

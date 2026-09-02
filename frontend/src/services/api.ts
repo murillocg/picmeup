@@ -266,16 +266,27 @@ export async function getPlatformUsage(): Promise<PlatformUsageResponse> {
   return response.data;
 }
 
-export async function checkAuth(): Promise<{ authenticated: boolean; username?: string }> {
-  const response = await api.get<{ authenticated: boolean; username?: string }>('/auth/check');
+export type Role = 'ADMIN' | 'PHOTOGRAPHER' | '';
+
+export interface AuthState {
+  authenticated: boolean;
+  username?: string;
+  role?: Role;
+}
+
+export async function checkAuth(): Promise<AuthState> {
+  const response = await api.get<AuthState>('/auth/check');
   return response.data;
 }
 
-export async function login(
-  username: string,
-  password: string,
-): Promise<{ authenticated: boolean; username?: string }> {
-  const response = await api.post<{ authenticated: boolean; username?: string }>('/auth/login', {
+// Sign-in is a full-page navigation, not an XHR: the backend redirects to Cognito and
+// Cognito redirects back. Nothing about the flow touches JavaScript.
+export function beginCognitoLogin(): void {
+  window.location.assign('/api/auth/authorize/cognito');
+}
+
+export async function login(username: string, password: string): Promise<AuthState> {
+  const response = await api.post<AuthState>('/auth/login', {
     username,
     password,
   });
@@ -284,4 +295,64 @@ export async function login(
 
 export async function logout(): Promise<void> {
   await api.post('/auth/logout');
+}
+
+// --- User management (admin only) ---
+
+export interface ManagedUser {
+  id: string;
+  email: string;
+  name: string | null;
+  role: 'ADMIN' | 'PHOTOGRAPHER';
+  status: 'INVITED' | 'ACTIVE' | 'DISABLED';
+  createdAt: string;
+  lastLoginAt: string | null;
+  assignedEvents: number;
+}
+
+export async function listUsers(): Promise<ManagedUser[]> {
+  const response = await api.get<ManagedUser[]>('/admin/users');
+  return response.data;
+}
+
+export async function inviteUser(
+  email: string,
+  name: string,
+  role: 'ADMIN' | 'PHOTOGRAPHER',
+): Promise<ManagedUser> {
+  const response = await api.post<ManagedUser>('/admin/users', { email, name, role });
+  return response.data;
+}
+
+export async function setUserRole(
+  userId: string,
+  role: 'ADMIN' | 'PHOTOGRAPHER',
+): Promise<ManagedUser> {
+  const response = await api.patch<ManagedUser>(`/admin/users/${userId}`, null, { params: { role } });
+  return response.data;
+}
+
+export async function setUserEnabled(userId: string, enabled: boolean): Promise<ManagedUser> {
+  const response = await api.patch<ManagedUser>(`/admin/users/${userId}`, null, {
+    params: { enabled },
+  });
+  return response.data;
+}
+
+export async function listEventPhotographers(slug: string): Promise<ManagedUser[]> {
+  const response = await api.get<ManagedUser[]>(`/admin/users/events/${slug}`);
+  return response.data;
+}
+
+export async function assignToEvent(userId: string, slug: string): Promise<void> {
+  await api.post(`/admin/users/${userId}/events/${slug}`);
+}
+
+export async function unassignFromEvent(userId: string, slug: string): Promise<void> {
+  await api.delete(`/admin/users/${userId}/events/${slug}`);
+}
+
+export async function listMyEvents(): Promise<EventResponse[]> {
+  const response = await api.get<EventResponse[]>('/photographer/events');
+  return response.data;
 }

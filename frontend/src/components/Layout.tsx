@@ -2,7 +2,7 @@ import { Link, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 export default function Layout() {
-  const { authenticated, username, logout } = useAuth();
+  const { authenticated, username, isAdmin, isPhotographer, logout } = useAuth();
   const navigate = useNavigate();
 
   async function handleLogout() {
@@ -24,10 +24,18 @@ export default function Layout() {
             <Link to="/faq" className="text-gray-600 hover:text-brand-charcoal">
               FAQ
             </Link>
-            {authenticated && (
+            {isPhotographer && (
+              <Link to="/my-events" className="text-gray-600 hover:text-brand-charcoal">
+                My events
+              </Link>
+            )}
+            {isAdmin && (
               <>
                 <Link to="/admin/orders" className="text-gray-600 hover:text-brand-charcoal">
                   Orders
+                </Link>
+                <Link to="/admin/users" className="text-gray-600 hover:text-brand-charcoal">
+                  People
                 </Link>
                 <Link to="/admin/stats" className="text-gray-600 hover:text-brand-charcoal">
                   Stats

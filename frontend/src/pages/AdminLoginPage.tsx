@@ -1,79 +1,46 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import ErrorMessage from '../components/ErrorMessage';
 import usePageTitle from '../hooks/usePageTitle';
 
+/**
+ * Sign-in is a redirect to Cognito, handled entirely by the backend — there is no form
+ * here because no credential ever passes through this page.
+ */
 export default function AdminLoginPage() {
-  usePageTitle('Admin login');
-  const { authenticated, login } = useAuth();
+  usePageTitle('Sign in');
+  const { authenticated, isPhotographer, signIn } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState('');
 
   useEffect(() => {
     if (!authenticated) return;
-    // Land back on the page that bounced them here, or home if they came directly.
+    // Land back on the page that bounced them here; photographers have their own home.
     const from = (location.state as { from?: { pathname: string } } | null)?.from;
-    navigate(from?.pathname ?? '/', { replace: true });
-  }, [authenticated, navigate, location.state]);
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError('');
-    setSubmitting(true);
-    try {
-      await login(username, password);
-    } catch {
-      setError('Invalid username or password');
-      setSubmitting(false);
-    }
-  }
+    navigate(from?.pathname ?? (isPhotographer ? '/my-events' : '/'), { replace: true });
+  }, [authenticated, isPhotographer, navigate, location.state]);
 
   return (
-    <div className="max-w-sm mx-auto">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Admin login</h1>
+    <div className="max-w-sm mx-auto text-center">
+      <h1 className="text-2xl font-bold text-gray-900 mb-2">Sign in</h1>
+      <p className="text-gray-600 mb-6">For photographers and staff.</p>
 
-      {error && <ErrorMessage message={error} />}
-
-      <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="username">
-          Username
-        </label>
-        <input
-          id="username"
-          type="text"
-          autoComplete="username"
-          required
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          className="w-full border border-gray-300 rounded-lg px-4 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-brand-orange"
-        />
-
-        <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="password">
-          Password
-        </label>
-        <input
-          id="password"
-          type="password"
-          autoComplete="current-password"
-          required
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="w-full border border-gray-300 rounded-lg px-4 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-brand-orange"
-        />
-
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <button
-          type="submit"
-          disabled={submitting}
-          className="w-full bg-brand-orange text-white py-3 rounded-lg hover:bg-brand-orange-dark disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
+          onClick={signIn}
+          className="w-full bg-brand-orange text-white py-3 rounded-lg hover:bg-brand-orange-dark font-semibold"
         >
-          {submitting ? 'Signing in...' : 'Sign in'}
+          Continue
         </button>
-      </form>
+        <p className="text-sm text-gray-500 mt-4">
+          Sign in with Google, or have a one-time code emailed to you. No password needed.
+        </p>
+      </div>
+
+      <p className="text-xs text-gray-400 mt-6">
+        Access is by invitation. If you are not set up yet, ask the team to add your email
+        address.
+      </p>
     </div>
   );
 }
