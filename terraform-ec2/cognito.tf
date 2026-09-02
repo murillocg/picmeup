@@ -14,16 +14,39 @@ resource "aws_cognito_user_pool" "main" {
   username_attributes      = ["email"]
   auto_verified_attributes = ["email"]
 
-  # Blocks self-service signup through the native API. It does NOT block
-  # Google federation — Cognito auto-creates a pool user for any Google
-  # account that completes the flow. Invite-only is enforced in the
-  # application: no `users` row, no authorities.
+  # Deliberately open, because closing it would buy nothing. Google federation
+  # already auto-creates a pool user for anyone who completes sign-in, so the
+  # pool was never a gate. Email-OTP sign-in needs a native pool user to exist,
+  # and letting Cognito create one on demand avoids the app having to call
+  # AdminCreateUser — a new AWS dependency and IAM permission for no gain.
+  #
+  # Invite-only is enforced entirely in the application: no `users` row means no
+  # authorities, and DatabaseRoleJwtAuthenticationConverter refuses the request.
+  # Anyone can obtain a token here; nobody can do anything with one.
   admin_create_user_config {
-    allow_admin_create_user_only = true
+    allow_admin_create_user_only = false
   }
 
-  # Only reachable via the native API, which is closed above. Kept strict so
-  # the pool stays sane if a password flow is ever added.
+  # Sign in with a one-time code emailed by Cognito, so nobody needs a password
+  # or a Google account. PASSWORD stays listed because removing it would leave
+  # federated users no fallback if OTP delivery fails.
+  #
+  # Requires the Essentials tier, which is the default for new pools — this one
+  # is already on it, so there is no tier change and no new cost.
+  sign_in_policy {
+    allowed_first_auth_factors = ["PASSWORD", "EMAIL_OTP"]
+  }
+
+  # Codes are sent by Cognito's own mailer (~50/day), which never touches our
+  # SES — so the SES sandbox does not block sign-in. Worth revisiting once SES
+  # production access is granted: a branded sender is far less likely to be
+  # filtered as junk than no-reply@verificationemail.com.
+  email_configuration {
+    email_sending_account = "COGNITO_DEFAULT"
+  }
+
+  # Reachable now that native sign-in is open, though passwordless users never
+  # set one. Kept strict for anyone who does.
   password_policy {
     minimum_length                   = 12
     require_lowercase                = true
@@ -48,10 +71,20 @@ resource "aws_cognito_identity_provider" "google" {
   provider_name = "Google"
   provider_type = "Google"
 
+  # The endpoint values below are filled in by Cognito when the provider is
+  # created. They are declared here so the config matches what AWS reports —
+  # otherwise every plan proposes deleting them, and applying that would strip
+  # the endpoints Google federation runs on.
   provider_details = {
-    client_id        = var.google_oauth_client_id
-    client_secret    = var.google_oauth_client_secret
-    authorize_scopes = "openid email profile"
+    client_id                     = var.google_oauth_client_id
+    client_secret                 = var.google_oauth_client_secret
+    authorize_scopes              = "openid email profile"
+    attributes_url                = "https://people.googleapis.com/v1/people/me?personFields="
+    attributes_url_add_attributes = "true"
+    authorize_url                 = "https://accounts.google.com/o/oauth2/v2/auth"
+    oidc_issuer                   = "https://accounts.google.com"
+    token_request_method          = "POST"
+    token_url                     = "https://www.googleapis.com/oauth2/v4/token"
   }
 
   # email_verified is carried across deliberately: the application trusts the
@@ -80,7 +113,9 @@ resource "aws_cognito_user_pool_client" "web" {
   allowed_oauth_flows_user_pool_client = true
   allowed_oauth_flows                  = ["code"]
   allowed_oauth_scopes                 = ["openid", "email", "profile"]
-  supported_identity_providers         = ["Google"]
+  # "COGNITO" is the pool's own directory — without it the login page offers only
+  # the Google button and no way to sign in with an emailed code.
+  supported_identity_providers = ["COGNITO", "Google"]
 
   # Must be the www host. The apex serves a bare 404 on every path but "/",
   # and Cognito matches these as exact strings.
@@ -94,8 +129,10 @@ resource "aws_cognito_user_pool_client" "web" {
     "http://localhost:5173/",
   ]
 
-  # Hosted UI only — no direct username/password auth against this client.
-  explicit_auth_flows = ["ALLOW_REFRESH_TOKEN_AUTH"]
+  # ALLOW_USER_AUTH is what enables choice-based sign-in, the flow email-OTP runs
+  # through. Deliberately no ALLOW_USER_PASSWORD_AUTH: passwords are never sent
+  # directly to this client.
+  explicit_auth_flows = ["ALLOW_USER_AUTH", "ALLOW_REFRESH_TOKEN_AUTH"]
 
   access_token_validity  = 1
   id_token_validity      = 1
