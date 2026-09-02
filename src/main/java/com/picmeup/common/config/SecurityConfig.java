@@ -1,5 +1,6 @@
 package com.picmeup.common.config;
 
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,6 +15,7 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.session.ChangeSessionIdAuthenticationStrategy;
@@ -36,7 +38,11 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http,
-                                                   SecurityContextRepository securityContextRepository) throws Exception {
+                                                   SecurityContextRepository securityContextRepository,
+                                                   DatabaseRoleJwtAuthenticationConverter jwtAuthenticationConverter,
+                                                   ObjectProvider<JwtDecoder> jwtDecoder,
+                                                   JsonAuthenticationEntryPoint authenticationEntryPoint,
+                                                   JsonAccessDeniedHandler accessDeniedHandler) throws Exception {
         // The SPA reads the XSRF-TOKEN cookie and echoes it back in the X-XSRF-TOKEN header,
         // so the token must be resolved eagerly and stored unmasked.
         var csrfRequestHandler = new CsrfTokenRequestAttributeHandler();
@@ -64,11 +70,16 @@ public class SecurityConfig {
                         .requestMatchers("/actuator/**").permitAll()
                         .requestMatchers("/", "/index.html", "/assets/**", "/error").permitAll()
                         .requestMatchers("/api/auth/login", "/api/auth/logout", "/api/auth/check").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/events/**").authenticated()
-                        .requestMatchers(HttpMethod.DELETE, "/api/events/**").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/api/orders").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/api/passes").authenticated()
-                        .requestMatchers("/api/admin/**").authenticated()
+                        // Photographers may upload to events they are assigned to; the
+                        // assignment itself is checked in PhotoService, since a URL match
+                        // cannot know who is assigned to what.
+                        .requestMatchers(HttpMethod.POST, "/api/events/*/photos/**").hasAnyRole("ADMIN", "PHOTOGRAPHER")
+                        .requestMatchers("/api/photographer/**").hasAnyRole("ADMIN", "PHOTOGRAPHER")
+                        .requestMatchers(HttpMethod.POST, "/api/events/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/events/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/orders").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/passes").hasRole("ADMIN")
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .anyRequest().permitAll()
                 )
                 .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()))
@@ -84,19 +95,19 @@ public class SecurityConfig {
                         })
                 )
                 .exceptionHandling(ex -> ex
-                        .authenticationEntryPoint((request, response, authException) -> {
-                            response.setStatus(HttpStatus.UNAUTHORIZED.value());
-                            response.setContentType("application/json");
-                            response.getWriter().write("{\"status\":401,\"message\":\"Unauthorized\"}");
-                        })
-                        // Answer denials (a stale CSRF token, most often) in JSON rather than
-                        // letting the servlet error dispatch turn them into an HTML 404.
-                        .accessDeniedHandler((request, response, deniedException) -> {
-                            response.setStatus(HttpStatus.FORBIDDEN.value());
-                            response.setContentType("application/json");
-                            response.getWriter().write("{\"status\":403,\"message\":\"Forbidden\"}");
-                        })
+                        .authenticationEntryPoint(authenticationEntryPoint)
+                        .accessDeniedHandler(accessDeniedHandler)
                 );
+
+        // Bearer tokens run alongside the session login so the current admin login keeps
+        // working while Cognito is proven — this is the rollback point. Only wired when an
+        // issuer is configured, which leaves the test profile free of resource-server setup.
+        if (jwtDecoder.getIfAvailable() != null) {
+            http.oauth2ResourceServer(oauth2 -> oauth2
+                    .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter))
+                    .authenticationEntryPoint(authenticationEntryPoint)
+                    .accessDeniedHandler(accessDeniedHandler));
+        }
 
         return http.build();
     }

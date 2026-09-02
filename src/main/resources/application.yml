@@ -109,6 +109,13 @@ spring:
     url: ${DATABASE_URL}
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          # Presence of this is what switches Bearer-token auth on. Left unset elsewhere,
+          # so dev and test keep using the session login and need no Cognito.
+          issuer-uri: ${COGNITO_ISSUER_URI:}
 
 aws:
   region: ${AWS_REGION:ap-southeast-2}
@@ -127,6 +134,9 @@ app:
   admin:
     username: ${ADMIN_USERNAME:admin}
     password: ${ADMIN_PASSWORD}
+    # Treated as ADMIN on first sign-in even with no users row. Without at least one,
+    # nobody can issue the first invite, because inviting requires already being an admin.
+    bootstrap-emails: ${ADMIN_BOOTSTRAP_EMAILS:}
 
 paypal:
   client-id: ${PAYPAL_CLIENT_ID}

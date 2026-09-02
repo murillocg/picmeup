@@ -8,7 +8,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.session.SessionAuthenticationStrategy;
 import org.springframework.security.web.context.SecurityContextRepository;
@@ -18,7 +20,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.security.Principal;
 import java.util.Map;
 
 @RestController
@@ -38,13 +39,25 @@ public class AuthController {
     }
 
     @GetMapping("/check")
-    public ResponseEntity<Map<String, Object>> checkAuth(Principal principal) {
-        if (principal == null) {
+    public ResponseEntity<Map<String, Object>> checkAuth(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
             return ResponseEntity.ok(Map.of("authenticated", false));
         }
+
+        // Serves both mechanisms: the session admin, and a Cognito Bearer token whose role
+        // came from the users table. The role is reported from the granted authority rather
+        // than a token claim, because the database is what decides it.
+        String role = authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .filter(a -> a.startsWith("ROLE_"))
+                .findFirst()
+                .map(a -> a.substring("ROLE_".length()))
+                .orElse("");
+
         return ResponseEntity.ok(Map.of(
                 "authenticated", true,
-                "username", principal.getName()
+                "username", authentication.getName(),
+                "role", role
         ));
     }
 
