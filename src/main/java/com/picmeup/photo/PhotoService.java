@@ -30,6 +30,7 @@ public class PhotoService {
     private final FaceRecognitionService faceRecognitionService;
     private final OrderItemRepository orderItemRepository;
     private final FaceSearchRepository faceSearchRepository;
+    private final UploaderResolver uploaderResolver;
     private final boolean lambdaProcessingEnabled;
 
     public PhotoService(PhotoRepository photoRepository,
@@ -40,6 +41,7 @@ public class PhotoService {
                         FaceRecognitionService faceRecognitionService,
                         OrderItemRepository orderItemRepository,
                         FaceSearchRepository faceSearchRepository,
+                        UploaderResolver uploaderResolver,
                         @Value("${lambda.callback-secret:}") String lambdaCallbackSecret) {
         this.photoRepository = photoRepository;
         this.photographerRepository = photographerRepository;
@@ -49,6 +51,7 @@ public class PhotoService {
         this.faceRecognitionService = faceRecognitionService;
         this.orderItemRepository = orderItemRepository;
         this.faceSearchRepository = faceSearchRepository;
+        this.uploaderResolver = uploaderResolver;
         this.lambdaProcessingEnabled = lambdaCallbackSecret != null && !lambdaCallbackSecret.isBlank();
     }
 
@@ -86,6 +89,8 @@ public class PhotoService {
             throw new IllegalArgumentException("Cannot upload photos to an expired event");
         }
 
+        uploaderResolver.requireCanUploadTo(event.getId());
+
         if (filename != null && !filename.isBlank()) {
             var existing = photoRepository.findByEventIdAndOriginalFilename(event.getId(), filename);
 
@@ -120,8 +125,9 @@ public class PhotoService {
         var event = eventRepository.findBySlug(eventSlug)
                 .orElseThrow(() -> new ResourceNotFoundException("Event", eventSlug));
 
-        var photographer = photographerRepository.findAll().stream().findFirst()
-                .orElseGet(() -> photographerRepository.save(new Photographer("Admin", "admin@elitesportphotos.com")));
+        uploaderResolver.requireCanUploadTo(event.getId());
+
+        var photographer = uploaderResolver.resolvePhotographer(photographerRepository);
 
         var photo = new Photo(UUID.fromString(photoId), event, photographer, filename);
         photoRepository.save(photo);

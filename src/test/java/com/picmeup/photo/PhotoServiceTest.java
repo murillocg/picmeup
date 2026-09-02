@@ -40,6 +40,8 @@ class PhotoServiceTest {
     private com.picmeup.payment.OrderItemRepository orderItemRepository;
     @Mock
     private FaceSearchRepository faceSearchRepository;
+    @Mock
+    private UploaderResolver uploaderResolver;
 
     private PhotoService photoService;
 
@@ -47,7 +49,7 @@ class PhotoServiceTest {
     void setUp() {
         photoService = new PhotoService(photoRepository, photographerRepository,
                 eventRepository, s3StorageService, photoProcessingService, faceRecognitionService,
-                orderItemRepository, faceSearchRepository, "");
+                orderItemRepository, faceSearchRepository, uploaderResolver, "");
     }
 
     @Test
