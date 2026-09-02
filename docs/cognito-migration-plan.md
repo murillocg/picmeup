@@ -33,6 +33,8 @@ Four facts that shape the design. Ignoring any of them produces a plan that fail
 
 Purely additive. No app changes.
 
+**Prerequisite — done (2026-09-01).** The Google Cloud OAuth client exists, is published **In production** (its scopes are `openid`/`email`/`profile`, all non-sensitive, so no Google verification was needed) and has `https://elitesportphotos.auth.ap-southeast-2.amazoncognito.com/oauth2/idpresponse` registered as its authorised redirect URI. Both values are in the gitignored `terraform-ec2/terraform.tfvars` and declared in `variables.tf`. The `elitesportphotos` domain prefix was confirmed free in `ap-southeast-2`, and the account had no pre-existing user pools.
+
 **New file: `terraform-ec2/cognito.tf`**
 - `aws_cognito_user_pool` `elitesportphotos` — email sign-in, `allow_admin_create_user_only = true`, password policy
 - `aws_cognito_identity_provider` `Google` — client ID/secret from a Google Cloud OAuth client (free), attribute mapping `email → email`, scopes `openid email profile`

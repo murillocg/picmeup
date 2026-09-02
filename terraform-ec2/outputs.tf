@@ -53,3 +53,23 @@ output "github_actions_role_arn" {
   description = "GitHub Actions OIDC role ARN"
   value       = aws_iam_role.github_actions.arn
 }
+
+output "cognito_user_pool_id" {
+  description = "Cognito user pool ID"
+  value       = aws_cognito_user_pool.main.id
+}
+
+output "cognito_web_client_id" {
+  description = "Cognito app client ID — public, used by the frontend"
+  value       = aws_cognito_user_pool_client.web.id
+}
+
+output "cognito_hosted_ui_domain" {
+  description = "Hosted UI base URL — its /oauth2/idpresponse must match the Google client's redirect URI"
+  value       = "https://${aws_cognito_user_pool_domain.main.domain}.auth.${var.aws_region}.amazoncognito.com"
+}
+
+output "cognito_issuer_uri" {
+  description = "JWT issuer URI for the backend resource server"
+  value       = "https://cognito-idp.${var.aws_region}.amazonaws.com/${aws_cognito_user_pool.main.id}"
+}
