@@ -28,8 +28,12 @@ resource "aws_cognito_user_pool" "main" {
   }
 
   # Sign in with a one-time code emailed by Cognito, so nobody needs a password
-  # or a Google account. PASSWORD stays listed because removing it would leave
-  # federated users no fallback if OTP delivery fails.
+  # or a Google account.
+  #
+  # PASSWORD cannot be removed — Cognito rejects the update with "Password should
+  # be configured as one of the allowed first auth factors". The app client
+  # withholds ALLOW_USER_PASSWORD_AUTH instead, so no password flow is usable
+  # against it even though the factor is listed here.
   #
   # Requires the Essentials tier, which is the default for new pools — this one
   # is already on it, so there is no tier change and no new cost.
@@ -100,6 +104,11 @@ resource "aws_cognito_identity_provider" "google" {
 resource "aws_cognito_user_pool_domain" "main" {
   domain       = var.app_name
   user_pool_id = aws_cognito_user_pool.main.id
+
+  # 2 = managed login; 1 is the classic hosted UI. Not cosmetic: passwordless
+  # email-OTP sign-in only renders in managed login, so on the classic UI the
+  # page falls back to a password form and shows an empty grey logo bar.
+  managed_login_version = 2
 }
 
 resource "aws_cognito_user_pool_client" "web" {
