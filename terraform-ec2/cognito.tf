@@ -105,10 +105,13 @@ resource "aws_cognito_user_pool_domain" "main" {
   domain       = var.app_name
   user_pool_id = aws_cognito_user_pool.main.id
 
-  # 2 = managed login; 1 is the classic hosted UI. Not cosmetic: passwordless
-  # email-OTP sign-in only renders in managed login, so on the classic UI the
-  # page falls back to a password form and shows an empty grey logo bar.
-  managed_login_version = 2
+  # 1 = classic hosted UI. Managed login (2) is what renders passwordless email-OTP
+  # sign-in and drops the empty grey logo bar, but switching to it broke sign-in
+  # entirely with "Login pages unavailable" — it needs a managed login branding
+  # style, and creating the default style for the client was not enough on its own.
+  # Reverted until that is worked out; see aws_cognito_managed_login_branding,
+  # which this provider version (5.100.0) does not yet expose.
+  managed_login_version = 1
 }
 
 resource "aws_cognito_user_pool_client" "web" {
