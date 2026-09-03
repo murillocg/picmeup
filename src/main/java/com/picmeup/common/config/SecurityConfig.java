@@ -37,6 +37,15 @@ public class SecurityConfig {
     @Value("${app.admin.password}")
     private String adminPassword;
 
+    /**
+     * Whether cookies must carry the Secure flag. Not inferred from the request: behind
+     * CloudFront the origin call is plain HTTP, so request.isSecure() is false even
+     * though every viewer reaches the site over HTTPS. False locally, where dev runs
+     * over http and a secure cookie would simply never be sent back.
+     */
+    @Value("${app.cookies.secure:false}")
+    private boolean secureCookies;
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http,
                                                    SecurityContextRepository securityContextRepository,
@@ -50,9 +59,12 @@ public class SecurityConfig {
         var csrfRequestHandler = new CsrfTokenRequestAttributeHandler();
         csrfRequestHandler.setCsrfRequestAttributeName(null);
 
+        var csrfTokenRepository = CookieCsrfTokenRepository.withHttpOnlyFalse();
+        csrfTokenRepository.setCookieCustomizer(cookie -> cookie.secure(secureCookies));
+
         http
                 .csrf(csrf -> csrf
-                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                        .csrfTokenRepository(csrfTokenRepository)
                         .csrfTokenRequestHandler(csrfRequestHandler)
                         // Login, plus the endpoints used by anonymous visitors and the processing
                         // lambda — none of them act on a browser session cookie.

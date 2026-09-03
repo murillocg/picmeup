@@ -121,16 +121,30 @@ spring:
             client-secret: ${COGNITO_CLIENT_SECRET}
             authorization-grant-type: authorization_code
             scope: openid,email,profile
-            # Cognito matches this as an exact string against the registered callback
-            # list, so it must resolve to the www host over https — see
-            # forward-headers-strategy below.
-            redirect-uri: "{baseUrl}/api/auth/callback/{registrationId}"
+            # Literal, not "{baseUrl}/...". CloudFront reaches the origin over plain
+            # HTTP, so Spring sees an insecure request and would build this as http://,
+            # which Cognito rejects — it matches the callback as an exact string. The
+            # forwarded-proto header that would fix baseUrl does not survive CloudFront
+            # (see below), and this app has exactly one production URL anyway.
+            redirect-uri: "https://www.elitesportphotos.com/api/auth/callback/cognito"
 
-# CloudFront reaches the EC2 origin over plain HTTP, so without this Spring builds
-# redirect_uri as http:// and Cognito rejects the mismatch. Sign-in would work locally
-# and fail only in production.
+# Honours X-Forwarded-Proto when something upstream sets it. Verified working when the
+# header is sent directly to the origin — but CloudFront currently does not deliver it,
+# so absolute URLs Spring builds itself are still http://. That is why redirect-uri above
+# is literal rather than templated, and why the session cookie carries no Secure flag.
 server:
   forward-headers-strategy: framework
+  servlet:
+    session:
+      cookie:
+        # Set explicitly rather than inferred. Spring sees a plain-HTTP request from
+        # CloudFront, so request.isSecure() is false and the flag would never be
+        # applied — even though viewers only ever reach this host over HTTPS.
+        secure: true
+
+app:
+  cookies:
+    secure: true
 
 aws:
   region: ${AWS_REGION:ap-southeast-2}

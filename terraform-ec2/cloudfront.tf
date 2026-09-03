@@ -1,8 +1,8 @@
 resource "aws_acm_certificate" "main" {
-  provider          = aws.us_east_1
-  domain_name       = var.domain_name
+  provider                  = aws.us_east_1
+  domain_name               = var.domain_name
   subject_alternative_names = ["www.${var.domain_name}"]
-  validation_method = "DNS"
+  validation_method         = "DNS"
 
   lifecycle {
     create_before_destroy = true
@@ -18,6 +18,20 @@ resource "aws_cloudfront_distribution" "main" {
   origin {
     domain_name = aws_eip.app.public_dns
     origin_id   = "ec2"
+
+    # CloudFront reaches the origin over plain HTTP, so the application sees an
+    # insecure request and builds absolute URLs as http:// — which broke the OAuth
+    # redirect_uri, since Cognito matches it as an exact string.
+    #
+    # CloudFront does not send X-Forwarded-Proto of its own accord (it sends
+    # CloudFront-Forwarded-Proto), and a browser never sends one, so Spring's
+    # forward-headers handling had nothing to read. Injecting it here is safe:
+    # viewer_protocol_policy is redirect-to-https, so viewers are always on HTTPS,
+    # and an origin custom header overrides any value a client tries to supply.
+    custom_header {
+      name  = "X-Forwarded-Proto"
+      value = "https"
+    }
 
     custom_origin_config {
       http_port              = 80
