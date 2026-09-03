@@ -142,10 +142,6 @@ server:
         # applied — even though viewers only ever reach this host over HTTPS.
         secure: true
 
-app:
-  cookies:
-    secure: true
-
 aws:
   region: ${AWS_REGION:ap-southeast-2}
   s3:
@@ -158,6 +154,10 @@ lambda:
   callback-secret: ${LAMBDA_CALLBACK_SECRET:}
 
 app:
+  cookies:
+    # Not inferred: behind CloudFront the origin call is plain HTTP, so
+    # request.isSecure() is false even though viewers only reach us over HTTPS.
+    secure: true
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS}
   admin:
