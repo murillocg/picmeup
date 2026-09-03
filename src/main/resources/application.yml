@@ -22,7 +22,12 @@ server:
       timeout: 12h
       cookie:
         http-only: true
-        same-site: strict
+        # Lax, not Strict. The OAuth callback is a cross-site navigation — Cognito
+        # redirects the browser back to us — and Strict withholds the cookie on
+        # exactly that, so the session carrying the authorization request is missing
+        # and sign-in fails with authorization_request_not_found. Lax still withholds
+        # it on cross-site POSTs, and CSRF tokens cover state-changing requests.
+        same-site: lax
   compression:
     enabled: true
     mime-types: text/html,text/css,application/javascript,application/json,image/svg+xml
