@@ -111,7 +111,7 @@ resource "aws_cognito_user_pool_domain" "main" {
   # style, and creating the default style for the client was not enough on its own.
   # Reverted until that is worked out; see aws_cognito_managed_login_branding,
   # which this provider version (5.100.0) does not yet expose.
-  managed_login_version = 1
+  managed_login_version = 2
 }
 
 resource "aws_cognito_user_pool_client" "web" {
