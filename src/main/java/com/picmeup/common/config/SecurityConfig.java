@@ -1,5 +1,8 @@
 package com.picmeup.common.config;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.web.context.SecurityContextHolderFilter;
@@ -126,9 +129,21 @@ public class SecurityConfig {
                             .redirectionEndpoint(endpoint -> endpoint.baseUri("/api/auth/callback/*"))
                             .userInfoEndpoint(endpoint -> endpoint.oidcUserService(oidcUserService))
                             .defaultSuccessUrl("/", true)
-                            // Renders AccessNotGrantedException as a 403 naming the address
-                            // used — the "you signed in with the wrong account" case.
-                            .failureHandler(authenticationEntryPoint::commence))
+                            // A browser is mid-redirect here, so answer with a page rather
+                            // than JSON: someone who signed in successfully but has no
+                            // access needs to be told which address they used, not shown
+                            // a raw error body.
+                            .failureHandler((request, response, exception) -> {
+                                var query = new StringBuilder("/no-access");
+                                if (exception instanceof AccessNotGrantedException denied) {
+                                    query.append("?reason=").append(denied.getReason());
+                                    if (denied.getEmail() != null) {
+                                        query.append("&email=").append(
+                                                URLEncoder.encode(denied.getEmail(), StandardCharsets.UTF_8));
+                                    }
+                                }
+                                response.sendRedirect(query.toString());
+                            }))
                     // Authority lives in the database, so it is re-read per request rather
                     // than trusted from the session for its whole lifetime.
                     .addFilterAfter(revalidateUserFilter, SecurityContextHolderFilter.class);

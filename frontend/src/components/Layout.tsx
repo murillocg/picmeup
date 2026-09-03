@@ -2,7 +2,7 @@ import { Link, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 export default function Layout() {
-  const { authenticated, username, isAdmin, isPhotographer, logout } = useAuth();
+  const { authenticated, username, isAdmin, isPhotographer, loading, logout } = useAuth();
   const navigate = useNavigate();
 
   async function handleLogout() {
@@ -53,6 +53,14 @@ export default function Layout() {
                   Create Event
                 </Link>
               </>
+            )}
+            {!authenticated && !loading && (
+              <a
+                href="/api/auth/authorize/cognito"
+                className="text-sm text-gray-500 hover:text-brand-charcoal"
+              >
+                Sign in
+              </a>
             )}
             {authenticated && (
               <button

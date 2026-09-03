@@ -8,7 +8,9 @@ import CreateEventPage from './pages/CreateEventPage';
 import UploadPage from './pages/UploadPage';
 import CheckoutPage from './pages/CheckoutPage';
 import OrderPage from './pages/OrderPage';
-import AdminLoginPage from './pages/AdminLoginPage';
+import NoAccessPage from './pages/NoAccessPage';
+import NotFoundPage from './pages/NotFoundPage';
+import SignInRedirect from './components/SignInRedirect';
 import AdminOrdersPage from './pages/AdminOrdersPage';
 import AdminSearchStatsPage from './pages/AdminSearchStatsPage';
 import AdminUsagePage from './pages/AdminUsagePage';
@@ -30,7 +32,10 @@ export default function App() {
             <Route path="/events/:slug" element={<EventDetailPage />} />
             <Route path="/events/:slug/checkout" element={<CheckoutPage />} />
             {/* <Route path="/events/:slug/pass" element={<PassCheckoutPage />} /> */}
-            <Route path="/admin" element={<AdminLoginPage />} />
+            <Route path="/no-access" element={<NoAccessPage />} />
+            {/* Addresses people type or have bookmarked when they mean "sign in". */}
+            <Route path="/admin" element={<SignInRedirect />} />
+            <Route path="/login" element={<SignInRedirect />} />
             <Route path="/orders/:id" element={<OrderPage />} />
             <Route path="/faq" element={<FaqPage />} />
             <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
@@ -51,6 +56,9 @@ export default function App() {
               <Route path="/admin/users" element={<AdminUsersPage />} />
               {/* <Route path="/admin/passes" element={<AdminPassesPage />} /> */}
             </Route>
+
+            {/* Without this an unmatched path renders nothing at all — a white screen. */}
+            <Route path="*" element={<NotFoundPage />} />
           </Route>
         </Routes>
       </AuthProvider>
