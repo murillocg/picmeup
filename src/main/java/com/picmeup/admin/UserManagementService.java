@@ -1,5 +1,6 @@
 package com.picmeup.admin;
 
+import com.picmeup.admin.dto.InviteRequest;
 import com.picmeup.common.exception.ResourceNotFoundException;
 import com.picmeup.common.user.AppUser;
 import com.picmeup.common.user.AppUserRepository;
@@ -16,11 +17,14 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Invites, roles and event assignments. Pure database work — no AWS calls.
+ * Invites, roles and event assignments.
  *
  * <p>An "invite" sends nothing. The address itself is the invitation: an admin records it
  * here, tells the person out of band to sign in, and their first successful sign-in flips
  * the row from INVITED to ACTIVE. There is no token to expire, leak or re-send.
+ *
+ * <p>Inviting someone who will use an emailed code also creates their Cognito identity —
+ * the one AWS call here — because a code has nowhere to go without it.
  */
 @Service
 @Transactional(readOnly = true)
@@ -31,13 +35,16 @@ public class UserManagementService {
     private final AppUserRepository users;
     private final EventRepository events;
     private final EventPhotographerRepository assignments;
+    private final CognitoIdentityService cognitoIdentities;
 
     public UserManagementService(AppUserRepository users,
                                  EventRepository events,
-                                 EventPhotographerRepository assignments) {
+                                 EventPhotographerRepository assignments,
+                                 CognitoIdentityService cognitoIdentities) {
         this.users = users;
         this.events = events;
         this.assignments = assignments;
+        this.cognitoIdentities = cognitoIdentities;
     }
 
     public List<AppUser> listUsers() {
@@ -45,15 +52,23 @@ public class UserManagementService {
     }
 
     @Transactional
-    public AppUser invite(String email, String name, AppUser.Role role, UUID invitedBy) {
+    public AppUser invite(String email, String name, AppUser.Role role,
+                          InviteRequest.SignInMethod signInMethod, UUID invitedBy) {
         String normalised = email.trim().toLowerCase();
 
         if (users.existsByEmailIgnoreCase(normalised)) {
             throw new IllegalArgumentException("%s has already been invited".formatted(normalised));
         }
 
+        // Identity first. If Cognito refuses, no users row is written — better than an
+        // invitation that looks issued but can never be signed in to, since the login
+        // page cannot report a missing identity.
+        if (signInMethod == InviteRequest.SignInMethod.EMAIL_CODE) {
+            cognitoIdentities.createPasswordlessUser(normalised);
+        }
+
         var user = users.save(new AppUser(normalised, name, role, invitedBy));
-        log.info("Invited {} as {}", normalised, role);
+        log.info("Invited {} as {} signing in with {}", normalised, role, signInMethod);
         return user;
     }
 

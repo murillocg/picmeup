@@ -1,6 +1,7 @@
 package com.picmeup.photo.config;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
@@ -8,6 +9,7 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.rekognition.RekognitionClient;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+import software.amazon.awssdk.services.cognitoidentityprovider.CognitoIdentityProviderClient;
 import software.amazon.awssdk.services.ses.SesClient;
 
 import java.net.URI;
@@ -54,6 +56,20 @@ public class AwsConfig {
     @Bean
     public SesClient sesClient() {
         return SesClient.builder()
+                .region(Region.of(region))
+                .credentialsProvider(DefaultCredentialsProvider.create())
+                .build();
+    }
+
+    /**
+     * Only created when a user pool is configured, so dev and test start without any
+     * Cognito setup — CognitoIdentityService treats an absent client as "not configured"
+     * and skips identity creation.
+     */
+    @Bean
+    @ConditionalOnProperty(name = "app.cognito.user-pool-id")
+    public CognitoIdentityProviderClient cognitoClient() {
+        return CognitoIdentityProviderClient.builder()
                 .region(Region.of(region))
                 .credentialsProvider(DefaultCredentialsProvider.create())
                 .build();

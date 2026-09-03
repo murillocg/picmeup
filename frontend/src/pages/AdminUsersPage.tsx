@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { inviteUser, listUsers, setUserEnabled, setUserRole } from '../services/api';
-import type { ManagedUser } from '../services/api';
+import type { ManagedUser, SignInMethod } from '../services/api';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorMessage from '../components/ErrorMessage';
 import usePageTitle from '../hooks/usePageTitle';
@@ -14,6 +14,7 @@ export default function AdminUsersPage() {
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   const [role, setRole] = useState<'ADMIN' | 'PHOTOGRAPHER'>('PHOTOGRAPHER');
+  const [signInMethod, setSignInMethod] = useState<SignInMethod>('EMAIL_CODE');
   const [inviting, setInviting] = useState(false);
 
   useEffect(() => {
@@ -32,7 +33,7 @@ export default function AdminUsersPage() {
     setError('');
     setInviting(true);
     try {
-      const created = await inviteUser(email.trim(), name.trim(), role);
+      const created = await inviteUser(email.trim(), name.trim(), role, signInMethod);
       setUsers((prev) => [created, ...prev]);
       setEmail('');
       setName('');
@@ -50,7 +51,9 @@ export default function AdminUsersPage() {
       <h1 className="text-3xl font-bold text-gray-900 mb-2">People</h1>
       <p className="text-gray-600 mb-6">
         Inviting someone records their address — no email is sent. Tell them to sign in with
-        that address and they will have access the first time they do.
+        that address and they will have access the first time they do. Choose how they will
+        sign in: an emailed code needs an account set up for them, which happens here, while
+        Google creates one itself on first sign-in.
       </p>
 
       {error && <div className="mb-4"><ErrorMessage message={error} /></div>}
@@ -97,6 +100,20 @@ export default function AdminUsersPage() {
           >
             <option value="PHOTOGRAPHER">Photographer</option>
             <option value="ADMIN">Admin</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="invite-method">
+            Signs in with
+          </label>
+          <select
+            id="invite-method"
+            value={signInMethod}
+            onChange={(e) => setSignInMethod(e.target.value as SignInMethod)}
+            className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-orange"
+          >
+            <option value="EMAIL_CODE">An emailed code</option>
+            <option value="GOOGLE">Google</option>
           </select>
         </div>
         <button

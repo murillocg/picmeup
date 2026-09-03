@@ -315,12 +315,20 @@ export async function listUsers(): Promise<ManagedUser[]> {
   return response.data;
 }
 
+export type SignInMethod = 'GOOGLE' | 'EMAIL_CODE';
+
 export async function inviteUser(
   email: string,
   name: string,
   role: 'ADMIN' | 'PHOTOGRAPHER',
+  signInMethod: SignInMethod,
 ): Promise<ManagedUser> {
-  const response = await api.post<ManagedUser>('/admin/users', { email, name, role });
+  const response = await api.post<ManagedUser>('/admin/users', {
+    email,
+    name,
+    role,
+    signInMethod,
+  });
   return response.data;
 }
 

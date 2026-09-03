@@ -159,6 +159,9 @@ lambda:
   callback-secret: ${LAMBDA_CALLBACK_SECRET:}
 
 app:
+  cognito:
+    # Needed to create the sign-in identity for someone invited to use email codes.
+    user-pool-id: ${COGNITO_USER_POOL_ID:}
   cookies:
     # Not inferred: behind CloudFront the origin call is plain HTTP, so
     # request.isSecure() is false even though viewers only reach us over HTTPS.

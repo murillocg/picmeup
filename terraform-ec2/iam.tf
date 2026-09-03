@@ -68,6 +68,27 @@ resource "aws_iam_role_policy" "ec2_ses" {
   })
 }
 
+# Creating the Cognito identity is part of issuing an invite: the users table grants
+# authority, but Cognito is what an emailed sign-in code is actually sent to. Without a
+# pool user there is nothing to send to, and prevent_user_existence_errors means the
+# login page cannot say so — it shows "check your email" either way.
+#
+# Scoped to the one pool. Deliberately no AdminDeleteUser: access is revoked by disabling
+# the users row, which keeps photo attribution intact.
+resource "aws_iam_role_policy" "ec2_cognito" {
+  name = "${var.app_name}-cognito"
+  role = aws_iam_role.ec2.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect   = "Allow"
+      Action   = ["cognito-idp:AdminCreateUser", "cognito-idp:AdminGetUser"]
+      Resource = aws_cognito_user_pool.main.arn
+    }]
+  })
+}
+
 resource "aws_iam_role_policy" "ec2_ecr" {
   name = "${var.app_name}-ecr"
   role = aws_iam_role.ec2.id
