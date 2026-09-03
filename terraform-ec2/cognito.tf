@@ -14,17 +14,18 @@ resource "aws_cognito_user_pool" "main" {
   username_attributes      = ["email"]
   auto_verified_attributes = ["email"]
 
-  # Deliberately open, because closing it would buy nothing. Google federation
-  # already auto-creates a pool user for anyone who completes sign-in, so the
-  # pool was never a gate. Email-OTP sign-in needs a native pool user to exist,
-  # and letting Cognito create one on demand avoids the app having to call
-  # AdminCreateUser — a new AWS dependency and IAM permission for no gain.
+  # Closed, so the login page offers no "Create an account" link — the system is
+  # invite-only and the page should say so rather than inviting strangers to sign up
+  # and choose a password they would never use.
   #
-  # Invite-only is enforced entirely in the application: no `users` row means no
-  # authorities, and sign-in is refused. Anyone can authenticate against this
-  # pool; nobody can do anything in the app without an invite.
+  # Nobody is locked out by this: CognitoIdentityService creates the identity when an
+  # admin issues an invite, and Google federation creates its own on first sign-in
+  # (this flag governs the native signup API only, not federation).
+  #
+  # Invite-only is still enforced in the application regardless: no `users` row means
+  # no authorities, so a federated stranger can authenticate and do nothing.
   admin_create_user_config {
-    allow_admin_create_user_only = false
+    allow_admin_create_user_only = true
   }
 
   # Sign in with a one-time code emailed by Cognito, so nobody needs a password
