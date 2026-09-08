@@ -7,6 +7,7 @@ import type {
   OrderResponse,
   OrderItemResponse,
   OrderSummaryResponse,
+  PagedModel,
   EventPassResponse,
   SearchStatsResponse,
   PlatformUsageResponse,
@@ -198,8 +199,13 @@ export async function searchByFace(
 }
 
 
-export async function listOrders(): Promise<OrderSummaryResponse[]> {
-  const response = await api.get<OrderSummaryResponse[]>('/orders');
+export async function listOrders(
+  page = 0,
+  size = 25,
+): Promise<PagedModel<OrderSummaryResponse>> {
+  const response = await api.get<PagedModel<OrderSummaryResponse>>('/orders', {
+    params: { page, size },
+  });
   return response.data;
 }
 

@@ -10,6 +10,8 @@ import com.picmeup.photo.PhotoRepository;
 import com.picmeup.photo.S3StorageService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -138,8 +140,9 @@ public class OrderService {
         return order;
     }
 
-    public List<Order> getAllOrders() {
-        return orderRepository.findAllByOrderByCreatedAtDesc();
+    /** Newest first, which is the only order this list is ever read in. */
+    public Page<Order> getOrders(Pageable pageable) {
+        return orderRepository.findAllByOrderByCreatedAtDesc(pageable);
     }
 
     public Order getOrder(UUID orderId) {

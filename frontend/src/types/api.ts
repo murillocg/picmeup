@@ -63,7 +63,21 @@ export interface OrderSummaryResponse {
   status: string;
   totalAmount: number;
   currency: string;
+  /** True when the event was free, which is why the total is $0.00. */
+  free: boolean;
+  /** ISO-8601 instant with a UTC marker — safe to hand straight to new Date(). */
   createdAt: string;
+}
+
+/** Matches Spring Data's PagedModel. */
+export interface PagedModel<T> {
+  content: T[];
+  page: {
+    size: number;
+    number: number;
+    totalElements: number;
+    totalPages: number;
+  };
 }
 
 export interface EventPassResponse {

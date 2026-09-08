@@ -3,7 +3,8 @@ package com.picmeup.payment.dto;
 import com.picmeup.payment.Order;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.UUID;
 
 public record OrderSummaryResponse(
@@ -12,7 +13,13 @@ public record OrderSummaryResponse(
         String status,
         BigDecimal totalAmount,
         String currency,
-        LocalDateTime createdAt
+        boolean free,
+        /**
+         * Serialised as an instant, so it carries a UTC marker and the browser can convert
+         * it to the reader's own zone. The stored value is a naive LocalDateTime that is
+         * already UTC by convention; without this the client has to assume that.
+         */
+        Instant createdAt
 ) {
     public static OrderSummaryResponse from(Order order) {
         return new OrderSummaryResponse(
@@ -21,7 +28,8 @@ public record OrderSummaryResponse(
                 order.getStatus().name(),
                 order.getTotalAmount(),
                 order.getCurrency(),
-                order.getCreatedAt()
+                order.isFree(),
+                order.getCreatedAt().toInstant(ZoneOffset.UTC)
         );
     }
 }

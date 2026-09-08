@@ -7,12 +7,15 @@ import com.picmeup.payment.dto.OrderSummaryResponse;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.web.PagedModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
@@ -32,11 +35,14 @@ public class OrderController {
     }
 
     @GetMapping
-    public ResponseEntity<List<OrderSummaryResponse>> listOrders() {
-        var orders = orderService.getAllOrders().stream()
-                .map(OrderSummaryResponse::from)
-                .toList();
-        return ResponseEntity.ok(orders);
+    public ResponseEntity<PagedModel<OrderSummaryResponse>> listOrders(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "25") int size) {
+
+        // Capped so a hand-edited URL cannot ask for the whole table in one query.
+        var pageable = PageRequest.of(Math.max(page, 0), Math.clamp(size, 1, 100));
+        var orders = orderService.getOrders(pageable).map(OrderSummaryResponse::from);
+        return ResponseEntity.ok(new PagedModel<>(orders));
     }
 
     @PostMapping

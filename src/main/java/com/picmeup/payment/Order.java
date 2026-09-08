@@ -86,6 +86,14 @@ public class Order {
         return currency;
     }
 
+    /**
+     * A free-event order: created already PAID, with no PayPal order behind it. Lets the
+     * admin list explain a $0.00 total rather than leaving it looking like a failed charge.
+     */
+    public boolean isFree() {
+        return paypalOrderId == null && totalAmount.compareTo(BigDecimal.ZERO) == 0;
+    }
+
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
