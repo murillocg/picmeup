@@ -157,6 +157,35 @@ export default function EventListPage() {
                       {event.location}
                     </span>
                   </div>
+
+                  {/* Pricing is set at creation but was not shown anywhere afterwards, so
+                      there was no way to check what an event was configured with. Free is
+                      worth telling everyone; the amounts are for whoever runs the event. */}
+                  {event.free ? (
+                    <div className="mt-3 pt-3 border-t border-gray-100">
+                      <span className="bg-green-50 text-green-700 border border-green-200 text-xs font-semibold px-2.5 py-1 rounded-full">
+                        Free downloads
+                      </span>
+                    </div>
+                  ) : (
+                    authenticated && (
+                      <div className="mt-3 pt-3 border-t border-gray-100 flex items-center gap-3 text-xs text-gray-500">
+                        <span>
+                          <span className="font-semibold text-gray-700 tabular-nums">
+                            ${event.photoPrice.toFixed(2)}
+                          </span>{' '}
+                          per photo
+                        </span>
+                        <span className="text-gray-300">|</span>
+                        <span>
+                          <span className="font-semibold text-gray-700 tabular-nums">
+                            ${event.packPrice.toFixed(2)}
+                          </span>{' '}
+                          all photos
+                        </span>
+                      </div>
+                    )
+                  )}
                 </div>
               </Wrapper>
             );

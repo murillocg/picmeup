@@ -174,6 +174,27 @@ export default function EventDetailPage() {
               day: 'numeric',
             })}
           </p>
+
+          {/* What this event was configured to charge. Previously the prices were only
+              ever used to total a selection, so there was nowhere to check them. */}
+          {isFree ? (
+            <span className="inline-block mt-2 bg-green-50 text-green-700 border border-green-200 text-xs font-semibold px-2.5 py-1 rounded-full">
+              Free downloads
+            </span>
+          ) : (
+            authenticated && (
+              <p className="text-sm text-gray-500 mt-2">
+                <span className="font-semibold text-gray-700 tabular-nums">
+                  ${photoPrice.toFixed(2)}
+                </span>{' '}
+                per photo &middot;{' '}
+                <span className="font-semibold text-gray-700 tabular-nums">
+                  ${packPrice.toFixed(2)}
+                </span>{' '}
+                for all photos
+              </p>
+            )
+          )}
         </div>
         {authenticated && (
           <div className="flex items-center gap-2">
