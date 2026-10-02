@@ -54,14 +54,6 @@ export default function Layout() {
                 </Link>
               </>
             )}
-            {!authenticated && !loading && (
-              <a
-                href="/api/auth/authorize/cognito"
-                className="text-sm text-gray-500 hover:text-brand-charcoal"
-              >
-                Sign in
-              </a>
-            )}
             {authenticated && (
               <button
                 onClick={handleLogout}
@@ -89,6 +81,14 @@ export default function Layout() {
             <Link to="/privacy-policy" className="text-brand-orange hover:text-brand-orange-dark">
               Privacy Policy
             </Link>
+            {!authenticated && !loading && (
+              <>
+                <span className="text-gray-300">|</span>
+                <a href="/api/auth/authorize/cognito" className="text-gray-400 hover:text-gray-600">
+                  Staff login
+                </a>
+              </>
+            )}
           </p>
           {authenticated && (
             <p className="text-xs text-gray-400 mt-1">v{__APP_VERSION__}</p>
