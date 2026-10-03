@@ -1,6 +1,5 @@
 package com.picmeup.admin;
 
-import com.picmeup.admin.dto.InviteRequest.SignInMethod;
 import com.picmeup.common.user.AppUser;
 import com.picmeup.common.user.AppUserRepository;
 import com.picmeup.photo.EventPhotographerRepository;
@@ -35,32 +34,28 @@ class UserManagementServiceTest {
     }
 
     /**
-     * The whole reason the sign-in method is asked for: an emailed code has nowhere to go
-     * unless a Cognito identity exists first.
+     * Everyone gets an identity, so the person signing in can pick either button. Without
+     * it an emailed code has nowhere to go, and the sign-in page cannot say so.
      */
     @Test
-    void invitingSomeoneWhoUsesAnEmailedCodeCreatesTheirCognitoIdentity() {
+    void everyInviteCreatesACognitoIdentity() {
         when(users.existsByEmailIgnoreCase("shooter@example.com")).thenReturn(false);
         when(users.save(any(AppUser.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        service().invite("shooter@example.com", "Shooter", AppUser.Role.PHOTOGRAPHER,
-                SignInMethod.EMAIL_CODE, null);
+        service().invite("shooter@example.com", "Shooter", AppUser.Role.PHOTOGRAPHER, null);
 
         verify(cognitoIdentities).createPasswordlessUser("shooter@example.com");
     }
 
-    /**
-     * Google federation creates its own identity on first sign-in. Pre-creating a native
-     * user owning the same address risks colliding with that.
-     */
+    /** Including Gmail addresses, who will most likely use Google but may not. */
     @Test
-    void invitingAGoogleUserDoesNotCreateACognitoIdentity() {
-        when(users.existsByEmailIgnoreCase("boss@example.com")).thenReturn(false);
+    void aGmailAddressAlsoGetsAnIdentity() {
+        when(users.existsByEmailIgnoreCase("boss@gmail.com")).thenReturn(false);
         when(users.save(any(AppUser.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        service().invite("boss@example.com", "Boss", AppUser.Role.ADMIN, SignInMethod.GOOGLE, null);
+        service().invite("boss@gmail.com", "Boss", AppUser.Role.ADMIN, null);
 
-        verify(cognitoIdentities, never()).createPasswordlessUser(anyString());
+        verify(cognitoIdentities).createPasswordlessUser("boss@gmail.com");
     }
 
     @Test
@@ -70,7 +65,7 @@ class UserManagementServiceTest {
         when(users.save(any(AppUser.class))).thenAnswer(inv -> inv.getArgument(0));
 
         var user = service().invite("  Shooter@Example.com  ", "Shooter",
-                AppUser.Role.PHOTOGRAPHER, SignInMethod.EMAIL_CODE, null);
+                AppUser.Role.PHOTOGRAPHER, null);
 
         assertThat(user.getEmail()).isEqualTo("shooter@example.com");
         verify(cognitoIdentities).createPasswordlessUser("shooter@example.com");
@@ -81,7 +76,7 @@ class UserManagementServiceTest {
         when(users.existsByEmailIgnoreCase("shooter@example.com")).thenReturn(true);
 
         assertThatThrownBy(() -> service().invite("shooter@example.com", "Shooter",
-                AppUser.Role.PHOTOGRAPHER, SignInMethod.EMAIL_CODE, null))
+                AppUser.Role.PHOTOGRAPHER, null))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("already been invited");
 
@@ -96,7 +91,7 @@ class UserManagementServiceTest {
         when(users.save(any(AppUser.class))).thenAnswer(inv -> inv.getArgument(0));
 
         var user = service().invite("shooter@example.com", "Shooter",
-                AppUser.Role.PHOTOGRAPHER, SignInMethod.EMAIL_CODE, null);
+                AppUser.Role.PHOTOGRAPHER, null);
 
         assertThat(user.getStatus()).isEqualTo(AppUser.Status.INVITED);
         assertThat(user.getRole()).isEqualTo(AppUser.Role.PHOTOGRAPHER);

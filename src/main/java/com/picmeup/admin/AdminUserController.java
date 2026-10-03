@@ -49,8 +49,7 @@ public class AdminUserController {
     public ResponseEntity<UserResponse> invite(@Valid @RequestBody InviteRequest request,
                                                Authentication authentication) {
         var invitedBy = currentUserId(authentication);
-        var user = userManagement.invite(
-                request.email(), request.name(), request.role(), request.signInMethod(), invitedBy);
+        var user = userManagement.invite(request.email(), request.name(), request.role(), invitedBy);
         return ResponseEntity.status(HttpStatus.CREATED).body(UserResponse.from(user, 0));
     }
 

@@ -1,6 +1,5 @@
 package com.picmeup.admin;
 
-import com.picmeup.admin.dto.InviteRequest;
 import com.picmeup.common.exception.ResourceNotFoundException;
 import com.picmeup.common.user.AppUser;
 import com.picmeup.common.user.AppUserRepository;
@@ -52,23 +51,26 @@ public class UserManagementService {
     }
 
     @Transactional
-    public AppUser invite(String email, String name, AppUser.Role role,
-                          InviteRequest.SignInMethod signInMethod, UUID invitedBy) {
+    public AppUser invite(String email, String name, AppUser.Role role, UUID invitedBy) {
         String normalised = email.trim().toLowerCase();
 
         if (users.existsByEmailIgnoreCase(normalised)) {
             throw new IllegalArgumentException("%s has already been invited".formatted(normalised));
         }
 
-        // Identity first. If Cognito refuses, no users row is written — better than an
-        // invitation that looks issued but can never be signed in to, since the login
-        // page cannot report a missing identity.
-        if (signInMethod == InviteRequest.SignInMethod.EMAIL_CODE) {
-            cognitoIdentities.createPasswordlessUser(normalised);
-        }
+        // Always provisioned, so the person can use whichever button they prefer on the
+        // sign-in page. The identity is what an emailed code is sent to; Google
+        // federation does not need it but is unaffected by it, because this application
+        // resolves people by verified email rather than by Cognito subject — so a
+        // federated profile and this one both lead to the same users row.
+        //
+        // Done before the row is written: an invitation that cannot be signed in to is
+        // worse than one that fails outright, since the sign-in page deliberately cannot
+        // report a missing identity.
+        cognitoIdentities.createPasswordlessUser(normalised);
 
         var user = users.save(new AppUser(normalised, name, role, invitedBy));
-        log.info("Invited {} as {} signing in with {}", normalised, role, signInMethod);
+        log.info("Invited {} as {}", normalised, role);
         return user;
     }
 

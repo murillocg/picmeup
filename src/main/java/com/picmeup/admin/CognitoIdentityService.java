@@ -20,9 +20,10 @@ import software.amazon.awssdk.services.cognitoidentityprovider.model.UsernameExi
  * {@code prevent_user_existence_errors}, the login page cannot say so. It shows
  * "check your email" either way and the code never arrives.
  *
- * <p>Only for people who will sign in with an emailed code. Google users are created by
- * federation on first sign-in, and pre-creating a native user owning the same address
- * risks colliding with that.
+ * <p>Created for everyone invited, so each person can use whichever button they prefer.
+ * Google federation does not need this profile, and is not harmed by it: Cognito creates
+ * its own federated profile on first sign-in, and because this application resolves people
+ * by verified email rather than by Cognito subject, both profiles lead to the same user.
  */
 @Service
 public class CognitoIdentityService {
@@ -47,7 +48,13 @@ public class CognitoIdentityService {
     public boolean createPasswordlessUser(String email) {
         var client = clients.getIfAvailable();
         if (client == null || userPoolId.isBlank()) {
-            log.info("Cognito not configured — skipping identity creation for {}", email);
+            // Expected with no Cognito configured, as in dev and test. In production it
+            // means invitations are being issued that nobody can sign in to, and the
+            // sign-in page cannot report a missing identity — so it is logged loudly
+            // rather than passed over in silence.
+            log.warn("Cognito is not configured (app.cognito.user-pool-id is unset) — "
+                    + "no sign-in identity created for {}. If this is production, that "
+                    + "invitation cannot be used until one exists.", email);
             return false;
         }
 
