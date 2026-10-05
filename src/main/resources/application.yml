@@ -17,6 +17,18 @@ spring:
 
 server:
   port: 8080
+  tomcat:
+    # Virtual threads are enabled, which removes the bounded worker pool that used to
+    # shed load: Tomcat creates a thread per request with no ceiling. A scanner firing
+    # dozens a second accumulated tens of thousands of them and exhausted the 512 MB
+    # heap, leaving the JVM running but serving nothing.
+    #
+    # 200 is roughly ten times the concurrency real traffic produces — measured peak is
+    # 3 requests a second — so legitimate use never reaches it, while a flood is bounded
+    # to something the heap can hold. Excess connections wait in the accept queue and are
+    # refused beyond that, which is the backpressure virtual threads gave up.
+    max-connections: 200
+    accept-count: 100
   servlet:
     session:
       timeout: 12h
@@ -53,9 +65,11 @@ app:
     sender: ${EMAIL_SENDER:noreply@elitesportphotos.com}
     admin-recipients: ${EMAIL_ADMIN_RECIPIENTS:trent@elitesportphotos.com,murillo.cg@gmail.com}
 
+# Every request logged at DEBUG is pure cost in production, and during a scan it is
+# tens of thousands of lines. Switched on per-profile for local development instead.
 logging:
   level:
-    org.springframework.web.filter.CommonsRequestLoggingFilter: DEBUG
+    org.springframework.web.filter.CommonsRequestLoggingFilter: WARN
 
 ---
 spring:
@@ -82,6 +96,12 @@ paypal:
   client-id: ${PAYPAL_CLIENT_ID:unused}
   client-secret: ${PAYPAL_CLIENT_SECRET:unused}
   base-url: https://api-m.sandbox.paypal.com
+
+
+# Per-request logging is useful locally and far too noisy in production.
+logging:
+  level:
+    org.springframework.web.filter.CommonsRequestLoggingFilter: DEBUG
 
 ---
 spring:
