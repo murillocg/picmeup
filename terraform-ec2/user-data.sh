@@ -59,7 +59,15 @@ services:
     environment:
       - DATABASE_URL=jdbc:postgresql://postgres:5432/elitesportphotos
       - DB_USERNAME=elitesportphotos
-      - JAVA_OPTS=-Xmx512m
+      # ExitOnOutOfMemoryError is the important one. Without it the JVM survives an
+      # OutOfMemoryError in a wedged state — process alive, container "running",
+      # healthcheck failing, serving nothing. Compose does not act on an unhealthy
+      # container, so an outage lasted 35 hours before anyone noticed. Exiting lets
+      # "restart: unless-stopped" turn the same failure into a brief restart.
+      #
+      # The heap dump is what makes the cause diagnosable afterwards; /tmp survives a
+      # restart, though not a --force-recreate.
+      - JAVA_OPTS=-Xmx512m -XX:+ExitOnOutOfMemoryError -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp/heapdump.hprof
     ports:
       - "80:8080"
     healthcheck:
