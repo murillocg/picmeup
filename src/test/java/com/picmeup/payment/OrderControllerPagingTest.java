@@ -24,9 +24,11 @@ class OrderControllerPagingTest {
     private OrderService orderService;
     @Mock
     private PayPalService payPalService;
+    @Mock
+    private OrderZipService orderZipService;
 
     private OrderController controller() {
-        return new OrderController(orderService, payPalService);
+        return new OrderController(orderService, payPalService, orderZipService);
     }
 
     private Order paidOrder() {

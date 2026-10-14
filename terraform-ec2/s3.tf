@@ -59,6 +59,33 @@ resource "aws_s3_bucket_lifecycle_configuration" "photos" {
       days = 75
     }
   }
+
+  # Order archives are rebuilt on demand from photos that are still here, so they are
+  # a cache rather than data. Expiring them sooner than the originals keeps the bucket
+  # from roughly doubling for every order anyone downloads.
+  rule {
+    id     = "expire-order-archives"
+    status = "Enabled"
+    filter {
+      prefix = "zips/"
+    }
+    expiration {
+      days = 30
+    }
+  }
+
+  # A multipart upload that never completes leaves its parts in the bucket, billed but
+  # absent from any listing. The application aborts them when a build fails, but cannot
+  # when the process itself dies mid-write — which has happened. This is the backstop
+  # that keeps those from accumulating invisibly forever.
+  rule {
+    id     = "abort-incomplete-uploads"
+    status = "Enabled"
+    filter {}
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 1
+    }
+  }
 }
 
 resource "aws_s3_bucket_notification" "photo_upload" {

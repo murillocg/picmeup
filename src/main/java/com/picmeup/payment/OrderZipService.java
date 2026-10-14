@@ -1,0 +1,140 @@
+package com.picmeup.payment;
+
+import com.picmeup.photo.PhotoRepository;
+import com.picmeup.photo.S3StorageService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Service;
+
+import java.io.IOException;
+import java.time.Duration;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.zip.Deflater;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
+
+/**
+ * Builds the "download everything" archive for an order once, into S3, and hands out a
+ * presigned link to it.
+ *
+ * <p>Previously the archive was generated on the fly and streamed through this
+ * application on every request. Because its size could not be known in advance the
+ * response carried no {@code Content-Length}, so a browser could not tell a complete
+ * download from a truncated one: any interruption during a multi-minute transfer produced
+ * a corrupt file that still looked like a successful download. Serving it from S3 means
+ * the browser gets a length and range support, so truncation is detected and an
+ * interrupted download resumes.
+ */
+@Service
+public class OrderZipService {
+
+    private static final Logger log = LoggerFactory.getLogger(OrderZipService.class);
+
+    private static final Duration LINK_LIFETIME = Duration.ofHours(12);
+
+    private final OrderRepository orderRepository;
+    private final OrderItemRepository orderItemRepository;
+    private final PhotoRepository photoRepository;
+    private final S3StorageService s3StorageService;
+
+    /**
+     * Orders currently being built, so a second request does not start the work again.
+     * A duplicate build would be wasteful rather than harmful — both produce a valid
+     * archive and S3 keeps whichever finishes last — so in-memory tracking on a single
+     * instance is enough, and losing it on restart only risks one redundant rebuild.
+     */
+    private final Set<UUID> building = ConcurrentHashMap.newKeySet();
+
+    public OrderZipService(OrderRepository orderRepository,
+                           OrderItemRepository orderItemRepository,
+                           PhotoRepository photoRepository,
+                           S3StorageService s3StorageService) {
+        this.orderRepository = orderRepository;
+        this.orderItemRepository = orderItemRepository;
+        this.photoRepository = photoRepository;
+        this.s3StorageService = s3StorageService;
+    }
+
+    public static String zipKey(UUID orderId) {
+        return "zips/" + orderId + ".zip";
+    }
+
+    /** A link to the finished archive, or empty while it is still being built. */
+    public java.util.Optional<String> downloadUrl(UUID orderId) {
+        if (!s3StorageService.exists(zipKey(orderId))) {
+            return java.util.Optional.empty();
+        }
+        return java.util.Optional.of(s3StorageService.generatePresignedUrl(
+                zipKey(orderId), LINK_LIFETIME, "order-" + orderId + ".zip"));
+    }
+
+    /**
+     * Starts a build unless the archive already exists or one is already running.
+     *
+     * <p>The whole method is asynchronous rather than delegating to an inner one: Spring
+     * applies {@code @Async} through a proxy, so a call from inside this class would be
+     * invisible to it and would run the build on the caller's request thread.
+     */
+    @Async
+    public void requestBuild(UUID orderId) {
+        if (s3StorageService.exists(zipKey(orderId)) || !building.add(orderId)) {
+            return;
+        }
+
+        String key = zipKey(orderId);
+        long started = System.currentTimeMillis();
+        var stream = s3StorageService.multipartOutputStream(key, "application/zip");
+
+        try (var zip = new ZipOutputStream(stream)) {
+            // The photos are JPEGs, which do not compress. Deflating them costs real CPU
+            // on a small instance and saves essentially nothing, so the entries are stored
+            // as-is. NO_COMPRESSION keeps the deflate method, which — unlike STORED — does
+            // not require knowing each entry's size and checksum up front.
+            zip.setLevel(Deflater.NO_COMPRESSION);
+
+            int written = 0;
+            for (OrderItem item : orderItemRepository.findByOrderId(orderId)) {
+                var photo = photoRepository.findById(item.getPhotoId()).orElse(null);
+                if (photo == null || photo.getOriginalS3Key() == null) {
+                    continue;
+                }
+
+                String filename = photo.getOriginalFilename() != null
+                        ? photo.getOriginalFilename()
+                        : "photo-" + (written + 1) + ".jpg";
+
+                zip.putNextEntry(new ZipEntry(filename));
+                try (var source = s3StorageService.getObject(photo.getOriginalS3Key())) {
+                    source.transferTo(zip);
+                }
+                zip.closeEntry();
+                written++;
+            }
+
+            if (written == 0) {
+                throw new IOException("Order " + orderId + " has no downloadable photos");
+            }
+
+            log.info("Built archive for order {} with {} photos in {} ms",
+                    orderId, written, System.currentTimeMillis() - started);
+        } catch (IOException | RuntimeException e) {
+            // Parts already uploaded are billed but invisible to a bucket listing, so
+            // they are discarded rather than left behind. The bucket's lifecycle rule
+            // covers the case where this process dies before reaching here.
+            stream.abort();
+            log.error("Failed to build archive for order {}", orderId, e);
+        } finally {
+            building.remove(orderId);
+        }
+    }
+
+    /** Whether the order may be downloaded at all. */
+    public boolean isPaid(UUID orderId) {
+        return orderRepository.findById(orderId)
+                .map(order -> order.getStatus() == Order.Status.PAID)
+                .orElse(false);
+    }
+}

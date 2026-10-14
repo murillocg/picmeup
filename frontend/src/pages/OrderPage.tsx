@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { getOrder } from '../services/api';
+import { getOrder, getOrderZip } from '../services/api';
 import type { OrderResponse } from '../types/api';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorMessage from '../components/ErrorMessage';
@@ -13,6 +13,39 @@ export default function OrderPage() {
   const [order, setOrder] = useState<OrderResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [zipState, setZipState] = useState<'idle' | 'preparing' | 'error'>('idle');
+
+  /**
+   * The archive is built into S3 on first request, so the first person to ask may wait a
+   * minute. Polling until it exists, then handing the browser a direct S3 link: that is
+   * what gives the download a content length and the ability to resume, instead of the
+   * silently-truncating stream this replaced.
+   */
+  async function handleDownloadAll() {
+    if (!order) return;
+    setZipState('preparing');
+
+    const deadline = Date.now() + 5 * 60 * 1000;
+    try {
+      while (Date.now() < deadline) {
+        const result = await getOrderZip(order.id);
+
+        if (result.status === 'READY' && result.url) {
+          window.location.assign(result.url);
+          setZipState('idle');
+          return;
+        }
+        if (result.status === 'FORBIDDEN') {
+          setZipState('error');
+          return;
+        }
+        await new Promise((resolve) => setTimeout(resolve, 3000));
+      }
+      setZipState('error');
+    } catch {
+      setZipState('error');
+    }
+  }
 
   useEffect(() => {
     if (!id) return;
@@ -103,13 +136,27 @@ export default function OrderPage() {
       </div>
 
       {isPaid && (
-        <a
-          href={`/api/orders/${order.id}/downloads/zip`}
-          download
-          className="block w-full text-center bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 font-semibold"
-        >
-          Download all photos (ZIP)
-        </a>
+        <>
+          <button
+            onClick={handleDownloadAll}
+            disabled={zipState === 'preparing'}
+            className="block w-full text-center bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 font-semibold disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {zipState === 'preparing' ? 'Preparing your download...' : 'Download all photos (ZIP)'}
+          </button>
+          {zipState === 'preparing' && (
+            <p className="text-sm text-gray-500 text-center mt-2">
+              We are packaging your photos. This takes a minute the first time; the download
+              starts on its own when it is ready.
+            </p>
+          )}
+          {zipState === 'error' && (
+            <p className="text-sm text-red-600 text-center mt-2">
+              We could not prepare the download. Please try again, or use the individual
+              links above.
+            </p>
+          )}
+        </>
       )}
     </div>
   );

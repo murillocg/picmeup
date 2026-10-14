@@ -9,6 +9,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.web.PagedModel;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -28,10 +30,14 @@ public class OrderController {
 
     private final OrderService orderService;
     private final PayPalService payPalService;
+    private final OrderZipService orderZipService;
 
-    public OrderController(OrderService orderService, PayPalService payPalService) {
+    public OrderController(OrderService orderService,
+                           PayPalService payPalService,
+                           OrderZipService orderZipService) {
         this.orderService = orderService;
         this.payPalService = payPalService;
+        this.orderZipService = orderZipService;
     }
 
     @GetMapping
@@ -83,17 +89,26 @@ public class OrderController {
         return ResponseEntity.ok(items);
     }
 
+    /**
+     * Returns a link to the order's archive, building it first if necessary.
+     *
+     * <p>The archive is served from S3 rather than streamed through here, so the browser
+     * receives a content length and range support: a truncated download is detected
+     * instead of being saved as a corrupt file, and an interrupted one resumes.
+     */
     @GetMapping("/{id}/downloads/zip")
-    public void downloadZip(@PathVariable UUID id, HttpServletResponse response) throws IOException {
-        var order = orderService.getOrder(id);
-        if (order.getStatus() != Order.Status.PAID) {
-            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Order is not paid");
-            return;
+    public ResponseEntity<Map<String, String>> downloadZip(@PathVariable UUID id) {
+        if (!orderZipService.isPaid(id)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("status", "FORBIDDEN", "message", "Order is not paid"));
         }
 
-        response.setContentType("application/zip");
-        response.setHeader("Content-Disposition", "attachment; filename=\"order-" + id + ".zip\"");
+        var url = orderZipService.downloadUrl(id);
+        if (url.isPresent()) {
+            return ResponseEntity.ok(Map.of("status", "READY", "url", url.get()));
+        }
 
-        orderService.streamOrderAsZip(id, response.getOutputStream());
+        orderZipService.requestBuild(id);
+        return ResponseEntity.accepted().body(Map.of("status", "PREPARING"));
     }
 }

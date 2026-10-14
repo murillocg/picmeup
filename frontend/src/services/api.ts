@@ -362,3 +362,21 @@ export async function listMyEvents(): Promise<EventResponse[]> {
   const response = await api.get<EventResponse[]>('/photographer/events');
   return response.data;
 }
+
+export interface ZipStatus {
+  status: 'READY' | 'PREPARING' | 'FORBIDDEN';
+  url?: string;
+  message?: string;
+}
+
+/**
+ * The archive is built into S3 on first request, so the first caller may have to wait.
+ * Once ready the browser downloads straight from S3, which gives it a content length
+ * and range support — a truncated download is detected rather than silently saved.
+ */
+export async function getOrderZip(orderId: string): Promise<ZipStatus> {
+  const response = await api.get<ZipStatus>(`/orders/${orderId}/downloads/zip`, {
+    validateStatus: (s) => s === 200 || s === 202 || s === 403,
+  });
+  return response.data;
+}

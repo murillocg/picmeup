@@ -6,6 +6,8 @@ import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
+import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.StorageClass;
@@ -100,6 +102,25 @@ public class S3StorageService {
                 .build();
 
         return s3Presigner.presignPutObject(presignRequest).url().toString();
+    }
+
+    /**
+     * An output stream that uploads to S3 in parts as it is written, so an object larger
+     * than the heap can be produced without staging it anywhere. See
+     * {@link S3MultipartOutputStream} for the threading contract.
+     */
+    public S3MultipartOutputStream multipartOutputStream(String key, String contentType) {
+        return new S3MultipartOutputStream(s3Client, bucket, key, contentType);
+    }
+
+    /** Whether an object exists, without transferring it. */
+    public boolean exists(String key) {
+        try {
+            s3Client.headObject(HeadObjectRequest.builder().bucket(bucket).key(key).build());
+            return true;
+        } catch (NoSuchKeyException e) {
+            return false;
+        }
     }
 
     public InputStream getObject(String key) {
