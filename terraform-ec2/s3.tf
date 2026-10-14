@@ -11,6 +11,29 @@ resource "aws_s3_bucket_public_access_block" "photos" {
   restrict_public_buckets = true
 }
 
+# Only CloudFront may read the bucket. The archives are reachable at
+# https://www.<domain>/zips/<orderId>.zip, which is exactly as guessable as the order
+# page itself — both are protected by the order's UUID, not by a separate secret.
+resource "aws_s3_bucket_policy" "photos_cloudfront" {
+  bucket = aws_s3_bucket.photos.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Sid       = "AllowCloudFrontRead"
+      Effect    = "Allow"
+      Principal = { Service = "cloudfront.amazonaws.com" }
+      Action    = "s3:GetObject"
+      Resource  = "${aws_s3_bucket.photos.arn}/zips/*"
+      Condition = {
+        StringEquals = {
+          "AWS:SourceArn" = aws_cloudfront_distribution.main.arn
+        }
+      }
+    }]
+  })
+}
+
 resource "aws_s3_bucket_server_side_encryption_configuration" "photos" {
   bucket = aws_s3_bucket.photos.id
 

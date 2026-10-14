@@ -9,6 +9,15 @@ resource "aws_acm_certificate" "main" {
   }
 }
 
+# Lets CloudFront read the bucket while it stays private to everyone else, so order
+# archives can be served from the edge without being publicly listable.
+resource "aws_cloudfront_origin_access_control" "photos" {
+  name                              = "${var.app_name}-photos"
+  origin_access_control_origin_type = "s3"
+  signing_behavior                  = "always"
+  signing_protocol                  = "sigv4"
+}
+
 resource "aws_cloudfront_distribution" "main" {
   enabled             = true
   aliases             = [var.domain_name, "www.${var.domain_name}"]
@@ -39,6 +48,38 @@ resource "aws_cloudfront_distribution" "main" {
       origin_protocol_policy = "http-only"
       origin_ssl_protocols   = ["TLSv1.2"]
     }
+  }
+
+  # Order archives are served straight from S3 through the edge. Handing out a presigned
+  # S3 link instead sent viewers directly to the bucket in Sydney over the public
+  # internet, which measured five times slower from Brazil than the same bytes through
+  # CloudFront.
+  origin {
+    domain_name              = aws_s3_bucket.photos.bucket_regional_domain_name
+    origin_id                = "photos-s3"
+    origin_access_control_id = aws_cloudfront_origin_access_control.photos.id
+  }
+
+  ordered_cache_behavior {
+    path_pattern           = "/zips/*"
+    target_origin_id       = "photos-s3"
+    viewer_protocol_policy = "redirect-to-https"
+    allowed_methods        = ["GET", "HEAD"]
+    cached_methods         = ["GET", "HEAD"]
+    compress               = false
+
+    forwarded_values {
+      query_string = false
+      cookies {
+        forward = "none"
+      }
+    }
+
+    # An archive is immutable for the life of its key, so it can sit at the edge. The
+    # bucket lifecycle removes it after 30 days, which is the real expiry.
+    min_ttl     = 0
+    default_ttl = 86400
+    max_ttl     = 604800
   }
 
   default_cache_behavior {

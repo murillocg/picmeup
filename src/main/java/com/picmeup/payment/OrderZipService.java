@@ -4,11 +4,11 @@ import com.picmeup.photo.PhotoRepository;
 import com.picmeup.photo.S3StorageService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.time.Duration;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -34,7 +34,7 @@ public class OrderZipService {
 
     private static final Logger log = LoggerFactory.getLogger(OrderZipService.class);
 
-    private static final Duration LINK_LIFETIME = Duration.ofHours(12);
+    private final String siteUrl;
 
     /**
      * How many archives may be built at once.
@@ -68,24 +68,33 @@ public class OrderZipService {
     public OrderZipService(OrderRepository orderRepository,
                            OrderItemRepository orderItemRepository,
                            PhotoRepository photoRepository,
-                           S3StorageService s3StorageService) {
+                           S3StorageService s3StorageService,
+                           @Value("${app.site-url:https://www.elitesportphotos.com}") String siteUrl) {
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
         this.photoRepository = photoRepository;
         this.s3StorageService = s3StorageService;
+        this.siteUrl = siteUrl;
     }
 
     public static String zipKey(UUID orderId) {
         return "zips/" + orderId + ".zip";
     }
 
-    /** A link to the finished archive, or empty while it is still being built. */
+    /**
+     * A link to the finished archive, or empty while it is still being built.
+     *
+     * <p>Served through CloudFront rather than as a presigned S3 link. A presigned link
+     * sends the viewer straight to the bucket in Sydney over the public internet, which
+     * measured five times slower from Brazil than the same bytes through the edge. The
+     * path is protected by the order's own identifier, the same secret that protects the
+     * order page itself.
+     */
     public java.util.Optional<String> downloadUrl(UUID orderId) {
         if (!s3StorageService.exists(zipKey(orderId))) {
             return java.util.Optional.empty();
         }
-        return java.util.Optional.of(s3StorageService.generatePresignedUrl(
-                zipKey(orderId), LINK_LIFETIME, "order-" + orderId + ".zip"));
+        return java.util.Optional.of(siteUrl + "/" + zipKey(orderId));
     }
 
     /**

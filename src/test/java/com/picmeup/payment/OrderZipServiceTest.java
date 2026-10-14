@@ -45,8 +45,11 @@ class OrderZipServiceTest {
 
     private final UUID orderId = UUID.randomUUID();
 
+    private static final String SITE = "https://www.elitesportphotos.com";
+
     private OrderZipService service() {
-        return new OrderZipService(orderRepository, orderItemRepository, photoRepository, s3StorageService);
+        return new OrderZipService(orderRepository, orderItemRepository, photoRepository,
+                s3StorageService, SITE);
     }
 
     private Photo photoWithKey(String key, String filename) {
@@ -61,13 +64,17 @@ class OrderZipServiceTest {
         assertThat(OrderZipService.zipKey(orderId)).isEqualTo("zips/" + orderId + ".zip");
     }
 
+    /**
+     * Through the CDN, not straight at the bucket: a presigned S3 link bypasses the edge
+     * and measured five times slower from Brazil.
+     */
     @Test
-    void aFinishedArchiveIsHandedOutAsAPresignedLink() {
+    void aFinishedArchiveIsServedThroughTheSiteDomain() {
         when(s3StorageService.exists("zips/" + orderId + ".zip")).thenReturn(true);
-        when(s3StorageService.generatePresignedUrl(anyString(), any(), anyString()))
-                .thenReturn("https://s3.example.com/signed");
 
-        assertThat(service().downloadUrl(orderId)).contains("https://s3.example.com/signed");
+        assertThat(service().downloadUrl(orderId))
+                .contains(SITE + "/zips/" + orderId + ".zip");
+        verify(s3StorageService, never()).generatePresignedUrl(anyString(), any(), anyString());
     }
 
     @Test
