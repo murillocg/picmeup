@@ -145,6 +145,53 @@ class OrderZipServiceTest {
         verify(stream).abort();
     }
 
+    /**
+     * Virtual threads give @Async an unbounded thread per call, so without a permit limit
+     * every simultaneously-requested order would buffer a part at once. This pins the
+     * ceiling that keeps that within the heap.
+     */
+    @Test
+    void concurrentBuildsAreCappedSoTheHeapCannotBeSwamped() throws Exception {
+        var order = new Order("buyer@example.com", new BigDecimal("60.00"));
+        var photo = photoWithKey("originals/e/1.jpg", "IMG_1.jpg");
+
+        when(s3StorageService.exists(anyString())).thenReturn(false);
+        when(photoRepository.findById(any())).thenReturn(Optional.of(photo));
+        when(s3StorageService.multipartOutputStream(anyString(), anyString())).thenReturn(stream);
+
+        var inFlight = new java.util.concurrent.atomic.AtomicInteger();
+        var peak = new java.util.concurrent.atomic.AtomicInteger();
+        var release = new java.util.concurrent.CountDownLatch(1);
+
+        when(s3StorageService.getObject(anyString())).thenAnswer(invocation -> {
+            int now = inFlight.incrementAndGet();
+            peak.updateAndGet(previous -> Math.max(previous, now));
+            release.await();
+            inFlight.decrementAndGet();
+            return new ByteArrayInputStream(new byte[]{1, 2, 3, 4});
+        });
+
+        var service = service();
+        var threads = new java.util.ArrayList<Thread>();
+        for (int i = 0; i < 10; i++) {
+            var id = UUID.randomUUID();
+            when(orderItemRepository.findByOrderId(id))
+                    .thenReturn(List.of(new OrderItem(order, photo.getId(), BigDecimal.ONE)));
+            var t = new Thread(() -> service.requestBuild(id));
+            t.start();
+            threads.add(t);
+        }
+
+        // Give the threads time to pile up against the permit limit before releasing.
+        Thread.sleep(400);
+        assertThat(peak.get())
+                .describedAs("builds running at once")
+                .isLessThanOrEqualTo(3);
+
+        release.countDown();
+        for (var t : threads) t.join(5000);
+    }
+
     @Test
     void onlyPaidOrdersMayBeDownloaded() {
         var paid = new Order("buyer@example.com", new BigDecimal("60.00"));

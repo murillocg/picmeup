@@ -11,7 +11,7 @@ import software.amazon.awssdk.services.s3.model.CompletedPart;
 import software.amazon.awssdk.services.s3.model.CreateMultipartUploadRequest;
 import software.amazon.awssdk.services.s3.model.UploadPartRequest;
 
-import java.io.ByteArrayOutputStream;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
@@ -21,10 +21,12 @@ import java.util.List;
  * Writes to S3 as the data arrives, so an object of any size can be produced without
  * holding it in memory or staging it on disk.
  *
- * <p>Content accumulates until it reaches S3's five-megabyte minimum part size, then goes
- * up as a part and the buffer is reused. Peak memory is one part regardless of how large
- * the finished object is — which is what makes it safe to build a 400 MB download on an
- * instance with a 512 MB heap.
+ * <p>Content accumulates in a single fixed buffer until it reaches S3's five-megabyte
+ * minimum part size, then goes up as a part and the buffer is refilled. Memory is exactly
+ * one part for the lifetime of the stream, whatever the finished object weighs — which is
+ * what makes it safe to build a 400 MB download on an instance with a 512 MB heap. The
+ * buffer is deliberately reused rather than copied out on each flush, so the figure a
+ * caller budgets against is the real one.
  *
  * <p>One instance serves one upload, written by one thread from construction to
  * {@link #close()}. Part numbering and the buffer flush are sequences rather than atomic
@@ -45,7 +47,8 @@ public class S3MultipartOutputStream extends OutputStream {
     private final String key;
     private final String uploadId;
 
-    private final ByteArrayOutputStream buffer = new ByteArrayOutputStream(PART_SIZE);
+    private final byte[] buffer = new byte[PART_SIZE];
+    private int filled;
     private final List<CompletedPart> completedParts = new ArrayList<>();
     private int partNumber = 1;
     private boolean finished;
@@ -63,34 +66,40 @@ public class S3MultipartOutputStream extends OutputStream {
 
     @Override
     public void write(int b) {
-        buffer.write(b);
-        flushPartIfFull();
-    }
-
-    @Override
-    public void write(byte[] bytes, int offset, int length) {
-        buffer.write(bytes, offset, length);
-        flushPartIfFull();
-    }
-
-    private void flushPartIfFull() {
-        if (buffer.size() >= PART_SIZE) {
+        buffer[filled++] = (byte) b;
+        if (filled == PART_SIZE) {
             uploadPart();
         }
     }
 
-    private void uploadPart() {
-        byte[] part = buffer.toByteArray();
-        buffer.reset();
+    @Override
+    public void write(byte[] bytes, int offset, int length) {
+        while (length > 0) {
+            int chunk = Math.min(length, PART_SIZE - filled);
+            System.arraycopy(bytes, offset, buffer, filled, chunk);
+            filled += chunk;
+            offset += chunk;
+            length -= chunk;
 
+            if (filled == PART_SIZE) {
+                uploadPart();
+            }
+        }
+    }
+
+    private void uploadPart() {
+        // A ByteArrayInputStream view rather than a copy: the SDK streams from it, and it
+        // supports reset, which the SDK needs if it retries the part.
         var response = s3Client.uploadPart(UploadPartRequest.builder()
                         .bucket(bucket)
                         .key(key)
                         .uploadId(uploadId)
                         .partNumber(partNumber)
-                        .contentLength((long) part.length)
+                        .contentLength((long) filled)
                         .build(),
-                RequestBody.fromBytes(part));
+                RequestBody.fromInputStream(new ByteArrayInputStream(buffer, 0, filled), filled));
+
+        filled = 0;
 
         completedParts.add(CompletedPart.builder()
                 .partNumber(partNumber)
@@ -126,7 +135,7 @@ public class S3MultipartOutputStream extends OutputStream {
 
         // Whatever remains is the final part, which may legitimately be under the
         // minimum size.
-        if (buffer.size() > 0) {
+        if (filled > 0) {
             uploadPart();
         }
 

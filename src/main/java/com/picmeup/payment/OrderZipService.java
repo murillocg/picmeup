@@ -12,6 +12,7 @@ import java.time.Duration;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Semaphore;
 import java.util.zip.Deflater;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -35,6 +36,20 @@ public class OrderZipService {
 
     private static final Duration LINK_LIFETIME = Duration.ofHours(12);
 
+    /**
+     * How many archives may be built at once.
+     *
+     * <p>Virtual threads are enabled, so {@code @Async} hands every call its own thread
+     * with no pool and no ceiling — the same unbounded concurrency that exhausted the heap
+     * twice before. Each build holds one five-megabyte upload buffer, so three is roughly
+     * fifteen megabytes of a 512 MB heap, and at the measured peak of three requests a
+     * second it is far more capacity than the site needs.
+     *
+     * <p>Waiting for a permit is cheap here: a blocked virtual thread parks without
+     * holding an operating-system thread, so callers queue rather than pile up work.
+     */
+    private static final int MAX_CONCURRENT_BUILDS = 3;
+
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
     private final PhotoRepository photoRepository;
@@ -47,6 +62,8 @@ public class OrderZipService {
      * instance is enough, and losing it on restart only risks one redundant rebuild.
      */
     private final Set<UUID> building = ConcurrentHashMap.newKeySet();
+
+    private final Semaphore buildPermits = new Semaphore(MAX_CONCURRENT_BUILDS);
 
     public OrderZipService(OrderRepository orderRepository,
                            OrderItemRepository orderItemRepository,
@@ -81,6 +98,14 @@ public class OrderZipService {
     @Async
     public void requestBuild(UUID orderId) {
         if (s3StorageService.exists(zipKey(orderId)) || !building.add(orderId)) {
+            return;
+        }
+
+        try {
+            buildPermits.acquire();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            building.remove(orderId);
             return;
         }
 
@@ -127,6 +152,7 @@ public class OrderZipService {
             stream.abort();
             log.error("Failed to build archive for order {}", orderId, e);
         } finally {
+            buildPermits.release();
             building.remove(orderId);
         }
     }
