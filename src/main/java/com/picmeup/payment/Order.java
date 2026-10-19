@@ -23,6 +23,13 @@ public class Order {
     @Id
     private UUID id;
 
+    /**
+     * The event this order's photos belong to. Nullable only for historical rows that
+     * predate the column and could not be backfilled; every new order sets it.
+     */
+    @Column
+    private UUID eventId;
+
     @Column(nullable = false)
     private String buyerEmail;
 
@@ -46,7 +53,12 @@ public class Order {
     }
 
     public Order(String buyerEmail, BigDecimal totalAmount) {
+        this(null, buyerEmail, totalAmount);
+    }
+
+    public Order(UUID eventId, String buyerEmail, BigDecimal totalAmount) {
         this.id = UUID.randomUUID();
+        this.eventId = eventId;
         this.buyerEmail = buyerEmail;
         this.totalAmount = totalAmount;
         this.currency = "AUD";
@@ -56,6 +68,10 @@ public class Order {
 
     public UUID getId() {
         return id;
+    }
+
+    public UUID getEventId() {
+        return eventId;
     }
 
     public String getBuyerEmail() {

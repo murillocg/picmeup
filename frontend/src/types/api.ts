@@ -100,6 +100,20 @@ export interface SearchStatsResponse {
   searchesWithResults: number;
 }
 
+export interface EventRevenueResponse {
+  eventId: string;
+  eventName: string;
+  eventSlug: string | null;
+  orderCount: number;
+  orderRevenue: number;
+  photosSold: number;
+  passCount: number;
+  passRevenue: number;
+  totalRevenue: number;
+  totalSearches: number;
+  searchesWithResults: number;
+}
+
 export interface PlatformUsageResponse {
   totalEvents: number;
   totalPhotos: number;

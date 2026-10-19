@@ -10,6 +10,7 @@ import type {
   PagedModel,
   EventPassResponse,
   SearchStatsResponse,
+  EventRevenueResponse,
   PlatformUsageResponse,
 } from '../types/api';
 
@@ -264,6 +265,11 @@ export async function listPasses(): Promise<EventPassResponse[]> {
 
 export async function getSearchStats(): Promise<SearchStatsResponse[]> {
   const response = await api.get<SearchStatsResponse[]>('/admin/stats/searches');
+  return response.data;
+}
+
+export async function getEventRevenue(): Promise<EventRevenueResponse[]> {
+  const response = await api.get<EventRevenueResponse[]>('/admin/stats/revenue');
   return response.data;
 }
 

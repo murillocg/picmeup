@@ -12,6 +12,7 @@ import NoAccessPage from './pages/NoAccessPage';
 import NotFoundPage from './pages/NotFoundPage';
 import SignInRedirect from './components/SignInRedirect';
 import AdminOrdersPage from './pages/AdminOrdersPage';
+import AdminRevenuePage from './pages/AdminRevenuePage';
 import AdminSearchStatsPage from './pages/AdminSearchStatsPage';
 import AdminUsagePage from './pages/AdminUsagePage';
 import AdminUsersPage from './pages/AdminUsersPage';
@@ -51,6 +52,7 @@ export default function App() {
             <Route element={<ProtectedRoute requireAdmin />}>
               <Route path="/events/new" element={<CreateEventPage />} />
               <Route path="/admin/orders" element={<AdminOrdersPage />} />
+              <Route path="/admin/revenue" element={<AdminRevenuePage />} />
               <Route path="/admin/stats" element={<AdminSearchStatsPage />} />
               <Route path="/admin/usage" element={<AdminUsagePage />} />
               <Route path="/admin/users" element={<AdminUsersPage />} />

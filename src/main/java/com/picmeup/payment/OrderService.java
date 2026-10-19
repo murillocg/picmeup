@@ -64,7 +64,15 @@ public class OrderService {
             }
         }
 
+        // Pricing has always been taken from the first photo's event, which silently
+        // mispriced a cart spanning two events. Rejecting that cart makes the existing
+        // single-event assumption explicit, and is what lets the order store its event.
         Event event = photos.get(0).getEvent();
+        boolean spansEvents = photos.stream()
+                .anyMatch(photo -> !photo.getEvent().getId().equals(event.getId()));
+        if (spansEvents) {
+            throw new IllegalArgumentException("All photos in an order must belong to the same event");
+        }
 
         BigDecimal totalAmount;
         BigDecimal itemPrice;
@@ -80,7 +88,7 @@ public class OrderService {
             itemPrice = totalAmount.divide(new BigDecimal(photos.size()), 2, java.math.RoundingMode.HALF_UP);
         }
 
-        var order = new Order(buyerEmail, totalAmount);
+        var order = new Order(event.getId(), buyerEmail, totalAmount);
         orderRepository.save(order);
 
         for (Photo photo : photos) {

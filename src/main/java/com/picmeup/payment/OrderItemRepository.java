@@ -2,6 +2,7 @@ package com.picmeup.payment;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.UUID;
@@ -15,4 +16,13 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, UUID> {
 
     @Query("SELECT DISTINCT oi.photoId FROM OrderItem oi WHERE oi.photoId IN :photoIds")
     List<UUID> findPhotoIdsByPhotoIdIn(List<UUID> photoIds);
+
+    /** How many photos were actually sold per event, as (eventId, photoCount). */
+    @Query("""
+            SELECT oi.order.eventId, COUNT(oi)
+            FROM OrderItem oi
+            WHERE oi.order.status = :status AND oi.order.eventId IS NOT NULL
+            GROUP BY oi.order.eventId
+            """)
+    List<Object[]> countSoldPhotosByEvent(@Param("status") com.picmeup.payment.Order.Status status);
 }
