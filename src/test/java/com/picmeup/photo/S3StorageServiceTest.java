@@ -9,6 +9,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.DeleteObjectsRequest;
+import software.amazon.awssdk.services.s3.model.DeleteObjectsResponse;
+import software.amazon.awssdk.services.s3.model.ObjectIdentifier;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
@@ -25,6 +28,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -110,9 +114,30 @@ class S3StorageServiceTest {
                 .build();
 
         when(s3Client.listObjectsV2(any(ListObjectsV2Request.class))).thenReturn(response);
+        when(s3Client.deleteObjects(any(DeleteObjectsRequest.class)))
+                .thenReturn(DeleteObjectsResponse.builder().build());
 
         storageService.deleteByPrefix("originals/event1/");
 
-        verify(s3Client, times(2)).deleteObject(any(DeleteObjectRequest.class));
+        // One batch for the page, not one call per key -- a round trip per object ran for
+        // minutes on a large event and timed the caller out.
+        var request = ArgumentCaptor.forClass(DeleteObjectsRequest.class);
+        verify(s3Client, times(1)).deleteObjects(request.capture());
+        verify(s3Client, never()).deleteObject(any(DeleteObjectRequest.class));
+
+        assertThat(request.getValue().delete().objects())
+                .extracting(ObjectIdentifier::key)
+                .containsExactly("originals/event1/photo1.jpg", "originals/event1/photo2.jpg");
+    }
+
+    @Test
+    void deleteByPrefix_shouldSkipTheBatchWhenNothingMatches() {
+        when(s3Client.listObjectsV2(any(ListObjectsV2Request.class)))
+                .thenReturn(ListObjectsV2Response.builder().isTruncated(false).build());
+
+        storageService.deleteByPrefix("originals/event1/");
+
+        // An empty batch is rejected by S3, so it must not be sent at all.
+        verify(s3Client, never()).deleteObjects(any(DeleteObjectsRequest.class));
     }
 }

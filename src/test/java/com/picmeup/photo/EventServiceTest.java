@@ -39,11 +39,15 @@ class EventServiceTest {
     @Mock
     private com.picmeup.payment.OrderItemRepository orderItemRepository;
 
+    @Mock
+    private org.springframework.transaction.PlatformTransactionManager transactionManager;
+
     private EventService eventService;
 
     @BeforeEach
     void setUp() {
-        eventService = new EventService(eventRepository, photoRepository, s3StorageService, faceRecognitionService, imageProcessingService, orderItemRepository);
+        eventService = new EventService(eventRepository, photoRepository, s3StorageService, faceRecognitionService,
+                imageProcessingService, orderItemRepository, transactionManager);
     }
 
     @Test

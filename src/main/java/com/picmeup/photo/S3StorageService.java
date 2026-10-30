@@ -1,10 +1,15 @@
 package com.picmeup.photo;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.Delete;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.DeleteObjectsRequest;
+import software.amazon.awssdk.services.s3.model.ObjectIdentifier;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
 import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
@@ -18,9 +23,12 @@ import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignReques
 
 import java.io.InputStream;
 import java.time.Duration;
+import java.util.List;
 
 @Service
 public class S3StorageService {
+
+    private static final Logger log = LoggerFactory.getLogger(S3StorageService.class);
 
     private final S3Client s3Client;
     private final S3Presigner s3Presigner;
@@ -173,9 +181,7 @@ public class S3StorageService {
         var response = s3Client.listObjectsV2(listRequest);
 
         while (true) {
-            for (S3Object object : response.contents()) {
-                deleteFile(object.key());
-            }
+            deleteBatch(response.contents());
 
             if (!response.isTruncated()) {
                 break;
@@ -188,6 +194,36 @@ public class S3StorageService {
                     .build();
 
             response = s3Client.listObjectsV2(listRequest);
+        }
+    }
+
+    /**
+     * One request per listing page rather than one per object. Deleting an event used to
+     * issue a round trip per key, which ran past seven minutes for a large event and timed
+     * the caller out long before it finished. A listing page and a batch delete are both
+     * capped at 1,000 keys, so each page costs exactly one delete call.
+     */
+    private void deleteBatch(List<S3Object> objects) {
+        if (objects.isEmpty()) {
+            return;
+        }
+
+        var keys = objects.stream()
+                .map(object -> ObjectIdentifier.builder().key(object.key()).build())
+                .toList();
+
+        var result = s3Client.deleteObjects(DeleteObjectsRequest.builder()
+                .bucket(bucket)
+                .delete(Delete.builder().objects(keys).build())
+                .build());
+
+        // A batch reports per-key failures in its response instead of throwing. Anything
+        // left behind is swept by the bucket lifecycle, so this is worth recording but not
+        // worth abandoning the remaining pages over.
+        if (!result.errors().isEmpty()) {
+            var first = result.errors().get(0);
+            log.warn("Failed to delete {} of {} objects; first failure: {} ({})",
+                    result.errors().size(), keys.size(), first.key(), first.message());
         }
     }
 }
